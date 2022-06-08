@@ -37,6 +37,9 @@ pub fn init() {
     lazy_static::initialize(&POOL);
     let conn = connection().expect("Failed to get db connection");
 
+    // run migrations before starting test transaction
+    embedded_migrations::run(&conn).unwrap();
+
     if cfg!(test) {
         conn.begin_test_transaction()
             .expect("Failed to start transaction");
@@ -82,8 +85,6 @@ pub fn init() {
             .execute(&conn)
             .unwrap();
     }
-
-    embedded_migrations::run(&conn).unwrap();
 }
 
 pub fn connection() -> Result<PoolConn, ApiError> {
