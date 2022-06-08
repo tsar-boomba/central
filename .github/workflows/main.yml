@@ -4,5 +4,31 @@ on:
       - main
 
 jobs:
+  crud-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.changes.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v3
+      - run: ls
+      - name: Check For Changes
+        uses: ./.github/workflows/changes.yml
+        with:
+          path: services/crud/**
+        id: changes
+
   crud:
-    uses: ./.github/workflows/crud-ci.yml
+    runs-on: ubuntu-latest
+    needs: crud-changes
+    if: needs.crud-changes.outputs.changed == 'true'
+    steps:
+      - name: Build & Test
+        uses: ./.github/workflows/crud-ci.yml
+      - name: Build Image
+        run: docker build ./services/crud -t central-crud:latest
+      - name: Push to ECR
+        uses: ./.github/workflows/ecr-setup.yml
+        with:
+          repo: central-crud
+          access-key: ${{ secrets.AWS_ACCESS_KEY }}
+          secret-key: ${{ secrets.AWS_SECRET_KEY }}
