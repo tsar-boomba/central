@@ -25,7 +25,7 @@ runs:
     - name: Push image to ECR
       shell: bash
       env:
-        REGISTRY: ${{ steps.ecr.registry }}
+        REGISTRY: ${{ steps.ecr.outputs.registry }}
         REPO: ${{ inputs.repo }}
       run: |
         docker push $REGISTRY/$REPO:latest
