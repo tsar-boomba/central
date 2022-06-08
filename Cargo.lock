@@ -408,10 +408,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "71b85eb331f5c2b6ae4ff00aabd20a8a21de88b9890c58579616bf760570b207"
 dependencies = [
  "async-std",
+ "chrono",
+ "hex",
+ "hmac 0.12.1",
  "http-types",
  "serde",
  "serde_json",
  "serde_qs 0.9.2",
+ "sha2 0.10.2",
  "smart-default",
  "smol_str",
  "surf",
@@ -1203,6 +1207,12 @@ checksum = "62b467343b94ba476dcb2500d242dadbb39557df889310ac77c5d99100aaac33"
 dependencies = [
  "libc",
 ]
+
+[[package]]
+name = "hex"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
 name = "hkdf"
