@@ -1,0 +1,1 @@
+export { configDomain } from './configDomain';

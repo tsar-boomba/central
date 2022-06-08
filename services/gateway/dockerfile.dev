@@ -1,0 +1,22 @@
+FROM rust:slim-buster as build
+
+# create a new empty shell project
+RUN USER=root cargo new --bin central-gateway
+WORKDIR /central-gateway
+
+RUN apt-get update && apt-get install libpq5 -y
+
+# copy over your manifests
+COPY ./Cargo.lock ./Cargo.lock
+COPY ./Cargo.toml ./Cargo.toml
+
+# this build step will cache your dependencies
+RUN cargo build
+RUN rm src/*.rs
+
+# copy your source tree
+COPY ./src ./src
+
+EXPOSE 4000
+
+CMD ["cargo", "run", "-q"]

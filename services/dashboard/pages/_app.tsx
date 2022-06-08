@@ -1,0 +1,127 @@
+import Layout from '@/components/Layout';
+import type { AppContext, AppInitialProps, AppProps } from 'next/app';
+import { useRouter } from 'next/router';
+import { useState, useMemo, ReactNode } from 'react';
+import Head from 'next/head';
+import {
+	ColorScheme,
+	ColorSchemeProvider,
+	DefaultMantineColor,
+	DEFAULT_THEME,
+	MantineProvider,
+	MantineThemeOther,
+	MantineThemeOverride,
+} from '@mantine/core';
+import { ModalsProvider } from '@mantine/modals';
+import { getCookie, setCookie } from 'ez-cookies';
+import App from 'next/app';
+import { NotificationsProvider } from '@/components/NotificationsProvider';
+import { ColorProvider } from '@/components/ColorProvider';
+import { UserProvider } from '@/components/UserProvider';
+import { Spotlight } from '@/components/Spotlight';
+
+interface _App<P = {}> {
+	(props: AppProps & P): ReactNode;
+	getInitialProps(ctx: AppContext): Promise<P & AppInitialProps>;
+}
+
+const other: MantineThemeOther = {
+	flexCenter: (column) => ({
+		display: 'flex',
+		alignItems: 'center',
+		justifyContent: 'center',
+		flexDirection: column ? 'column' : 'row',
+	}),
+	defaultTextColor: (theme) => ({ color: theme.colorScheme === 'dark' ? 'white' : 'black' }),
+};
+
+const getTheme = (
+	colorScheme: ColorScheme,
+	primaryColor: DefaultMantineColor,
+): MantineThemeOverride => ({
+	...DEFAULT_THEME,
+	colorScheme,
+	primaryColor,
+	other,
+	breakpoints: {
+		...DEFAULT_THEME.breakpoints,
+		xxl: 1550,
+	},
+});
+
+const noLayoutPaths = ['/records/loads/[id]/rate-conf', '/records/loads/[id]/invoice'];
+
+const MyApp: _App<{
+	colorScheme: ColorScheme;
+	primaryColor: DefaultMantineColor;
+}> = ({
+	Component,
+	pageProps,
+	colorScheme: initialColorScheme,
+	primaryColor: initialPrimaryColor,
+}) => {
+	const router = useRouter();
+	const isNoLayout = noLayoutPaths.includes(router.pathname);
+
+	const [primaryColor, _setPrimaryColor] = useState(initialPrimaryColor);
+	const [colorScheme, setColorScheme] = useState(initialColorScheme);
+
+	const toggleColorScheme = (value?: 'dark' | 'light') => {
+		const nextColorScheme = colorScheme === 'dark' ? 'light' : 'dark';
+		setColorScheme(value || nextColorScheme);
+		setCookie('colorScheme', value || nextColorScheme, { maxAge: 60 * 60 * 24 * 365 });
+	};
+
+	const setPrimaryColor = (color: DefaultMantineColor) => {
+		_setPrimaryColor(color);
+		setCookie('primaryColor', color, { maxAge: 60 * 60 * 24 * 365 });
+	};
+
+	const theme = useMemo(() => getTheme(colorScheme, primaryColor), [colorScheme, primaryColor]);
+
+	return (
+		<>
+			<Head>
+				<link rel='icon' href='/icon.png' type='image/png' />
+				<meta
+					name='viewport'
+					content='minimum-scale=1, initial-scale=1, width=device-width'
+				/>
+				<title>Pudo</title>
+			</Head>
+			<ColorSchemeProvider colorScheme={colorScheme} toggleColorScheme={toggleColorScheme}>
+				<MantineProvider withGlobalStyles withNormalizeCSS theme={theme}>
+					<ColorProvider primaryColor={primaryColor} setPrimaryColor={setPrimaryColor}>
+						<ModalsProvider>
+							<NotificationsProvider>
+								<Spotlight>
+									<UserProvider>
+										{!isNoLayout ? (
+											<Layout>
+												<Component {...pageProps} />
+											</Layout>
+										) : (
+											<Component {...pageProps} />
+										)}
+									</UserProvider>
+								</Spotlight>
+							</NotificationsProvider>
+						</ModalsProvider>
+					</ColorProvider>
+				</MantineProvider>
+			</ColorSchemeProvider>
+		</>
+	);
+};
+
+MyApp.getInitialProps = async (appCtx) => {
+	const appProps = await App.getInitialProps(appCtx);
+
+	return {
+		...appProps,
+		colorScheme: (getCookie('colorScheme', { req: appCtx.ctx.req }) || 'light') as ColorScheme,
+		primaryColor: getCookie('primaryColor', { req: appCtx.ctx.req }) || 'orange',
+	};
+};
+
+export default MyApp;

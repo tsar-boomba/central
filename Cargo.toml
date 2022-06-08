@@ -1,0 +1,7 @@
+[workspace]
+
+members = [
+	"services/crud",
+	"services/gateway",
+	"services/payments"
+]

@@ -1,0 +1,22 @@
+[package]
+name = "payments"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+axum = "0.5"
+tokio = { version = "1.18", features = ["full"] }
+hyper = { version = "0.14", features = ["full"] }
+async-stripe = { version = "0.14", default-features = false, features = ["runtime-async-std-surf", "billing"] }
+tower = { version = "0.4", features = ["make"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+dotenv = "0.15.0"
+serde = { version = "1.0.137", features = ["derive"] }
+serde_json = "1.0.81"
+env_logger = "0.9.0"
+futures-util = "0.3"
+lazy_static = "1.4"
+log = "0.4"

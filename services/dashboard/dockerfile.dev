@@ -1,0 +1,23 @@
+# Base on offical Node.js Alpine image
+FROM public.ecr.aws/docker/library/node:16.14.2-alpine3.15
+
+# Set working directory
+WORKDIR /usr/src/frontend
+
+# Install PM2 globally
+RUN npm install --global pm2
+
+# Copy package.json and package-lock.json before other files
+# Utilise Docker cache to save re-installing dependencies if unchanged
+COPY ./package.json /usr/src/frontend
+
+# Install dependencies
+RUN npm install --legacy-peer-deps
+
+COPY . /usr/src/frontend
+
+# Expose the listening port
+EXPOSE 3000
+
+# Run npm start script with PM2 when container starts
+CMD [ "pm2-runtime", "npm run dev" ]

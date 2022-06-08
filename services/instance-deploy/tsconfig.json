@@ -1,0 +1,30 @@
+{
+	"compilerOptions": {
+		/* Language and Environment */
+		"target": "es2020",
+		"lib": ["es2020"],
+
+		/* Modules */
+		"module": "es2015",
+		"rootDir": "./",
+		"moduleResolution": "node",
+		"baseUrl": "./",
+
+		/* Emit */
+		"declaration": true,
+		"declarationMap": true,
+		"outDir": "dist",
+		"noEmit": true,
+
+		/* Interop Constraints */
+		"allowSyntheticDefaultImports": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+
+		/* Type Checking */
+		"strict": true,
+
+		/* Completeness */
+		"skipLibCheck": true
+	}
+}
