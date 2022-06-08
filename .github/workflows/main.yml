@@ -5,25 +5,20 @@ on:
 
 jobs:
   crud-changes:
-    runs-on: ubuntu-latest
-    outputs:
-      changed: ${{ steps.changes.outputs.changed }}
-    steps:
-      - uses: actions/checkout@v3
-      - run: ls
-      - name: Check For Changes
-        uses: ./.github/workflows/changes.yml
-        with:
-          path: services/crud/**
-        id: changes
+    uses: ./.github/workflows/changes.yml
+    with:
+      path: services/crud/**
+
+  crud-ci:
+    needs: crud-changes
+    #if: needs.crud-changes.outputs.changed == 'true' COMMENT OUT FOR TESTING
+    uses: ./.github/workflows/crud-ci.yml
 
   crud:
     runs-on: ubuntu-latest
-    needs: crud-changes
-    if: needs.crud-changes.outputs.changed == 'true'
+    needs: crud-ci
     steps:
-      - name: Build & Test
-        uses: ./.github/workflows/crud-ci.yml
+      - uses: actions/checkout@v3
       - name: Build Image
         run: docker build ./services/crud -t central-crud:latest
       - name: Push to ECR
