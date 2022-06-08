@@ -9,6 +9,7 @@ jobs:
     outputs:
       changed: ${{ steps.changes.outputs.changed }}
     steps:
+      - uses: actions/checkout@v3
       - uses: ./.github/workflows/changes.yml
         with:
           path: services/crud/**
