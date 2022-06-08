@@ -22,10 +22,11 @@ runs:
     - name: Login to Amazon ECR
       id: ecr
       uses: aws-actions/amazon-ecr-login@v1
-    - name: Push image to ECR
+    - name: Tag & Push image to ECR
       shell: bash
       env:
         REGISTRY: ${{ steps.ecr.outputs.registry }}
         REPO: ${{ inputs.repo }}
       run: |
+        docker tag $REPO:latest $REGISTRY/$REPO:latest
         docker push $REGISTRY/$REPO:latest
