@@ -1,0 +1,25 @@
+name: Check for changes
+
+on:
+  workflow_call:
+    inputs:
+      path:
+        required: true
+        type: string
+    outputs:
+      changed:
+        description: Whether or not the path had any changes
+        value: ${{ jobs.check.outputs.changed }}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.changes.outputs.src }}
+    steps:
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            src:
+              - ${{ inputs.path }}

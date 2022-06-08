@@ -1,0 +1,8 @@
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  crud:
+    uses: ./.github/workflows/crud-ci.yml
