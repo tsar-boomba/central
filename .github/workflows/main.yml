@@ -10,7 +10,11 @@ jobs:
       changed: ${{ steps.changes.outputs.changed }}
     steps:
       - uses: actions/checkout@v3
-      - run: cd ".github"
+      - run: |
+          cd ".github"
+          ls
+          cd workflows
+          ls
       - name: Check For Changes
         uses: ./.github/workflows/changes.yml
         with:
