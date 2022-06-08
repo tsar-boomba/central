@@ -21,7 +21,6 @@ jobs:
       with:
         profile: minimal
         toolchain: stable
-    - run: cd services/crud
     - name: Rust Cache
       uses: Swatinem/rust-cache@v1.3.0
       with:
