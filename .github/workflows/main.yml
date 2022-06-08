@@ -5,4 +5,4 @@ on:
 
 jobs:
   crud:
-    uses: ./.github/workflows/projects/crud.yml
+    uses: ./.github/workflows/crud-ci.yml
