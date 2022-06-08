@@ -28,5 +28,5 @@ jobs:
         uses: ./.github/push-image
         with:
           repo: central-crud
-          access-key: ${{ secrets.AWS_ACCESS_KEY }}
-          secret-key: ${{ secrets.AWS_SECRET_KEY }}
+          access-key: ${{ secrets.ECR_ACCESS_KEY }}
+          secret-key: ${{ secrets.ECR_SECRET_KEY }}
