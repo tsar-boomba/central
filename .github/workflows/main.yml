@@ -25,7 +25,7 @@ jobs:
       - name: Build Image
         run: docker build . -f ./services/crud/dockerfile -t central-crud:latest
       - name: Push to ECR
-        uses: ./.github/workflows/ecr-setup.yml
+        uses: ./.github/push-image
         with:
           repo: central-crud
           access-key: ${{ secrets.AWS_ACCESS_KEY }}
