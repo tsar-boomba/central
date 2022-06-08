@@ -23,6 +23,7 @@ runs:
       id: ecr
       uses: aws-actions/amazon-ecr-login@v1
     - name: Push image to ECR
+      shell: bash
       env:
         REGISTRY: ${{ steps.ecr.registry }}
         REPO: ${{ inputs.repo }}
