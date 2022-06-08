@@ -10,6 +10,9 @@ env:
 jobs:
   build-n-test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./services/crud
 
     steps:
     - uses: actions/checkout@v3
