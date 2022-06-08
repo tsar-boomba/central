@@ -16,8 +16,8 @@ jobs:
 
   crud:
     runs-on: ubuntu-latest
-    needs: [crud-changes]
-    if: crud-changes.outputs.changed == 'true'
+    needs: crud-changes
+    if: needs.crud-changes.outputs.changed == 'true'
     steps:
       - name: Build & Test
         uses: ./.github/workflows/crud-ci.yml
