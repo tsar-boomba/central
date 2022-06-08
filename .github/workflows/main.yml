@@ -13,10 +13,12 @@ jobs:
     needs: crud-changes
     #if: needs.crud-changes.outputs.changed == 'true' COMMENT OUT FOR TESTING
     uses: ./.github/workflows/crud-ci.yml
-    
+
   crud:
     runs-on: ubuntu-latest
+    needs: crud-ci
     steps:
+      - uses: actions/checkout@v3
       - name: Build Image
         run: docker build ./services/crud -t central-crud:latest
       - name: Push to ECR
