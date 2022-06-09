@@ -10,13 +10,12 @@ jobs:
       path: services/crud/**
 
   crud-ci:
-    needs: crud-changes
-    #if: needs.crud-changes.outputs.changed == 'true' COMMENT OUT FOR TESTING
     uses: ./.github/workflows/crud-ci.yml
 
   crud:
     runs-on: ubuntu-latest
-    needs: crud-ci
+    needs: [crud-ci, crud-changes]
+    if: needs.crud-changes.outputs.changed == 'true'
     steps:
       - uses: actions/checkout@v3
       - uses: satackey/action-docker-layer-caching@v0.0.11
