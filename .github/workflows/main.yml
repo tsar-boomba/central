@@ -10,13 +10,12 @@ jobs:
       path: services/crud/**
 
   crud-ci:
-    needs: crud-changes
-    #if: needs.crud-changes.outputs.changed == 'true' COMMENT OUT FOR TESTING
     uses: ./.github/workflows/crud-ci.yml
 
-  crud:
+  push-crud:
     runs-on: ubuntu-latest
-    needs: crud-ci
+    needs: [crud-ci, crud-changes]
+    if: needs.crud-changes.outputs.changed == 'true'
     steps:
       - uses: actions/checkout@v3
       - uses: satackey/action-docker-layer-caching@v0.0.11
@@ -25,8 +24,40 @@ jobs:
       - name: Build Image
         run: docker build . -f ./services/crud/dockerfile -t central-crud:latest
       - name: Push to ECR
-        uses: ./.github/workflows/ecr-setup.yml
+        uses: ./.github/push-image
         with:
           repo: central-crud
-          access-key: ${{ secrets.AWS_ACCESS_KEY }}
-          secret-key: ${{ secrets.AWS_SECRET_KEY }}
+          access-key: ${{ secrets.ECR_ACCESS_KEY }}
+          secret-key: ${{ secrets.ECR_SECRET_KEY }}
+
+  gateway-changes:
+    uses: ./.github/workflows/changes.yml
+    with:
+      path: services/gateway/**
+
+  gateway-ci:
+    uses: ./.github/workflows/gateway-ci.yml
+
+  push-gateway:
+    runs-on: ubuntu-latest
+    needs: [gateway-ci, gateway-changes]
+    #if: needs.gateway-changes.outputs.changed == 'true'
+    steps:
+      - uses: actions/checkout@v3
+      - uses: satackey/action-docker-layer-caching@v0.0.11
+        # Ignore the failure of a step and avoid terminating the job.
+        continue-on-error: true
+      - name: Build Image
+        run: docker build . -f ./services/gateway/dockerfile -t central-gateway:latest
+      - name: Push to ECR
+        uses: ./.github/push-image
+        with:
+          repo: central-gateway
+          access-key: ${{ secrets.ECR_ACCESS_KEY }}
+          secret-key: ${{ secrets.ECR_SECRET_KEY }}
+          
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [push-gateway, push-crud]
+    steps:
+      - run: echo "pretend this is deploying"

@@ -1,0 +1,32 @@
+name: 'Push Image To ECR'
+description: 'Push image to ECR'
+inputs:
+  repo:
+    required: true
+    type: string
+  access-key:
+    required: true
+    type: string
+  secret-key:
+    required: true
+    type: string
+runs:
+  using: "composite"
+  steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ inputs.access-key }}
+        aws-secret-access-key: ${{ inputs.secret-key }}
+        aws-region: us-east-1
+    - name: Login to Amazon ECR
+      id: ecr
+      uses: aws-actions/amazon-ecr-login@v1
+    - name: Tag & Push image to ECR
+      shell: bash
+      env:
+        REGISTRY: ${{ steps.ecr.outputs.registry }}
+        REPO: ${{ inputs.repo }}
+      run: |
+        docker tag $REPO:latest $REGISTRY/$REPO:latest
+        docker push $REGISTRY/$REPO:latest
