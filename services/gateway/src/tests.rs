@@ -66,7 +66,7 @@ async fn e2e() {
 	tracing::info!("Testing crud users.");
 	let req = Request::builder()
 		.method(Method::GET)
-		.uri("http://127.0.0.1:4001/users")
+		.uri("http://localhost:4001/users")
 		.header("Cookie", "noop=noop")
 		.body(Body::empty())
 		.unwrap();
@@ -78,7 +78,7 @@ async fn e2e() {
 
 	// test verify
 	tracing::info!("Testing crud verify.");
-	let res = client.get("http://127.0.0.1:4001/verify".try_into().unwrap()).await.unwrap();
+	let res = client.get("http://localhost:4001/verify".try_into().unwrap()).await.unwrap();
 	assert_eq!(res.status(), StatusCode::OK);
 	let body_json: crud::User = from_slice(&body::to_bytes(res.into_body()).await.unwrap()).unwrap();
 	
@@ -88,7 +88,7 @@ async fn e2e() {
 	tracing::info!("Testing payments webhooks.");
 	let req = Request::builder()
 		.method(Method::POST)
-		.uri("http://127.0.0.1:4001/payments/webhooks")
+		.uri("http://localhost:4001/payments/webhooks")
 		.body(Body::empty())
 		.unwrap();
 	let res = client.request(req).await.unwrap();
