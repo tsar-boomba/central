@@ -10,7 +10,7 @@ use std::{convert::Infallible, net::{SocketAddr, IpAddr}};
 
 type Client = hyper::client::Client<HttpConnector, Body>;
 
-async fn app() {
+async fn app(port: u16) {
     let main_client = Client::new();
 
     let make_service = make_service_fn(|conn: &AddrStream| {
@@ -24,7 +24,7 @@ async fn app() {
         }
     });
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 4000));
+    let addr = SocketAddr::from(([127, 0, 0, 1], port));
     println!("reverse proxy listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(make_service)
@@ -35,7 +35,7 @@ async fn app() {
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
-    app().await
+    app(4000).await
 }
 
 async fn handle(
