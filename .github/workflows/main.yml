@@ -3,6 +3,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: ci-cd-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   crud-changes:
     uses: ./.github/workflows/changes.yml
