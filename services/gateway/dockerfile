@@ -16,7 +16,6 @@ RUN cargo build --release --bin gateway
 # We do not need the Rust toolchain to run the binary!
 FROM debian:buster-slim AS runtime
 WORKDIR /gateway
-RUN apt-get update && apt-get install libpq5 -y
 COPY --from=builder /gateway/target/release/gateway /usr/local/bin
 
 EXPOSE 8080

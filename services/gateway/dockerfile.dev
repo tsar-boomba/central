@@ -4,8 +4,6 @@ FROM rust:slim-buster as build
 RUN USER=root cargo new --bin central-gateway
 WORKDIR /central-gateway
 
-RUN apt-get update && apt-get install libpq5 -y
-
 # copy over your manifests
 
 COPY ./Cargo.toml ./Cargo.toml

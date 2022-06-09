@@ -1,17 +1,16 @@
 mod services;
 
-#[macro_use]
+#[macro_use(lazy_static)]
 extern crate lazy_static;
 
 use axum::http::{Request, Response};
 use hyper::{client::HttpConnector, Body, service::{service_fn, make_service_fn}, server::conn::AddrStream, StatusCode, Method, body, Uri};
 use services::crud;
-use std::{convert::{Infallible}, net::{SocketAddr, IpAddr}};
+use std::{convert::Infallible, net::{SocketAddr, IpAddr}};
 
 type Client = hyper::client::Client<HttpConnector, Body>;
 
-#[tokio::main]
-async fn main() {
+async fn app() {
     let main_client = Client::new();
 
     let make_service = make_service_fn(|conn: &AddrStream| {
@@ -20,7 +19,7 @@ async fn main() {
         async move {
             Ok::<_, Infallible>(service_fn(move |req: Request<Body>| {
                 let client = temp_client.clone();
-                handle(client_ip, client, req)
+                crate::handle(client_ip, client, req)
             }))
         }
     });
@@ -30,7 +29,13 @@ async fn main() {
     axum::Server::bind(&addr)
         .serve(make_service)
         .await
-        .unwrap();
+        .unwrap()
+}
+
+#[tokio::main]
+async fn main() {
+    tracing_subscriber::fmt::init();
+    app().await
 }
 
 async fn handle(
@@ -45,12 +50,12 @@ async fn handle(
     if path.starts_with("/payments") {
         let path_query = service_path_query("/payments", &mut req, path);
 
-        let uri = format!("http://127.0.0.1:3000{}", path_query);
+        let uri = format!("http://127.0.0.1:8000{}", path_query);
 
         *req.uri_mut() = Uri::try_from(uri).unwrap();
 
         // TODO make payments service
-        Ok(proxy_call(client_ip, "http://localhost:3000", req).await)
+        Ok(proxy_call(client_ip, "http://localhost:8000", req).await)
     } else if path.starts_with(crud::PATH_BASE) {
         // will forward requests to crud/auth service
         crud::proxy(client_ip, client, req, path).await
@@ -72,9 +77,9 @@ fn service_path_query(service_path: &str, req: &mut Request<Body>, path: String)
 
     let path_query = req
         .uri()
-        .path_and_query()
-        .map(|v| v.as_str())
-        .unwrap_or(&truncated_path);
+        .query()
+        .map(|query| format!("{}{}", truncated_path, query))
+        .unwrap_or(truncated_path);
 
     path_query.into()
 }
@@ -112,3 +117,6 @@ pub async fn authorize_req(client: &Client, req: &Request<Body>) -> Option<crud:
         return None;
     }
 }
+
+#[cfg(test)]
+mod tests;

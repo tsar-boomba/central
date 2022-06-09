@@ -20,12 +20,12 @@ pub enum Resource {
     Shipper,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct User {
-	create_perms: Vec<Resource>,
-    update_perms: Vec<Resource>,
-    delete_perms: Vec<Resource>,
+	pub create_perms: Vec<Resource>,
+    pub update_perms: Vec<Resource>,
+    pub delete_perms: Vec<Resource>,
 }
 
 pub async fn proxy(client_ip: IpAddr, client: Client, req: Request<Body>, path: String) -> Result<Response<Body>, Infallible> {
