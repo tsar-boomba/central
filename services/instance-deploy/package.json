@@ -5,7 +5,7 @@
 	"main": "index.js",
 	"scripts": {
 		"build": "tsup",
-		"dev": "tsup --watch",
+		"dev": "tsx watch src/app.ts",
 		"lint-fix": "eslint --fix",
 		"test": "jest"
 	},
@@ -28,14 +28,15 @@
 		"ts-jest": "^28.0.2",
 		"ts-node": "^10.7.0",
 		"tsup": "^5.12.7",
+		"tsx": "^3.8.0",
 		"typescript": "^4.6.4"
 	},
 	"dependencies": {
-		"@aws-sdk/client-elastic-beanstalk": "^3.100.0",
-		"@aws-sdk/client-elastic-load-balancing-v2": "^3.100.0",
-		"@aws-sdk/client-route-53": "^3.100.0",
-		"aws-lambda-fastify": "^2.1.2",
-		"dotenv": "^16.0.1",
-		"fastify": "^3.29.0"
+		"@aws-sdk/client-elastic-beanstalk": "3.131.0",
+		"@aws-sdk/client-elastic-load-balancing-v2": "3.131.0",
+		"@aws-sdk/client-route-53": "3.131.0",
+		"@fastify/aws-lambda": "3.0.0",
+		"dotenv": "16.0.1",
+		"fastify": "4.3.0"
 	}
 }
