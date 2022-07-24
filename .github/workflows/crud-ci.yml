@@ -6,6 +6,8 @@ env:
   CARGO_TERM_COLOR: always
   DATABASE_URL: 'postgres://central_server:cntrl@localhost/central'
   JWT_SECRET: 'my actual secret, please dont hack me'
+  ADMIN_USERNAME: 'admin'
+  ADMIN_PASS: 'admin'
 
 jobs:
   build-n-test:
