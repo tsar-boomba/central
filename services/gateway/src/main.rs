@@ -50,12 +50,12 @@ async fn handle(
     if path.starts_with("/payments") {
         let path_query = service_path_query("/payments", &mut req, path);
 
-        let uri = format!("http://127.0.0.1:8000{}", path_query);
+        let uri = format!("http://127.0.0.1:6000{}", path_query);
 
         *req.uri_mut() = Uri::try_from(uri).unwrap();
 
         // TODO make payments service
-        Ok(proxy_call(client_ip, "http://localhost:8000", req).await)
+        Ok(proxy_call(client_ip, "http://localhost:6000", req).await)
     } else if path.starts_with(crud::PATH_BASE) {
         // will forward requests to crud/auth service
         crud::proxy(client_ip, client, req, path).await

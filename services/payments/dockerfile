@@ -18,5 +18,5 @@ FROM debian:buster-slim AS runtime
 WORKDIR /payments
 COPY --from=builder /payments/target/release/payments /usr/local/bin
 
-EXPOSE 8080
+EXPOSE 6000
 ENTRYPOINT ["/usr/local/bin/payments"]
