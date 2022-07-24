@@ -33,4 +33,4 @@ jobs:
         ## version (defaults to "latest") can be a series like 0.9:
         version: 0.9
     - name: Run tests
-      run: cargo nextest run --verbose
+      run: cargo nextest run --verbose --profile ci
