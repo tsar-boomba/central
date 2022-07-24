@@ -16,17 +16,18 @@ pub type PoolConn = r2d2::PooledConnection<ConnectionManager<PgConnection>>;
 
 embed_migrations!();
 
+const POOL_SIZE: u32 = match cfg!(test) {
+    true => 1,
+    false => 10
+};
+
 lazy_static! {
     static ref POOL: DbPool = {
         let db_url = std::env::var("DATABASE_URL").expect("Database url not set");
         let manager = ConnectionManager::<PgConnection>::new(db_url);
-        let pool_size = match cfg!(test) {
-            true => 1,
-            false => 10,
-        };
 
         Builder::new()
-            .max_size(pool_size)
+            .max_size(POOL_SIZE)
             .build(manager)
             .expect("Failed to create db pool")
     };
