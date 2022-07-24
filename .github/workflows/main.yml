@@ -1,3 +1,5 @@
+name: Main CI/CD
+
 on:
   push:
     branches:
