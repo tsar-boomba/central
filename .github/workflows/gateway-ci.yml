@@ -24,7 +24,7 @@ jobs:
     - name: Rust Cache
       uses: Swatinem/rust-cache@v1.3.0
       with:
-        key: 'central-crud-cache'
+        key: 'central-gateway-cache'
     - name: Build
       run: cargo build --verbose
     - uses: taiki-e/install-action@v1
