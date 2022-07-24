@@ -29,11 +29,13 @@ fn init_e2e() {
 }
 
 async fn mock_crud() {
+	let test_addr = "127.0.0.1:8081";
+	std::env::set_var("CRUD_URI", "http://".to_string() + test_addr);
 	let app = Router::new()
 		.route("/verify", get(|| async { Json(crud::User { create_perms: vec![], update_perms: vec![], delete_perms: vec![] }) }))
 		.route("/users", get(|| async { Json::<Vec<crud::User>>(vec![]) }));
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
+    let addr = SocketAddr::from(test_addr.parse::<SocketAddr>().unwrap());
     println!("server listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
@@ -44,11 +46,13 @@ async fn mock_crud() {
 const WEBHOOK_BODY: &str = "Web hooked";
 
 async fn mock_payments() {
+	let test_addr = "127.0.0.1:8000";
+	std::env::set_var("PAYMENTS_URI", "http://".to_string() + test_addr);
 	let app = Router::new()
 		.route("/subscriptions", get(|| async { Json(Vec::<String>::new()) }))
 		.route("/webhooks", post(|| async { WEBHOOK_BODY }));
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 8000));
+    let addr = SocketAddr::from(test_addr.parse::<SocketAddr>().unwrap());
     println!("server listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())

@@ -65,6 +65,7 @@ pub fn belongs_to_account(jwt: &Option<Claim>, expected: &str) -> bool {
         jwt.account_id == expected || jwt.account_id == "admin"
     } else {
         // if no jwt just let it through
+        // means the request came from internally
         true
     }
 }

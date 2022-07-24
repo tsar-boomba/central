@@ -10,7 +10,9 @@ pub const PATH_BASE: &str = "/";
 
 const PUBLIC_PATHS: [&str; 3] = ["/verify", "/login", "/authenticate"];
 
-pub fn uri() -> String { std::env::var("CRUD_URI").unwrap_or("http://127.0.0.1:8080".into()) }
+lazy_static! {
+	pub static ref URI: String = std::env::var("CRUD_URI").unwrap_or("http://127.0.0.1:8080".into());
+}
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -29,16 +31,14 @@ pub struct User {
 }
 
 pub async fn proxy(client_ip: IpAddr, client: Client, req: Request<Body>, path: String) -> Result<Response<Body>, Infallible> {
-	let uri = uri();
-
 	if PUBLIC_PATHS.contains(&path.as_str()) {
 		// do not authorize request
-		return Ok(proxy_call(client_ip, uri.as_str(), req).await);
+		return Ok(proxy_call(client_ip, URI.as_str(), req).await);
 	} else {
 		return match authorize_req(&client, &req).await {
 			// request was authed
 			Some(_) => {
-				Ok(proxy_call(client_ip, uri.as_str(), req).await)
+				Ok(proxy_call(client_ip, URI.as_str(), req).await)
 			},
 			// request was not authed
 			_ => {

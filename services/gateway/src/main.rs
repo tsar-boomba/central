@@ -102,7 +102,7 @@ pub async fn authorize_req(client: &Client, req: &Request<Body>) -> Option<crud:
     if let Some(req_cookies) = req_cookies {
         let auth_req = Request::builder()
             .method(Method::GET)
-            .uri(format!("{}/verify", crud::uri()))
+            .uri(format!("{}/verify", crud::URI.as_str()))
             .header("Cookie", req_cookies)
             .body(Body::empty())
             .unwrap();
