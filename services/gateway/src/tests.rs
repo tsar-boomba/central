@@ -46,7 +46,7 @@ async fn mock_crud() {
 const WEBHOOK_BODY: &str = "Web hooked";
 
 async fn mock_payments() {
-	let test_addr = "127.0.0.1:8000";
+	let test_addr = "127.0.0.1:6000";
 	std::env::set_var("PAYMENTS_URI", "http://".to_string() + test_addr);
 	let app = Router::new()
 		.route("/subscriptions", get(|| async { Json(Vec::<String>::new()) }))
