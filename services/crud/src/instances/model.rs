@@ -6,24 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{api_error::ApiError, db, ID_SIZE};
 
-child_model! {
-    String, NaiveDateTime, "instances", NewInstance, "Server generated id", Account,
-    Instance {
-        account_id: String,
-        db_url: String,
-        url: String,
-        business_name: String,
-        short_name: String,
-        address: String,
-        city: String,
-        zip_code: String,
-        phone_number: String,
-        rate_conf_email: String,
-        instance_name: Option<String>,
-        top_terms: Option<String>,
-        bottom_terms: Option<Vec<String>>,
-    }
-}
+instance_models!(Account);
 
 use self::instances::dsl::*;
 impl Instance {

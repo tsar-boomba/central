@@ -5,18 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{api_error::ApiError, db, ID_SIZE};
 
-model! {
-    String, NaiveDateTime, "accounts", NewAccount, ReqAccount,
-    Account {
-        address: String,
-        email: String,
-        business_name: String,
-        short_name: String,
-        city: String,
-        zip_code: String,
-        phone_number: String,
-    }
-}
+account_models!();
 
 use self::accounts::dsl::*;
 impl Account {

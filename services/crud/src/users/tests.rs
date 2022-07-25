@@ -3,7 +3,8 @@ use super::{
     schema::users::dsl::*,
     *,
 };
-use crate::{db, json::DeleteBody, sql_types::Role, tests};
+use crate::{db, json::DeleteBody, tests};
+use models::types::Role;
 use actix_web::test;
 use diesel::prelude::*;
 

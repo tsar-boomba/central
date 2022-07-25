@@ -3,5 +3,6 @@
 members = [
 	"services/crud",
 	"services/gateway",
-	"services/payments"
+	"services/payments",
+	"libs/models"
 ]

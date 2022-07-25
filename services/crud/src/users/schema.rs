@@ -2,8 +2,8 @@ use diesel::table;
 
 table! {
     use diesel::sql_types::*;
-    use crate::sql_types::resource_sql::Resource;
-    use crate::sql_types::role_sql::Role;
+    use models::types::resource_sql::Resource;
+    use models::types::role_sql::Role;
 
     users {
         id -> Int4,

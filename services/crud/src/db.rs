@@ -1,9 +1,9 @@
 use crate::{
     accounts::{self, model::NewAccount},
     api_error::ApiError,
-    sql_types::{Resource, Role},
     users::{self, model::NewUser},
 };
+use models::types::{Role, Resource};
 use bcrypt::{hash, DEFAULT_COST};
 use diesel::{
     r2d2::{self, Builder, ConnectionManager},

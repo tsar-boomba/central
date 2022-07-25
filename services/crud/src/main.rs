@@ -8,12 +8,12 @@ extern crate lazy_static;
 extern crate log;
 #[macro_use(nanoid)]
 extern crate nanoid;
+#[macro_use]
+extern crate models;
 
 const ID_SIZE: usize = 12;
 
 mod db;
-#[macro_use]
-mod macros;
 mod api_error;
 mod auth;
 mod json;
