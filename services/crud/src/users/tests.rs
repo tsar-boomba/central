@@ -4,9 +4,9 @@ use super::{
     *,
 };
 use crate::{db, json::DeleteBody, tests};
-use models::types::Role;
 use actix_web::test;
 use diesel::prelude::*;
+use models::types::Role;
 
 pub fn compare(got: &User, exp: &NewUser) {
     assert_eq!(got.username, exp.username);

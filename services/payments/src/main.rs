@@ -1,10 +1,17 @@
 mod subscriptions;
 mod webhooks;
+mod crud_models {
+    use chrono::NaiveDateTime;
+    use serde::{Deserialize, Serialize};
+    account_models!();
+}
 
 #[macro_use]
 extern crate lazy_static;
+#[macro_use]
+extern crate models;
 
-use axum::{Router, routing::post, Extension};
+use axum::{routing::post, Extension, Router};
 use hyper::{client::HttpConnector, Body};
 use std::net::SocketAddr;
 
@@ -34,7 +41,8 @@ async fn main() {
 
 lazy_static! {
     pub static ref STRIPE_KEY: String = std::env::var("STRIPE_KEY").unwrap();
-    pub static ref CRUD_URI: String = std::env::var("CRUD_URI").unwrap_or("http://127.0.0.1:8080".into());
+    pub static ref CRUD_URI: String =
+        std::env::var("CRUD_URI").unwrap_or("http://127.0.0.1:8080".into());
 }
 
 #[cfg(test)]

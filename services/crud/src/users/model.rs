@@ -2,12 +2,10 @@ use super::users;
 use bcrypt::{hash, DEFAULT_COST};
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
-use serde::{Deserialize, Serialize};
 use models::types::{Resource, Role};
+use serde::{Deserialize, Serialize};
 
-use crate::{
-    accounts::model::Account, api_error::ApiError, db
-};
+use crate::{accounts::model::Account, api_error::ApiError, db};
 
 fn skip_serialize_pass(_: &String) -> bool {
     !cfg!(test)

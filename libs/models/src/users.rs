@@ -7,18 +7,18 @@ macro_rules! user_models {
             i32, NaiveDateTime, "users", NewUser, $parent,
             User {
                 account_id: String,
-        		username: String,
-        		first_name: String,
-        		last_name: String,
-        		#[serde(skip_serializing_if = "skip_serialize_pass")]
-        		password: String,
-        		active: bool,
-        		instances: Vec<String>,
-        		create_perms: Vec<Resource>,
-        		update_perms: Vec<Resource>,
-        		delete_perms: Vec<Resource>,
-        		role: Role,
-        		notes: Option<String>,
+                username: String,
+                first_name: String,
+                last_name: String,
+                #[serde(skip_serializing_if = "skip_serialize_pass")]
+                password: String,
+                active: bool,
+                instances: Vec<String>,
+                create_perms: Vec<Resource>,
+                update_perms: Vec<Resource>,
+                delete_perms: Vec<Resource>,
+                role: Role,
+                notes: Option<String>,
             }
         }
     };

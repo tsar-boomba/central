@@ -4,9 +4,18 @@ mod services;
 extern crate lazy_static;
 
 use axum::http::{Request, Response};
-use hyper::{client::HttpConnector, Body, service::{service_fn, make_service_fn}, server::conn::AddrStream, StatusCode, Method, body, Uri};
+use hyper::{
+    body,
+    client::HttpConnector,
+    server::conn::AddrStream,
+    service::{make_service_fn, service_fn},
+    Body, Method, StatusCode, Uri,
+};
 use services::crud;
-use std::{convert::Infallible, net::{SocketAddr, IpAddr}};
+use std::{
+    convert::Infallible,
+    net::{IpAddr, SocketAddr},
+};
 
 type Client = hyper::client::Client<HttpConnector, Body>;
 
@@ -26,10 +35,7 @@ async fn app(port: u16) {
 
     let addr = SocketAddr::from(([127, 0, 0, 1], port));
     println!("reverse proxy listening on {}", addr);
-    axum::Server::bind(&addr)
-        .serve(make_service)
-        .await
-        .unwrap()
+    axum::Server::bind(&addr).serve(make_service).await.unwrap()
 }
 
 #[tokio::main]
@@ -60,12 +66,13 @@ async fn handle(
         // will forward requests to crud/auth service
         crud::proxy(client_ip, client, req, path).await
     } else {
-        Ok(
-            Response::builder()
-                .status(StatusCode::NOT_FOUND)
-                .body(Body::from(format!(r#"{{ "message": "uri: {} is not valid" }}"#, path)))
-                .unwrap()
-        )
+        Ok(Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body(Body::from(format!(
+                r#"{{ "message": "uri: {} is not valid" }}"#,
+                path
+            )))
+            .unwrap())
     }
 }
 
@@ -73,7 +80,11 @@ fn service_path_query(service_path: &str, req: &mut Request<Body>, path: String)
     let truncated_path = path.replacen(service_path, "", 1);
 
     // if it is empty add on a "/" so it is the base path
-    let truncated_path = if truncated_path.len() == 0 { "/".to_string() } else { truncated_path };
+    let truncated_path = if truncated_path.len() == 0 {
+        "/".to_string()
+    } else {
+        truncated_path
+    };
 
     let path_query = req
         .uri()
@@ -84,15 +95,17 @@ fn service_path_query(service_path: &str, req: &mut Request<Body>, path: String)
     path_query.into()
 }
 
-pub async fn proxy_call(client_ip: IpAddr, forward_uri: &str, request: Request<Body>) -> Response<Body> {
+pub async fn proxy_call(
+    client_ip: IpAddr,
+    forward_uri: &str,
+    request: Request<Body>,
+) -> Response<Body> {
     match hyper_reverse_proxy::call(client_ip, forward_uri, request).await {
         Ok(response) => response,
-        _ => {
-            Response::builder()
-                .status(StatusCode::INTERNAL_SERVER_ERROR)
-                .body(Body::empty())
-                .unwrap()
-        }
+        _ => Response::builder()
+            .status(StatusCode::INTERNAL_SERVER_ERROR)
+            .body(Body::empty())
+            .unwrap(),
     }
 }
 
@@ -108,9 +121,7 @@ pub async fn authorize_req(client: &Client, req: &Request<Body>) -> Option<crud:
             .unwrap();
 
         return match client.request(auth_req).await {
-            Ok(res) => {
-                serde_json::from_slice(&body::to_bytes(res.into_body()).await.unwrap()).ok()
-            },
+            Ok(res) => serde_json::from_slice(&body::to_bytes(res.into_body()).await.unwrap()).ok(),
             _ => None,
         };
     } else {

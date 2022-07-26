@@ -6,9 +6,9 @@ use diesel::pg::Pg;
 use diesel::serialize::{self, Output, ToSql};
 #[cfg(feature = "diesel")]
 use diesel::sql_types::Text;
+use serde::{Deserialize, Serialize};
 #[cfg(feature = "diesel")]
 use std::io::Write;
-use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "diesel")]
 pub mod sql_type {

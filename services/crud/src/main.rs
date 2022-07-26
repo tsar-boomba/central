@@ -13,9 +13,9 @@ extern crate models;
 
 const ID_SIZE: usize = 12;
 
-mod db;
 mod api_error;
 mod auth;
+mod db;
 mod json;
 mod sql_types;
 

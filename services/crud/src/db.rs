@@ -3,13 +3,13 @@ use crate::{
     api_error::ApiError,
     users::{self, model::NewUser},
 };
-use models::types::{Role, Resource};
 use bcrypt::{hash, DEFAULT_COST};
 use diesel::{
     r2d2::{self, Builder, ConnectionManager},
     Connection, PgConnection, RunQueryDsl,
 };
 use diesel_migrations::embed_migrations;
+use models::types::{Resource, Role};
 
 pub type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
 pub type PoolConn = r2d2::PooledConnection<ConnectionManager<PgConnection>>;
@@ -18,7 +18,7 @@ embed_migrations!();
 
 const POOL_SIZE: u32 = match cfg!(test) {
     true => 1,
-    false => 10
+    false => 10,
 };
 
 lazy_static! {
