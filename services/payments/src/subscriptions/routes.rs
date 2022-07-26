@@ -132,9 +132,12 @@ pub async fn subscribe(
 #[derive(Debug, Deserialize)]
 pub struct CreateUsage {
 	stripe_id: String,
+	/// Should be either "instances" or "users"
+	resource: String,
+	number: u32,
 }
 
-pub async fn create_usage(Json(data): Json<CreateUsage>) -> Result<Response<Body>, ApiError> {
+pub async fn create_usage_record(Json(data): Json<CreateUsage>) -> Result<Response<Body>, ApiError> {
     Ok(Response::builder()
         .status(StatusCode::OK)
         .body(Body::empty())

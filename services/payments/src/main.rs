@@ -28,6 +28,7 @@ async fn main() {
 
     let app = Router::new()
         .route("/subscriptions", post(subscriptions::routes::subscribe))
+        .route("/create-usage-record", post(subscriptions::routes::create_usage_record))
         .route("/webhooks", post(webhooks::handler))
         .layer(Extension(http_client))
         .layer(Extension(stripe));

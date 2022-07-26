@@ -11,7 +11,7 @@ use hyper::{
     service::{make_service_fn, service_fn},
     Body, Method, StatusCode, Uri,
 };
-use services::crud;
+use services::{crud, payments};
 use std::{
     convert::Infallible,
     net::{IpAddr, SocketAddr},
@@ -53,7 +53,7 @@ async fn handle(
 ) -> Result<Response<Body>, Infallible> {
     let path = req.uri().path().to_owned();
 
-    if path.starts_with("/payments") {
+    if path.starts_with(payments::PATH_BASE) {
         let path_query = service_path_query("/payments", &mut req, path);
 
         let uri = format!("http://127.0.0.1:6000{}", path_query);
@@ -61,7 +61,7 @@ async fn handle(
         *req.uri_mut() = Uri::try_from(uri).unwrap();
 
         // TODO make payments service
-        Ok(proxy_call(client_ip, "http://localhost:6000", req).await)
+        payments::proxy(client_ip, client, req, path_query).await
     } else if path.starts_with(crud::PATH_BASE) {
         // will forward requests to crud/auth service
         crud::proxy(client_ip, client, req, path).await
