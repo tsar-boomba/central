@@ -59,8 +59,8 @@ CREATE TABLE public.accounts (
     city			TEXT		NOT NULL,
     zip_code		TEXT		NOT NULL,
     phone_number	TEXT		NOT NULL,
-	stripe_id		TEXT		NOT NULL UNIQUE,
-	state			TEXT		NOT NULL
+	state			TEXT		NOT NULL,
+	stripe_id		TEXT
 );
 
 CREATE UNIQUE INDEX email_idx ON public.accounts (email);

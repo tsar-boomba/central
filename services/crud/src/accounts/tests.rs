@@ -27,7 +27,7 @@ fn defaults(test_name: String /*fk: String*/) -> (NewAccount, NewAccount) {
             city: "charlotte".into(),
             zip_code: "28254".into(),
             phone_number: "704-805-1261".into(),
-            stripe_id: Some("cust_blizgonbop".into()),
+            stripe_id: Some("cust_baklakgjaslk".into()),
             state: "nc".into(),
         },
         NewAccount {
