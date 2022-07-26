@@ -25,6 +25,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: satackey/action-docker-layer-caching@v0.0.11
+        with:
+          key: central-crud-docker-{hash}
         # Ignore the failure of a step and avoid terminating the job.
         continue-on-error: true
       - name: Build Image
@@ -51,6 +53,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: satackey/action-docker-layer-caching@v0.0.11
+        with:
+          key: central-gateway-docker-{hash}
         # Ignore the failure of a step and avoid terminating the job.
         continue-on-error: true
       - name: Build Image
