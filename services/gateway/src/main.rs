@@ -69,7 +69,7 @@ async fn handle(
         Ok(Response::builder()
             .status(StatusCode::NOT_FOUND)
             .body(Body::from(format!(
-                r#"{{ "message": "uri: {} is not valid" }}"#,
+                r#"{{"message": "uri: {} is not valid"}}"#,
                 path
             )))
             .unwrap())

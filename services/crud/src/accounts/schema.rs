@@ -12,5 +12,7 @@ table! {
         city -> Text,
         zip_code -> Text,
         phone_number -> Text,
+        stripe_id -> Nullable<Text>,
+        state -> Text,
     }
 }

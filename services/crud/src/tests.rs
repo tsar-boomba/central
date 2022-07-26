@@ -48,6 +48,8 @@ pub fn test_account() {
             phone_number: "999-999-0000".into(),
             short_name: "test".into(),
             zip_code: "28282".into(),
+            stripe_id: None,
+            state: "nc".into(),
         })
         .on_conflict_do_nothing()
         .get_result::<Account>(&db::connection().unwrap())

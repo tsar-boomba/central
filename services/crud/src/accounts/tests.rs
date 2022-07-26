@@ -27,6 +27,8 @@ fn defaults(test_name: String /*fk: String*/) -> (NewAccount, NewAccount) {
             city: "charlotte".into(),
             zip_code: "28254".into(),
             phone_number: "704-805-1261".into(),
+            stripe_id: Some("cust_blizgonbop".into()),
+            state: "nc".into(),
         },
         NewAccount {
             id: nanoid!(ID_SIZE),
@@ -37,6 +39,8 @@ fn defaults(test_name: String /*fk: String*/) -> (NewAccount, NewAccount) {
             city: "charlotte".into(),
             zip_code: "28254".into(),
             phone_number: "980-335-6090".into(),
+            stripe_id: Some("cust_blizgonbop".into()),
+            state: "south carolina".into(),
         },
     )
 }

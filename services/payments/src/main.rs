@@ -1,5 +1,6 @@
 mod subscriptions;
 mod webhooks;
+mod error;
 mod crud_models {
     use chrono::NaiveDateTime;
     use serde::{Deserialize, Serialize};
