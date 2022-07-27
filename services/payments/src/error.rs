@@ -1,6 +1,6 @@
 use axum::response::IntoResponse;
 use hyper::StatusCode;
-use stripe::{ErrorType, StripeError};
+use stripe::{ErrorType, StripeError, ParseIdError};
 
 pub struct ApiError {
     status: StatusCode,
@@ -49,6 +49,13 @@ impl From<StripeError> for ApiError {
 				ApiError::new(StatusCode::INTERNAL_SERVER_ERROR, "An internal server error ocurred.")
 			},
         }
+    }
+}
+
+impl From<ParseIdError> for ApiError {
+    fn from(_: ParseIdError) -> Self {
+        tracing::error!("[Stripe] Invalid id received.");
+        ApiError::new(StatusCode::INTERNAL_SERVER_ERROR, "Invalid id.")
     }
 }
 

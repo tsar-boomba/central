@@ -23,6 +23,8 @@ mod accounts;
 mod instances;
 mod users;
 
+use std::sync::Arc;
+
 use actix_cors::Cors;
 use actix_web::{middleware, App, HttpServer};
 use auth::Claim;
@@ -68,6 +70,10 @@ pub fn belongs_to_account(jwt: &Option<Claim>, expected: &str) -> bool {
         // means the request came from internally
         true
     }
+}
+
+lazy_static! {
+    pub static ref PAYMENTS_URI: String = std::env::var("PAYMENTS_URI").unwrap_or("http://127.0.0.1:6000".into());
 }
 
 #[cfg(test)]

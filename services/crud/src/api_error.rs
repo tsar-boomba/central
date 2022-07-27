@@ -59,6 +59,13 @@ impl From<DieselError> for ApiError {
     }
 }
 
+impl From<reqwest::Error> for ApiError {
+    fn from(err: reqwest::Error) -> Self {
+        error!("Reqwest failed: {:?}", err);
+        ApiError::server_err()
+    }
+}
+
 impl From<BcryptError> for ApiError {
     fn from(_err: BcryptError) -> Self {
         ApiError::new(500, "Error hashing password.".into())

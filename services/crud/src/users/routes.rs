@@ -1,7 +1,13 @@
 use super::model::*;
 use actix_web::{delete, get, post, put, web, HttpResponse};
+use bcrypt::hash;
+use diesel::prelude::*;
+use models::types::Role;
+use payments_lib::routes::create_usage_record;
 
-use crate::{api_error::ApiError, auth::Claim, belongs_to_account, json::DeleteBody};
+use crate::{
+    accounts::model::Account, api_error::ApiError, auth::Claim, belongs_to_account, db, PAYMENTS_URI, json::DeleteBody,
+};
 
 #[get("/users")]
 async fn find_all(jwt: Option<Claim>) -> Result<HttpResponse, ApiError> {
@@ -33,23 +39,74 @@ async fn find(id: web::Path<i32>, jwt: Option<Claim>) -> Result<HttpResponse, Ap
 }
 
 #[post("/users")]
-async fn create(user: web::Json<NewUser>, jwt: Option<Claim>) -> Result<HttpResponse, ApiError> {
-    if !belongs_to_account(&jwt, &user.account_id) {
+async fn create(
+    new_user: web::Json<NewUser>,
+    jwt: Option<Claim>,
+) -> Result<HttpResponse, ApiError> {
+    if !belongs_to_account(&jwt, &new_user.account_id) {
         return Err(ApiError::forbidden());
     }
+    use super::users::dsl::*;
 
-    let user = web::block(move || User::insert(user.into_inner())).await?;
+    let conn = db::connection()?;
+    let new_user = new_user.into_inner();
+    let hashed_pass =
+        web::block(move || hash(new_user.password.clone(), bcrypt::DEFAULT_COST)).await??;
+    let with_hash = NewUser {
+        password: hashed_pass,
+        role: Role::User,
+        ..new_user
+    };
 
-    match user {
-        Ok(user) => Ok(HttpResponse::Ok().json(user)),
-        Err(err) => {
-            if err.status_code == 409 {
-                // there was a conflict only possibility is username
-                Err(ApiError::new(409, "Username must be unique.".into()))
-            } else {
-                Err(err)
+    let owner_id = with_hash.account_id.clone();
+    let owner = web::block(move || Account::find_by_id(owner_id)).await?;
+
+    let result: Result<User, ApiError> = web::block(move || {
+        conn.transaction(|| {
+            let user: Result<User, ApiError> = diesel::insert_into(users)
+                .values(&with_hash)
+                .get_result::<User>(&conn)
+                .map_err(|e| ApiError::from(e));
+
+            match user {
+                Ok(user) => match owner {
+                    Ok(owner) => {
+                        if None == owner.stripe_id {
+                            // err variant causes rollback
+                            return Err(ApiError::new(
+                                400,
+                                "Cannot create users while not subscribed.".into(),
+                            ));
+                        }
+
+                        let res = update_user_usage(&owner, 0)?;
+
+                        match res.error_for_status() {
+                            Ok(_) => Ok(user),
+                            Err(_) => Err(ApiError::new(
+                                500,
+                                "Failed to update user subscription with Stripe.".into(),
+                            )),
+                        }
+                    }
+                    Err(_) => Err(ApiError::server_err()),
+                },
+                Err(err) => {
+                    if err.status_code == 409 {
+                        // there was a conflict only possibility is username
+                        Err(ApiError::new(409, "Username must be unique.".into()))
+                    } else {
+                        Err(err)
+                    }
+                }
             }
-        }
+        })
+    })
+    .await?;
+
+    match result {
+        Ok(user) => Ok(HttpResponse::Ok().json(user)),
+        Err(err) => Err(err),
     }
 }
 
@@ -69,20 +126,79 @@ async fn update(
 }
 
 #[delete("/users/{id}")]
-async fn delete(id: web::Path<i32>, jwt: Option<Claim>) -> Result<HttpResponse, ApiError> {
-    let find_id = *id;
-    if !belongs_to_account(
-        &jwt,
-        &web::block(move || User::find_by_id(find_id))
-            .await??
-            .account_id,
-    ) {
+async fn delete(target: web::Path<i32>, jwt: Option<Claim>) -> Result<HttpResponse, ApiError> {
+    let target = target.into_inner();
+
+    let user = web::block(move || User::find_by_id(target)).await??;
+    if !belongs_to_account(&jwt, &user.account_id) {
         return Err(ApiError::forbidden());
     }
+    use super::users::dsl::*;
 
-    let affected = web::block(move || User::delete(id.into_inner())).await??;
+    let conn = db::connection()?;
 
-    Ok(HttpResponse::Ok().json(DeleteBody::new(affected.try_into().unwrap())))
+    let owner_id = user.account_id.clone();
+    let owner = web::block(move || Account::find_by_id(owner_id)).await?;
+
+    let result: Result<usize, ApiError> = web::block(move || {
+        conn.transaction(|| {
+            let affected = diesel::delete(users.filter(id.eq(target))).execute(&conn)?;
+
+            match owner {
+                Ok(owner) => {
+                    if None == owner.stripe_id {
+                        // err variant causes rollback
+                        return Err(ApiError::new(
+                            400,
+                            "Cannot delete users while not subscribed.".into(),
+                        ));
+                    }
+
+                    let res = update_user_usage(&owner, 0)?;
+
+                    match res.error_for_status() {
+                        Ok(_) => Ok(affected),
+                        Err(_) => Err(ApiError::new(
+                            500,
+                            "Failed to update user subscription with Stripe.".into(),
+                        )),
+                    }
+                }
+                Err(_) => Err(ApiError::server_err()),
+            }
+        })
+    })
+    .await?;
+
+    match result {
+        Ok(affected) => Ok(HttpResponse::Ok().json(DeleteBody::new(affected.try_into().unwrap()))),
+        Err(err) => Err(err),
+    }
+}
+
+fn update_user_usage(
+    owner: &Account,
+    offset: i64,
+) -> Result<reqwest::blocking::Response, ApiError> {
+    use super::users::dsl::*;
+
+    let owner_id = owner.id.clone();
+
+    let num_user = users
+        .count()
+        .filter(account_id.eq(owner_id))
+        .get_result::<i64>(&db::connection().unwrap())?;
+
+    let client = reqwest::blocking::Client::new();
+
+    return Ok(client
+        .post(PAYMENTS_URI.to_string() + create_usage_record::ROUTE)
+        .json(&create_usage_record::CreateUsageRecordParams {
+            stripe_id: owner.stripe_id.clone().unwrap(),
+            number: (num_user + offset).try_into().unwrap(),
+            resource: "users".into(),
+        })
+        .send()?);
 }
 
 pub fn init_routes(config: &mut web::ServiceConfig) {

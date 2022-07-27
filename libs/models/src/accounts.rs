@@ -11,6 +11,7 @@ macro_rules! account_models {
                 city: String,
                 zip_code: String,
                 phone_number: String,
+                #[serde(skip)]
                 stripe_id: Option<String>,
                 state: String,
             }

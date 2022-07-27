@@ -1,27 +1,19 @@
+use std::str::FromStr;
+
 use axum::{Extension, Json};
 use hyper::{Body, Response, StatusCode};
-use serde::Deserialize;
+use payments_lib::routes::{self, subscribe};
 use stripe::{
     Address, AttachPaymentMethod, CardDetailsParams, CreateCustomer, CreatePaymentMethod,
     CreatePaymentMethodCardUnion, CreateSubscription, CreateSubscriptionItems, CreateUsageRecord,
-    Customer, PaymentMethod, PaymentMethodTypeFilter, Subscription, UsageRecord, UsageRecordAction,
+    Customer, PaymentMethod, PaymentMethodTypeFilter, Subscription, SubscriptionId, UsageRecord,
+    UsageRecordAction,
 };
 
-use crate::{crud_models, error::ApiError, STRIPE_KEY};
-
-#[derive(Debug, Deserialize)]
-pub struct CreateAccount {
-    account: crud_models::Account,
-    /// Card number
-    number: String,
-    exp_year: i32,
-    exp_month: i32,
-    /// 3 numbers on the back
-    cvc: String,
-}
+use crate::{error::ApiError, INSTANCE_PRICE_ID, USER_PRICE_ID};
 
 pub async fn subscribe(
-    Json(data): Json<CreateAccount>,
+    Json(data): Json<subscribe::SubscribeParams>,
     Extension(stripe): Extension<stripe::Client>,
 ) -> Result<Response<Body>, ApiError> {
     // Do this first to see if it fails
@@ -50,7 +42,7 @@ pub async fn subscribe(
             email: Some(&data.account.email),
             address: Some(Address {
                 city: Some(data.account.city.clone()),
-                country: Some("USA".to_string()),
+                country: Some("US".to_string()),
                 line1: Some(data.account.address.clone()),
                 postal_code: Some(data.account.zip_code.clone()),
                 state: Some(data.account.state.clone()),
@@ -71,27 +63,15 @@ pub async fn subscribe(
     )
     .await?;
 
-    let instance_price_id = if STRIPE_KEY.contains("test") {
-        "price_1LP8pMAMMTQqCw55f1MxzIjC".to_string()
-    } else {
-        "".to_string()
-    };
-
-    let user_price_id = if STRIPE_KEY.contains("test") {
-        "price_1LP8mmAMMTQqCw55U0urmth4".to_string()
-    } else {
-        "".to_string()
-    };
-
     let subscription = {
         let mut params = CreateSubscription::new(customer.id.clone());
         params.items = Some(vec![
             CreateSubscriptionItems {
-                price: Some(instance_price_id),
+                price: Some(INSTANCE_PRICE_ID.clone()),
                 ..Default::default()
             },
             CreateSubscriptionItems {
-                price: Some(user_price_id.clone()),
+                price: Some(USER_PRICE_ID.clone()),
                 ..Default::default()
             },
         ]);
@@ -102,7 +82,7 @@ pub async fn subscribe(
 
     let user_sub_item = subscription.items.data.iter().find(|&item| {
         if let Some(price) = item.price.as_ref() {
-            price.id == user_price_id
+            price.id == USER_PRICE_ID.as_str()
         } else {
             false
         }
@@ -125,19 +105,48 @@ pub async fn subscribe(
 
     Ok(Response::builder()
         .status(StatusCode::OK)
-        .body(Body::from(customer.id.to_string()))
+        .body(Body::from(subscription.id.to_string()))
         .unwrap())
 }
 
-#[derive(Debug, Deserialize)]
-pub struct CreateUsage {
-	stripe_id: String,
-	/// Should be either "instances" or "users"
-	resource: String,
-	number: u32,
-}
+pub async fn create_usage_record(
+    Json(data): Json<routes::create_usage_record::CreateUsageRecordParams>,
+    Extension(stripe): Extension<stripe::Client>,
+) -> Result<Response<Body>, ApiError> {
+    if data.resource != "users" && data.resource != "instances" {
+        return Ok(Response::builder()
+            .status(StatusCode::BAD_REQUEST)
+            .body(Body::from("'resource' must be one of 'instances' or 'users'."))
+            .unwrap());
+    };
 
-pub async fn create_usage_record(Json(data): Json<CreateUsage>) -> Result<Response<Body>, ApiError> {
+    let subscription =
+        Subscription::retrieve(&stripe, &SubscriptionId::from_str(&data.stripe_id)?, &[]).await?;
+
+    let user_sub_item = subscription.items.data.iter().find(|&item| {
+        if let Some(price) = item.price.as_ref() {
+            price.id
+                == (if data.resource == "users" {
+                    USER_PRICE_ID.as_str()
+                } else {
+                    INSTANCE_PRICE_ID.as_str()
+                })
+        } else {
+            false
+        }
+    });
+
+    // new subs always have at least one user
+    UsageRecord::create(
+        &stripe,
+        &user_sub_item.unwrap().id,
+        CreateUsageRecord {
+            action: Some(UsageRecordAction::Set),
+            quantity: data.number,
+            ..Default::default()
+        },
+    );
+
     Ok(Response::builder()
         .status(StatusCode::OK)
         .body(Body::empty())
