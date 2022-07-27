@@ -4,11 +4,11 @@ import Navbar from './Navbar';
 import { linkGroups } from './linkGroups';
 import Header from './Header';
 import { useLayoutStyles } from './LayoutStyles';
-import { useBooleanToggle, useHotkeys } from '@mantine/hooks';
+import { useDisclosure, useHotkeys } from '@mantine/hooks';
 
 const Layout: React.FC<PropsWithChildren<unknown>> = ({ children }) => {
-	const [opened, toggleOpened] = useBooleanToggle(false);
-	useHotkeys([['mod+b', () => toggleOpened()]]);
+	const [opened, handlers] = useDisclosure(false);
+	useHotkeys([['mod+b', handlers.toggle]]);
 	const { classes } = useLayoutStyles();
 
 	return (
@@ -17,8 +17,8 @@ const Layout: React.FC<PropsWithChildren<unknown>> = ({ children }) => {
 				padding={0}
 				navbarOffsetBreakpoint='sm'
 				fixed
-				header={<Header navState={[opened, toggleOpened]} />}
-				navbar={<Navbar navState={[opened, toggleOpened]} linkGroups={linkGroups} />}
+				header={<Header navState={[opened, handlers]} />}
+				navbar={<Navbar navState={[opened, handlers]} linkGroups={linkGroups} />}
 			>
 				<ScrollArea
 					p='md'

@@ -60,7 +60,7 @@ export interface LinksGroupProps {
 }
 
 interface ComponentProps {
-	toggleOpened: (value?: boolean) => void;
+	handlers: { open: () => void; close: () => void; toggle: () => void };
 }
 
 const LinksGroup: React.VFC<LinksGroupProps & ComponentProps> = ({
@@ -69,7 +69,7 @@ const LinksGroup: React.VFC<LinksGroupProps & ComponentProps> = ({
 	initiallyOpened,
 	link,
 	links,
-	toggleOpened: toggleNav,
+	handlers: navHandlers,
 }) => {
 	const router = useRouter();
 	const { classes, cx, theme } = useStyles();
@@ -87,7 +87,7 @@ const LinksGroup: React.VFC<LinksGroupProps & ComponentProps> = ({
 					className={cx(classes.link, {
 						[classes.active]: linkActive,
 					})}
-					onClick={() => toggleNav(false)}
+					onClick={navHandlers.close}
 				>
 					{link.label}
 				</Text>
@@ -100,7 +100,7 @@ const LinksGroup: React.VFC<LinksGroupProps & ComponentProps> = ({
 			<LinkOrFragment href={link} cond={!hasLinks}>
 				<UnstyledButton
 					component={hasLinks ? 'button' : 'a'}
-					onClick={hasLinks ? () => setOpened((o) => !o) : () => toggleNav(false)}
+					onClick={hasLinks ? () => setOpened((o) => !o) : navHandlers.close}
 					className={cx(classes.control, {
 						[classes.active]: childActive || router.asPath === link,
 					})}

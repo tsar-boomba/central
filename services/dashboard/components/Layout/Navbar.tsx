@@ -51,15 +51,15 @@ const useStyles = createStyles((theme) => ({
 
 interface NavbarProps {
 	linkGroups: LinksGroupProps[];
-	navState: [boolean, (value?: boolean) => void];
+	navState: [boolean, { open: () => void; close: () => void; toggle: () => void }];
 }
 
 const Navbar: React.VFC<NavbarProps> = ({ linkGroups, navState }) => {
 	const { classes } = useStyles();
 	const os = useOs();
-	const [opened, toggleOpened] = navState;
+	const [opened, handlers] = navState;
 	const links = linkGroups.map((group) => (
-		<LinksGroup {...group} toggleOpened={toggleOpened} key={group.label} />
+		<LinksGroup {...group} handlers={handlers} key={group.label} />
 	));
 
 	return (

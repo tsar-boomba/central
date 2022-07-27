@@ -30,7 +30,11 @@ const CustomAction = ({
 	onTrigger,
 	...others
 }: SpotlightActionProps) => {
-	const { classes, cx } = useStyles(void 0, { styles, classNames, name: 'Spotlight' });
+	const { classes, cx } = useStyles(void 0, {
+		styles: styles as any,
+		classNames,
+		name: 'Spotlight',
+	});
 
 	return (
 		<UnstyledButton

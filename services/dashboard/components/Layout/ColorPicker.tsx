@@ -9,7 +9,7 @@ import {
 	ThemeIcon,
 	useMantineTheme,
 } from '@mantine/core';
-import { useBooleanToggle, useClickOutside } from '@mantine/hooks';
+import { useDisclosure, useClickOutside } from '@mantine/hooks';
 import { usePrimaryColor } from '../ColorProvider';
 import { CgDrop, CgCheck } from 'react-icons/cg';
 
@@ -36,8 +36,8 @@ const useStyles = createStyles((theme) => {
 
 const ColorPicker = () => {
 	const { classes } = useStyles();
-	const [opened, toggleOpened] = useBooleanToggle(false);
-	const ref = useClickOutside(() => toggleOpened(false));
+	const [opened, handlers] = useDisclosure(false);
+	const ref = useClickOutside(() => handlers.close());
 	const theme = useMantineTheme();
 	const { primaryColor, setPrimaryColor } = usePrimaryColor();
 
@@ -63,28 +63,24 @@ const ColorPicker = () => {
 
 	return (
 		<div ref={ref} className={classes.wrapper}>
-			<Popover
-				target={
-					<ActionIcon className={classes.menuButton} onClick={() => toggleOpened()}>
+			<Popover opened={opened} withArrow withinPortal={false}>
+				<Popover.Target>
+					<ActionIcon className={classes.menuButton} onClick={handlers.toggle}>
 						<CgDrop color='white' />
 					</ActionIcon>
-				}
-				opened={opened}
-				position='bottom'
-				placement='end'
-				withArrow
-				withinPortal={false}
-			>
-				<Box sx={{ minWidth: 150, maxWidth: 300 }} py={8}>
-					<Stack align='center' onClick={(e) => e.stopPropagation()}>
-						<Text sx={{ fontWeight: 500 }} align='center'>
-							Choose a color
-						</Text>
-						<Group sx={{ justifyContent: 'center' }} grow>
-							{colors}
-						</Group>
-					</Stack>
-				</Box>
+				</Popover.Target>
+				<Popover.Dropdown>
+					<Box sx={{ minWidth: 150, maxWidth: 300 }} py={8}>
+						<Stack align='center' onClick={(e) => e.stopPropagation()}>
+							<Text sx={{ fontWeight: 500 }} align='center'>
+								Choose a color
+							</Text>
+							<Group sx={{ justifyContent: 'center' }} grow>
+								{colors}
+							</Group>
+						</Stack>
+					</Box>
+				</Popover.Dropdown>
 			</Popover>
 		</div>
 	);

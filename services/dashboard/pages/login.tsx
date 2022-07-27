@@ -5,7 +5,7 @@ import { Anchor, Button, Group, Paper, PasswordInput, Text, TextInput } from '@m
 import { setCookie } from 'ez-cookies';
 import { GetServerSideProps, NextPage } from 'next';
 import { useRouter } from 'next/router';
-import { useForm } from 'react-hook-form';
+import { useForm } from '@mantine/form';
 
 interface Props {
 	accountId: string | null;
@@ -19,7 +19,7 @@ interface FormValues {
 const Login: NextPage<Props> = ({ accountId }) => {
 	const { mutate } = useUser();
 	const router = useRouter();
-	const { register, handleSubmit } = useForm<FormValues>();
+	const form = useForm<FormValues>();
 
 	const onSubmit = (values: FormValues) => {
 		const [success, fail] = fetchNotification('login');
@@ -44,14 +44,16 @@ const Login: NextPage<Props> = ({ accountId }) => {
 						Welcome Back!
 					</Text>
 					<Paper withBorder shadow='md' p='xl' m='lg' style={{ maxWidth: 240 }}>
-						<form onSubmit={handleSubmit(onSubmit)}>
+						<form onSubmit={form.onSubmit(onSubmit)}>
 							<TextInput
+								required
 								label='Username'
-								{...register('username', { required: true })}
+								{...form.getInputProps('username')}
 							/>
 							<PasswordInput
+								required
 								label='Password'
-								{...register('password', { required: true })}
+								{...form.getInputProps('password')}
 							/>
 							<Group mt='md' position='right'>
 								<Anchor>Forgot password?</Anchor>
@@ -63,7 +65,7 @@ const Login: NextPage<Props> = ({ accountId }) => {
 					</Paper>
 				</>
 			) : (
-				<h1>Invalid link! Use one provided by the company.</h1>
+				<h1>Invalid link! Use one provided by your employer.</h1>
 			)}
 		</>
 	);

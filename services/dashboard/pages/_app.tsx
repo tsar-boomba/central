@@ -9,7 +9,6 @@ import {
 	DefaultMantineColor,
 	DEFAULT_THEME,
 	MantineProvider,
-	MantineThemeOther,
 	MantineThemeOverride,
 } from '@mantine/core';
 import { ModalsProvider } from '@mantine/modals';
@@ -25,16 +24,6 @@ interface _App<P = {}> {
 	getInitialProps(ctx: AppContext): Promise<P & AppInitialProps>;
 }
 
-const other: MantineThemeOther = {
-	flexCenter: (column) => ({
-		display: 'flex',
-		alignItems: 'center',
-		justifyContent: 'center',
-		flexDirection: column ? 'column' : 'row',
-	}),
-	defaultTextColor: (theme) => ({ color: theme.colorScheme === 'dark' ? 'white' : 'black' }),
-};
-
 const getTheme = (
 	colorScheme: ColorScheme,
 	primaryColor: DefaultMantineColor,
@@ -42,14 +31,13 @@ const getTheme = (
 	...DEFAULT_THEME,
 	colorScheme,
 	primaryColor,
-	other,
 	breakpoints: {
 		...DEFAULT_THEME.breakpoints,
 		xxl: 1550,
 	},
 });
 
-const noLayoutPaths = ['/records/loads/[id]/rate-conf', '/records/loads/[id]/invoice'];
+const noLayoutPaths: string[] = [];
 
 const MyApp: _App<{
 	colorScheme: ColorScheme;
@@ -82,7 +70,11 @@ const MyApp: _App<{
 	return (
 		<>
 			<Head>
-				<link rel='icon' href='/icon.png' type='image/png' />
+				<meta charSet='UTF-8' />
+				<link
+					rel='icon'
+					href='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 256 256%22><text y=%22203%22 font-size=%22224%22>🚚</text></svg>'
+				/>
 				<meta
 					name='viewport'
 					content='minimum-scale=1, initial-scale=1, width=device-width'

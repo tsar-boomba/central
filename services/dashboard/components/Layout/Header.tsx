@@ -52,11 +52,11 @@ const useStyles = createStyles((theme) => ({
 }));
 
 interface HeaderProps {
-	navState: [boolean, (value?: boolean) => void];
+	navState: [boolean, { open: () => void; close: () => void; toggle: () => void }];
 }
 
 const Header: React.VFC<HeaderProps> = ({ navState }) => {
-	const [opened, toggleOpened] = navState;
+	const [opened, handlers] = navState;
 	const theme = useMantineTheme();
 	const { classes } = useStyles();
 
@@ -65,7 +65,7 @@ const Header: React.VFC<HeaderProps> = ({ navState }) => {
 			<div className={classes.inner}>
 				<Group>
 					<MediaQuery largerThan='sm' styles={{ display: 'none' }}>
-						<Burger opened={opened} onClick={() => toggleOpened()} size='sm' />
+						<Burger opened={opened} onClick={handlers.toggle} size='sm' />
 					</MediaQuery>
 					<Link href='/' passHref>
 						<Text
