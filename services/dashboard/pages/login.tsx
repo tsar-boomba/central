@@ -36,37 +36,30 @@ const Login: NextPage<Props> = ({ accountId }) => {
 		});
 	};
 
+	if (!accountId)
+		return (
+			<Text mt='lg' style={{ fontSize: 40, fontWeight: 700 }}>
+				Invalid link! Use one provided by your employer.
+			</Text>
+		);
+
 	return (
 		<>
-			{accountId ? (
-				<>
-					<Text mt='lg' style={{ fontSize: 40, fontWeight: 700 }}>
-						Welcome Back!
-					</Text>
-					<Paper withBorder shadow='md' p='xl' m='lg' style={{ maxWidth: 240 }}>
-						<form onSubmit={form.onSubmit(onSubmit)}>
-							<TextInput
-								required
-								label='Username'
-								{...form.getInputProps('username')}
-							/>
-							<PasswordInput
-								required
-								label='Password'
-								{...form.getInputProps('password')}
-							/>
-							<Group mt='md' position='right'>
-								<Anchor>Forgot password?</Anchor>
-							</Group>
-							<Button mt='md' fullWidth type='submit'>
-								Submit
-							</Button>
-						</form>
-					</Paper>
-				</>
-			) : (
-				<h1>Invalid link! Use one provided by your employer.</h1>
-			)}
+			<Text mt='lg' style={{ fontSize: 40, fontWeight: 700 }}>
+				Welcome Back!
+			</Text>
+			<Paper withBorder shadow='md' p='xl' m='lg' style={{ maxWidth: 240 }}>
+				<form onSubmit={form.onSubmit(onSubmit)}>
+					<TextInput required label='Username' {...form.getInputProps('username')} />
+					<PasswordInput required label='Password' {...form.getInputProps('password')} />
+					<Group mt='md' position='right'>
+						<Anchor>Forgot password?</Anchor>
+					</Group>
+					<Button mt='md' fullWidth type='submit'>
+						Submit
+					</Button>
+				</form>
+			</Paper>
 		</>
 	);
 };
