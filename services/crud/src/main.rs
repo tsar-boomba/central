@@ -23,8 +23,6 @@ mod accounts;
 mod instances;
 mod users;
 
-use std::sync::Arc;
-
 use actix_cors::Cors;
 use actix_web::{middleware, App, HttpServer};
 use auth::Claim;

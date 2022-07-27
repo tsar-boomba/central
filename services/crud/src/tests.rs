@@ -1,13 +1,15 @@
 use diesel::prelude::*;
+use payments_lib::routes::create_usage_record;
 use std::sync::{Arc, Mutex};
 
 use actix_web::{
     dev::{Service, ServiceResponse},
-    test, web, App,
+    test, web, App, HttpResponse, HttpServer,
 };
 
 use crate::{
     accounts::model::{Account, NewAccount},
+    api_error::ApiError,
     auth, db,
 };
 
@@ -27,11 +29,31 @@ pub async fn init(
         *initiated = true;
     }
 
+
     test::init_service(
         App::new()
             .wrap(auth::middleware::Authorize)
             .configure(init_routes),
     )
+    .await
+}
+
+pub async fn mock_payments() -> std::io::Result<()> {
+    std::env::set_var("PAYMENTS_URI", "http://127.0.0.1:6666");
+
+    async fn create_usage_record_handler() -> Result<HttpResponse, ApiError> {
+        println!("Payments received request.");
+        Ok(HttpResponse::Ok().finish())
+    }
+
+    HttpServer::new(|| {
+        App::new().route(
+            create_usage_record::ROUTE,
+            web::post().to(create_usage_record_handler),
+        )
+    })
+    .bind(("127.0.0.1", 6666))?
+    .run()
     .await
 }
 
@@ -48,7 +70,7 @@ pub fn test_account() {
             phone_number: "999-999-0000".into(),
             short_name: "test".into(),
             zip_code: "28282".into(),
-            stripe_id: None,
+            stripe_id: Some("something".into()),
             state: "nc".into(),
         })
         .on_conflict_do_nothing()

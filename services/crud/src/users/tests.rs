@@ -95,6 +95,7 @@ async fn get() {
 
 #[actix_web::test]
 async fn post() {
+    actix_web::rt::spawn(crate::tests::mock_payments());
     let (default1, _default2) = defaults("users post");
 
     let app = tests::init(super::routes::init_routes).await;
@@ -159,6 +160,7 @@ async fn put() {
 
 #[actix_web::test]
 async fn delete() {
+    actix_web::rt::spawn(crate::tests::mock_payments());
     let (default1, default2) = defaults("users delete");
 
     let app = tests::init(super::routes::init_routes).await;

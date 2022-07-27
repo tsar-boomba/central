@@ -6,7 +6,8 @@ use models::types::Role;
 use payments_lib::routes::create_usage_record;
 
 use crate::{
-    accounts::model::Account, api_error::ApiError, auth::Claim, belongs_to_account, db, PAYMENTS_URI, json::DeleteBody,
+    accounts::model::Account, api_error::ApiError, auth::Claim, belongs_to_account, db,
+    json::DeleteBody, PAYMENTS_URI,
 };
 
 #[get("/users")]
@@ -48,7 +49,6 @@ async fn create(
     }
     use super::users::dsl::*;
 
-    let conn = db::connection()?;
     let new_user = new_user.into_inner();
     let hashed_pass =
         web::block(move || hash(new_user.password.clone(), bcrypt::DEFAULT_COST)).await??;
@@ -59,7 +59,19 @@ async fn create(
     };
 
     let owner_id = with_hash.account_id.clone();
-    let owner = web::block(move || Account::find_by_id(owner_id)).await?;
+    // must get it manually so tests can pass when we have only 1 connection
+    let owner = web::block::<_, Result<Account, ApiError>>(move || {
+        use crate::accounts::accounts::dsl::*;
+        let conn = db::connection()?;
+
+        let result = accounts.filter(id.eq(owner_id)).first::<Account>(&conn)?;
+        drop(conn);
+
+        Ok(result)
+    })
+    .await?;
+
+    let conn = db::connection()?;
 
     let result: Result<User, ApiError> = web::block(move || {
         conn.transaction(|| {
@@ -79,7 +91,14 @@ async fn create(
                             ));
                         }
 
-                        let res = update_user_usage(&owner, 0)?;
+                        let num_user = users
+                            .count()
+                            .filter(account_id.eq(owner.id.clone()))
+                            .get_result::<i64>(&conn)?;
+
+                        let res = update_user_usage(&owner, num_user)?;
+
+                        println!("{:?}", res);
 
                         match res.error_for_status() {
                             Ok(_) => Ok(user),
@@ -135,10 +154,19 @@ async fn delete(target: web::Path<i32>, jwt: Option<Claim>) -> Result<HttpRespon
     }
     use super::users::dsl::*;
 
-    let conn = db::connection()?;
-
     let owner_id = user.account_id.clone();
-    let owner = web::block(move || Account::find_by_id(owner_id)).await?;
+    let owner = web::block::<_, Result<Account, ApiError>>(move || {
+        use crate::accounts::accounts::dsl::*;
+        let conn = db::connection()?;
+
+        let result = accounts.filter(id.eq(owner_id)).first::<Account>(&conn)?;
+        drop(conn);
+
+        Ok(result)
+    })
+    .await?;
+
+    let conn = db::connection()?;
 
     let result: Result<usize, ApiError> = web::block(move || {
         conn.transaction(|| {
@@ -154,7 +182,12 @@ async fn delete(target: web::Path<i32>, jwt: Option<Claim>) -> Result<HttpRespon
                         ));
                     }
 
-                    let res = update_user_usage(&owner, 0)?;
+                    let num_user = users
+                        .count()
+                        .filter(account_id.eq(owner.id.clone()))
+                        .get_result::<i64>(&conn)?;
+
+                    let res = update_user_usage(&owner, num_user)?;
 
                     match res.error_for_status() {
                         Ok(_) => Ok(affected),
@@ -178,24 +211,15 @@ async fn delete(target: web::Path<i32>, jwt: Option<Claim>) -> Result<HttpRespon
 
 fn update_user_usage(
     owner: &Account,
-    offset: i64,
+    new_value: i64,
 ) -> Result<reqwest::blocking::Response, ApiError> {
-    use super::users::dsl::*;
-
-    let owner_id = owner.id.clone();
-
-    let num_user = users
-        .count()
-        .filter(account_id.eq(owner_id))
-        .get_result::<i64>(&db::connection().unwrap())?;
-
     let client = reqwest::blocking::Client::new();
 
     return Ok(client
         .post(PAYMENTS_URI.to_string() + create_usage_record::ROUTE)
         .json(&create_usage_record::CreateUsageRecordParams {
             stripe_id: owner.stripe_id.clone().unwrap(),
-            number: (num_user + offset).try_into().unwrap(),
+            number: new_value.try_into().unwrap(),
             resource: "users".into(),
         })
         .send()?);
