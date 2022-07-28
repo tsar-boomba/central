@@ -1,4 +1,4 @@
-use super::model::*;
+use models::{Instance, NewInstance, Model};
 use actix_web::{delete, get, post, put, web, HttpResponse};
 
 use crate::{api_error::ApiError, auth::Claim, belongs_to_account, json::DeleteBody};

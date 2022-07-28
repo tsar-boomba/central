@@ -4,13 +4,14 @@ use actix_web::{
     web::{block, Json, ServiceConfig},
     HttpRequest, HttpResponse,
 };
+use models::User;
 use diesel::prelude::*;
 
-use crate::{api_error::ApiError, auth::Login, db, json::ErrorBody, users::model::User};
+use crate::{api_error::ApiError, auth::Login, db, json::ErrorBody};
 
 #[post("/login")]
 async fn login(login: Json<Login>) -> Result<HttpResponse, ApiError> {
-    use crate::users::users::dsl::*;
+    use models::users::dsl::*;
     let conn = db::connection()?;
     let login = login.into_inner();
     let user = block(move || {
@@ -80,7 +81,7 @@ async fn authenticate(req: HttpRequest) -> Result<HttpResponse, ApiError> {
 /// Returns full user from jwt
 #[get("/verify")]
 async fn verify(req: HttpRequest) -> Result<HttpResponse, ApiError> {
-    use crate::users::users::dsl::*;
+    use models::users::dsl::*;
     match req.cookie("at") {
         // cookie exists try to verify
         Some(token) => match super::verify(&token.value().into()) {

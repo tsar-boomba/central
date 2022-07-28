@@ -22,7 +22,7 @@ pub mod subscribe {
 
     #[derive(Debug, Serialize, Deserialize)]
     pub struct SubscribeParams {
-        pub account: crate::crud_models::Account,
+        pub account: models::Account,
         /// Card number
         pub number: String,
         pub exp_year: i32,

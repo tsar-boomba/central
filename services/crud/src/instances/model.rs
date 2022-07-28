@@ -1,30 +1,25 @@
-use super::instances;
-use crate::accounts::model::Account;
-use chrono::NaiveDateTime;
 use diesel::prelude::*;
-use serde::{Deserialize, Serialize};
+use models::{Instance, Model, NewInstance};
+use models::instances::dsl::*;
 
 use crate::{api_error::ApiError, db, ID_SIZE};
 
-instance_models!(Account);
-
-use self::instances::dsl::*;
-impl Instance {
-    pub fn find_all() -> Result<Vec<Self>, ApiError> {
+impl Model<String, NewInstance, ApiError> for Instance {
+    fn find_all() -> Result<Vec<Self>, ApiError> {
         let conn = db::connection()?;
         let result = instances.load::<Self>(&conn)?;
 
         Ok(result)
     }
 
-    pub fn find_by_id(target: String) -> Result<Self, ApiError> {
+    fn find_by_id(target: String) -> Result<Self, ApiError> {
         let conn = db::connection()?;
         let result = instances.filter(id.eq(target)).get_result::<Self>(&conn)?;
 
         Ok(result)
     }
 
-    pub fn insert(new: NewInstance) -> Result<Self, ApiError> {
+    fn insert(new: NewInstance) -> Result<Self, ApiError> {
         let conn = db::connection()?;
         let with_id = NewInstance {
             id: nanoid!(ID_SIZE),
@@ -37,7 +32,7 @@ impl Instance {
         Ok(result)
     }
 
-    pub fn update(target: String, new_vals: NewInstance) -> Result<Self, ApiError> {
+    fn update(target: String, new_vals: NewInstance) -> Result<Self, ApiError> {
         let conn = db::connection()?;
         let result = diesel::update(instances)
             .filter(id.eq(target))
@@ -47,7 +42,7 @@ impl Instance {
         Ok(result)
     }
 
-    pub fn delete(target: String) -> Result<usize, ApiError> {
+    fn delete(target: String) -> Result<usize, ApiError> {
         let conn = db::connection()?;
         let result = diesel::delete(instances.filter(id.eq(target))).execute(&conn)?;
 

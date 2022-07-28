@@ -3,10 +3,25 @@ extern crate diesel;
 
 #[macro_use]
 mod macros;
-#[macro_use]
-mod accounts;
-#[macro_use]
-mod users;
-#[macro_use]
-mod instances;
+mod account;
+pub use account::model::*;
+pub use account::schema::*;
+mod user;
+pub use user::model::*;
+pub use user::schema::*;
+mod instance;
+pub use instance::model::*;
+pub use instance::schema::*;
 pub mod types;
+
+pub trait Model<Id, New, Err> {
+	fn find_all() -> Result<Vec<Self>, Err> where Self: Sized;
+
+    fn find_by_id(target: Id) -> Result<Self, Err> where Self: Sized;
+
+    fn insert(new: New) -> Result<Self, Err> where Self: Sized;
+
+    fn update(target: Id, new_vals: New) -> Result<Self, Err> where Self: Sized;
+
+    fn delete(target: Id) -> Result<usize, Err>;
+}

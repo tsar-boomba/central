@@ -1,14 +1,13 @@
 use diesel::prelude::*;
 use payments_lib::routes::create_usage_record;
 use std::sync::{Arc, Mutex};
-
+use models::{Account, NewAccount};
 use actix_web::{
     dev::{Service, ServiceResponse},
     test, web, App, HttpResponse, HttpServer,
 };
 
 use crate::{
-    accounts::model::{Account, NewAccount},
     api_error::ApiError,
     auth, db,
 };
@@ -30,6 +29,8 @@ pub async fn init(
     }
 
 
+    // serialize password when doing tests
+    models::dont_skip_pass();
     test::init_service(
         App::new()
             .wrap(auth::middleware::Authorize)
@@ -59,7 +60,7 @@ pub async fn mock_payments() -> std::io::Result<()> {
 
 /// Creates an account to ensure foreign keys are satisfied during testing
 pub fn test_account() {
-    use crate::accounts::accounts::dsl::*;
+    use models::accounts::dsl::*;
     diesel::insert_into(accounts)
         .values(NewAccount {
             id: "test".into(),

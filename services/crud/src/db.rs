@@ -1,8 +1,4 @@
-use crate::{
-    accounts::{self, model::NewAccount},
-    api_error::ApiError,
-    users::{self, model::NewUser},
-};
+use models::{NewAccount, NewUser};
 use bcrypt::{hash, DEFAULT_COST};
 use diesel::{
     r2d2::{self, Builder, ConnectionManager},
@@ -10,6 +6,8 @@ use diesel::{
 };
 use diesel_migrations::embed_migrations;
 use models::types::{Resource, Role};
+
+use crate::api_error::ApiError;
 
 pub type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
 pub type PoolConn = r2d2::PooledConnection<ConnectionManager<PgConnection>>;
@@ -47,7 +45,7 @@ pub fn init() {
     }
 
     // ensure admin account exists
-    diesel::insert_into(accounts::table)
+    diesel::insert_into(models::accounts::table)
         .values(NewAccount {
             id: "admin".into(),
             address: "admin".into(),
@@ -69,7 +67,7 @@ pub fn init() {
 
     if admin_name.is_ok() && admin_pass.is_ok() {
         // add admin user
-        diesel::insert_into(users::table)
+        diesel::insert_into(models::users::table)
             .values(NewUser {
                 account_id: "admin".into(),
                 username: admin_name.unwrap(),

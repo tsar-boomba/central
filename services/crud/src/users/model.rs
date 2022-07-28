@@ -1,35 +1,27 @@
-use super::users;
 use bcrypt::{hash, DEFAULT_COST};
-use chrono::NaiveDateTime;
 use diesel::prelude::*;
-use models::types::{Resource, Role};
-use serde::{Deserialize, Serialize};
+use models::{types::Role, Model, NewUser};
+use models::User;
+use models::users::dsl::*;
 
-use crate::{accounts::model::Account, api_error::ApiError, db};
+use crate::{api_error::ApiError, db};
 
-fn skip_serialize_pass(_: &String) -> bool {
-    !cfg!(test)
-}
-
-user_models!(Account);
-
-use self::users::dsl::*;
-impl User {
-    pub fn find_all() -> Result<Vec<Self>, ApiError> {
+impl Model<i32, NewUser, ApiError> for User {
+    fn find_all() -> Result<Vec<Self>, ApiError> {
         let conn = db::connection()?;
         let result = users.load::<Self>(&conn)?;
 
         Ok(result)
     }
 
-    pub fn find_by_id(target: i32) -> Result<Self, ApiError> {
+    fn find_by_id(target: i32) -> Result<Self, ApiError> {
         let conn = db::connection()?;
         let result = users.filter(id.eq(target)).get_result::<Self>(&conn)?;
 
         Ok(result)
     }
 
-    pub fn insert(new: NewUser) -> Result<Self, ApiError> {
+    fn insert(new: NewUser) -> Result<Self, ApiError> {
         let conn = db::connection()?;
         let with_hash = NewUser {
             password: hash(new.password, DEFAULT_COST)?,
@@ -43,7 +35,7 @@ impl User {
         Ok(result)
     }
 
-    pub fn update(target: i32, new_vals: NewUser) -> Result<Self, ApiError> {
+    fn update(target: i32, new_vals: NewUser) -> Result<Self, ApiError> {
         let conn = db::connection()?;
         let result = diesel::update(users.filter(id.eq(target)))
             .set(new_vals)
@@ -52,7 +44,7 @@ impl User {
         Ok(result)
     }
 
-    pub fn delete(target: i32) -> Result<usize, ApiError> {
+    fn delete(target: i32) -> Result<usize, ApiError> {
         let conn = db::connection()?;
         let result = diesel::delete(users.filter(id.eq(target))).execute(&conn)?;
 

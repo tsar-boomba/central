@@ -1,11 +1,9 @@
 use crate::{
     auth::*,
     db, tests,
-    users::{
-        self,
-        model::{NewUser, User},
-    },
+    users
 };
+use models::{User, NewUser};
 use actix_http::StatusCode;
 use actix_web::{cookie::Cookie, test};
 use bcrypt::{hash, DEFAULT_COST};
@@ -18,7 +16,7 @@ async fn login() {
     let app = tests::init(routes::init_routes).await;
     let conn = db::connection().unwrap();
 
-    let result1: User = diesel::insert_into(users::table)
+    let result1: User = diesel::insert_into(models::users::table)
         .values(NewUser {
             password: hash(default1.password.clone(), DEFAULT_COST)
                 .expect("Failed to hash password."),
@@ -88,7 +86,7 @@ async fn verify() {
     let app = tests::init(routes::init_routes).await;
     let conn = db::connection().unwrap();
 
-    let result1: User = diesel::insert_into(users::table)
+    let result1: User = diesel::insert_into(models::users::table)
         .values(NewUser {
             password: hash(default1.password.clone(), DEFAULT_COST)
                 .expect("Failed to hash password."),

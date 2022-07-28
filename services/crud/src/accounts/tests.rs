@@ -1,7 +1,4 @@
-use super::{
-    model::{Account, NewAccount},
-    schema::accounts::dsl::*,
-};
+use models::{Account, NewAccount, accounts::dsl::*};
 use crate::{db, json::DeleteBody, tests, ID_SIZE};
 use actix_web::test;
 use diesel::prelude::*;

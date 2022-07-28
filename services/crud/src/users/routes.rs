@@ -1,13 +1,12 @@
-use super::model::*;
 use actix_web::{delete, get, post, put, web, HttpResponse};
 use bcrypt::hash;
 use diesel::prelude::*;
 use models::types::Role;
+use models::{Account, NewUser, User, Model};
 use payments_lib::routes::create_usage_record;
 
 use crate::{
-    accounts::model::Account, api_error::ApiError, auth::Claim, belongs_to_account, db,
-    json::DeleteBody, PAYMENTS_URI,
+    api_error::ApiError, auth::Claim, belongs_to_account, db, json::DeleteBody, PAYMENTS_URI,
 };
 
 #[get("/users")]
@@ -47,7 +46,7 @@ async fn create(
     if !belongs_to_account(&jwt, &new_user.account_id) {
         return Err(ApiError::forbidden());
     }
-    use super::users::dsl::*;
+    use models::users::dsl::*;
 
     let new_user = new_user.into_inner();
     let hashed_pass =
@@ -61,7 +60,7 @@ async fn create(
     let owner_id = with_hash.account_id.clone();
     // must get it manually so tests can pass when we have only 1 connection
     let owner = web::block::<_, Result<Account, ApiError>>(move || {
-        use crate::accounts::accounts::dsl::*;
+        use models::accounts::dsl::*;
         let conn = db::connection()?;
 
         let result = accounts.filter(id.eq(owner_id)).first::<Account>(&conn)?;
@@ -152,11 +151,11 @@ async fn delete(target: web::Path<i32>, jwt: Option<Claim>) -> Result<HttpRespon
     if !belongs_to_account(&jwt, &user.account_id) {
         return Err(ApiError::forbidden());
     }
-    use super::users::dsl::*;
+    use models::users::dsl::*;
 
     let owner_id = user.account_id.clone();
     let owner = web::block::<_, Result<Account, ApiError>>(move || {
-        use crate::accounts::accounts::dsl::*;
+        use models::accounts::dsl::*;
         let conn = db::connection()?;
 
         let result = accounts.filter(id.eq(owner_id)).first::<Account>(&conn)?;

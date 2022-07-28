@@ -1,8 +1,4 @@
-use super::{
-    model::{NewUser, User},
-    schema::users::dsl::*,
-    *,
-};
+use models::{User, NewUser, users::dsl::*};
 use crate::{db, json::DeleteBody, tests};
 use actix_web::test;
 use diesel::prelude::*;
@@ -17,7 +13,7 @@ pub fn compare(got: &User, exp: &NewUser) {
 
 pub fn defaults(test_name: &str) -> (NewUser, NewUser) {
     (
-        model::NewUser {
+        NewUser {
             account_id: "test".into(),
             username: test_name.into(),
             first_name: "Test".into(),
@@ -31,7 +27,7 @@ pub fn defaults(test_name: &str) -> (NewUser, NewUser) {
             role: Role::Admin,
             notes: None,
         },
-        model::NewUser {
+        NewUser {
             account_id: "test".into(),
             username: format!("{}2", test_name),
             first_name: "Test2".into(),
@@ -77,14 +73,14 @@ async fn get() {
         .to_request();
 
     drop(conn);
-    let resp: model::User = test::call_and_read_body_json(&app, req).await;
+    let resp: User = test::call_and_read_body_json(&app, req).await;
 
     compare(&resp, &default1);
 
     // Check for both inserted records with the get all route
     let req = test::TestRequest::get().uri("/users").to_request();
 
-    let resp: Vec<model::User> = test::call_and_read_body_json(&app, req).await;
+    let resp: Vec<User> = test::call_and_read_body_json(&app, req).await;
     let conn = db::connection().unwrap();
 
     assert!(resp.len() >= 2);
@@ -106,7 +102,7 @@ async fn post() {
         .set_json(&default1)
         .to_request();
 
-    let resp: model::User = test::call_and_read_body_json(&app, req).await;
+    let resp: User = test::call_and_read_body_json(&app, req).await;
     let conn = db::connection().unwrap();
 
     // Check in db for inserted record

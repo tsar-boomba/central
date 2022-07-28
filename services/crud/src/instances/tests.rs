@@ -1,8 +1,4 @@
-use super::{
-    model::{Instance, NewInstance},
-    schema::instances::dsl::*,
-    *,
-};
+use models::{NewInstance, Instance, instances::dsl::*};
 use crate::{db, json::DeleteBody, tests, ID_SIZE};
 use actix_web::test;
 use diesel::prelude::*;
@@ -23,7 +19,7 @@ fn compare(got: &Instance, exp: &NewInstance) {
 
 fn defaults(/*fk: String*/) -> (NewInstance, NewInstance) {
     (
-        model::NewInstance {
+        NewInstance {
             id: nanoid!(ID_SIZE),
             account_id: "test".into(),
             db_url: "postgres".into(),
@@ -39,7 +35,7 @@ fn defaults(/*fk: String*/) -> (NewInstance, NewInstance) {
             top_terms: Some("you must not be sus!".into()),
             bottom_terms: None,
         },
-        model::NewInstance {
+        NewInstance {
             id: nanoid!(ID_SIZE),
             account_id: "test".into(),
             db_url: "postgres".into(),
@@ -87,14 +83,14 @@ async fn get() {
         .uri(&format!("/instances/{}", result1.id))
         .to_request();
 
-    let resp: model::Instance = test::call_and_read_body_json(&app, req).await;
+    let resp: Instance = test::call_and_read_body_json(&app, req).await;
 
     compare(&resp, &default1);
 
     // Check for both inserted records with the get all route
     let req = test::TestRequest::get().uri("/instances").to_request();
 
-    let resp: Vec<model::Instance> = test::call_and_read_body_json(&app, req).await;
+    let resp: Vec<Instance> = test::call_and_read_body_json(&app, req).await;
     let conn = db::connection().unwrap();
 
     assert!(resp.len() >= 2);
@@ -115,7 +111,7 @@ async fn post() {
         .set_json(&default1)
         .to_request();
 
-    let resp: model::Instance = test::call_and_read_body_json(&app, req).await;
+    let resp: Instance = test::call_and_read_body_json(&app, req).await;
     let conn = db::connection().unwrap();
 
     // Check in db for inserted record
