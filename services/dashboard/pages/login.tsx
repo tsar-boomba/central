@@ -39,7 +39,7 @@ const Login: NextPage<Props> = ({ accountId }) => {
 	if (!accountId)
 		return (
 			<Text mt='lg' style={{ fontSize: 40, fontWeight: 700 }}>
-				Invalid link! Use one provided by your employer.
+				In order to login, get a link from an account owner.
 			</Text>
 		);
 

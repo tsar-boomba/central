@@ -8,7 +8,7 @@ export const ssrFetch = (
 	route: string,
 	{ req }: GetServerSidePropsContext,
 	opts: RequestInit = {},
-) => fetch(route, { ...opts, headers: { Cookie: `at=${req.cookies.at}` } });
+) => fetch(route, { ...opts, headers: { ...opts.headers, Cookie: `at=${req.cookies.at}` } });
 
 /**
  *
