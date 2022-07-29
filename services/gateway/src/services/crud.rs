@@ -1,14 +1,14 @@
 use std::{convert::Infallible, net::IpAddr};
 
 use axum::http::{Request, Response};
-use hyper::{body, Body, Method, StatusCode};
+use hyper::{Body, StatusCode};
 use serde::{Deserialize, Serialize};
 
 use crate::{authorize_req, error_body, proxy_call, Client};
 
 pub const PATH_BASE: &str = "/";
 
-const PUBLIC_PATHS: [&str; 3] = ["/verify", "/login", "/authenticate"];
+const PUBLIC_PATHS: [&str; 4] = ["/verify", "/login", "/authenticate", "/register"];
 
 lazy_static! {
     pub static ref URI: String =
