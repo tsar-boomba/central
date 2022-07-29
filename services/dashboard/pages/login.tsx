@@ -6,6 +6,7 @@ import { setCookie } from 'ez-cookies';
 import { GetServerSideProps, NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useForm } from '@mantine/form';
+import Link from 'next/link';
 
 interface Props {
 	accountId: string | null;
@@ -60,6 +61,9 @@ const Login: NextPage<Props> = ({ accountId }) => {
 					</Button>
 				</form>
 			</Paper>
+			<Link href='/register'>
+				<Anchor>Interested in NAME_HERE? Create an account.</Anchor>
+			</Link>
 		</>
 	);
 };

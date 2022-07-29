@@ -30,6 +30,8 @@ const UserContext = createContext<UserContextValue>({
 	isValidating: false,
 });
 
+const publicPaths = ['/login', '/register'];
+
 const UserProvider: React.FC<PropsWithChildren<unknown>> = ({ children }) => {
 	const router = useRouter();
 	const [fallback, setFallback] = useState<User | undefined>(undefined);
@@ -45,7 +47,7 @@ const UserProvider: React.FC<PropsWithChildren<unknown>> = ({ children }) => {
 	);
 
 	if ((!data && !isLoading) || error) {
-		if (router.pathname !== '/login') router.push(`/login?from=${location.pathname}`);
+		if (!publicPaths.includes(router.pathname)) router.push(`/login?from=${location.pathname}`);
 	}
 
 	return (

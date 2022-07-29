@@ -829,6 +829,7 @@ dependencies = [
  "hyper-reverse-proxy",
  "lazy_static",
  "log",
+ "models",
  "serde",
  "serde_json",
  "tokio",

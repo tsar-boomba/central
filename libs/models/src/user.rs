@@ -53,14 +53,15 @@ pub mod schema {
 }
 
 pub mod model {
-    use std::sync::atomic::{Ordering, AtomicUsize};
+    use std::sync::atomic::{AtomicUsize, Ordering};
 
     #[cfg(feature = "diesel")]
     use super::schema::users;
+    use crate::types::*;
+    #[cfg(feature = "diesel")]
     use crate::Account;
     use chrono::NaiveDateTime;
     use serde::{Deserialize, Serialize};
-    use crate::types::*;
 
     static SKIP_SERIALIZE_PASS: AtomicUsize = AtomicUsize::new(1);
 
@@ -72,8 +73,9 @@ pub mod model {
         SKIP_SERIALIZE_PASS.swap(1, Ordering::SeqCst);
     }
 
-    fn skip_serialize_pass(_: &String) -> bool { SKIP_SERIALIZE_PASS.load(Ordering::SeqCst) == 1 }
+    fn skip_serialize_pass(_: &String) -> bool {
+        SKIP_SERIALIZE_PASS.load(Ordering::SeqCst) == 1
+    }
 
     user_models!(Account);
 }
-

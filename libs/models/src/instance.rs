@@ -50,6 +50,7 @@ pub mod schema {
 pub mod model {
     #[cfg(feature = "diesel")]
     use super::schema::instances;
+    #[cfg(feature = "diesel")]
     use crate::Account;
     use chrono::NaiveDateTime;
     use serde::{Deserialize, Serialize};

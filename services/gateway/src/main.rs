@@ -62,6 +62,9 @@ async fn handle(
 
         // TODO make payments service
         payments::proxy(client_ip, client, req, path_query).await
+    } else if path == "/register" {
+        // Special logic for registering a new account & user
+        crud::register(client, req).await
     } else if path.starts_with(crud::PATH_BASE) {
         // will forward requests to crud/auth service
         crud::proxy(client_ip, client, req, path).await
@@ -127,6 +130,10 @@ pub async fn authorize_req(client: &Client, req: &Request<Body>) -> Option<crud:
     } else {
         return None;
     }
+}
+
+pub fn error_body(message: impl Into<String>) -> String {
+    format!(r#"{{"message": {}}}"#, message.into())
 }
 
 #[cfg(test)]
