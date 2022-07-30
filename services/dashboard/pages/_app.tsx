@@ -31,6 +31,7 @@ const getTheme = (
 	...DEFAULT_THEME,
 	colorScheme,
 	primaryColor,
+	cursorType: 'pointer',
 	breakpoints: {
 		...DEFAULT_THEME.breakpoints,
 		xxl: 1550,

@@ -34,9 +34,10 @@ const publicPaths = ['/login', '/register'];
 
 const UserProvider: React.FC<PropsWithChildren<unknown>> = ({ children }) => {
 	const router = useRouter();
+	const isPublic = publicPaths.includes(router.pathname);
 	const [fallback, setFallback] = useState<User | undefined>(undefined);
 	const { data, error, isLoading, isValidating, mutate } = useSWR<User>(
-		api('verify'),
+		!isPublic ? api('verify') : null,
 		fetcher,
 		fallback
 			? {
@@ -47,7 +48,7 @@ const UserProvider: React.FC<PropsWithChildren<unknown>> = ({ children }) => {
 	);
 
 	if ((!data && !isLoading) || error) {
-		if (!publicPaths.includes(router.pathname)) router.push(`/login?from=${location.pathname}`);
+		if (!isPublic) router.push(`/login?from=${location.pathname}`);
 	}
 
 	return (
