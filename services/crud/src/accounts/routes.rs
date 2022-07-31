@@ -32,6 +32,17 @@ async fn find(id: web::Path<String>, jwt: Option<Claim>) -> Result<HttpResponse,
     Ok(HttpResponse::Ok().json(account))
 }
 
+#[get("/accounts/{id}/is-subbed")]
+async fn is_subbed(id: web::Path<String>, jwt: Option<Claim>) -> Result<HttpResponse, ApiError> {
+    let account = web::block(move || Account::find_by_id(id.into_inner())).await??;
+
+    if !belongs_to_account(&jwt, &account.id) {
+        return Err(ApiError::forbidden());
+    }
+
+    Ok(HttpResponse::Ok().body(account.stripe_id.is_some().to_string()))
+}
+
 #[post("/accounts")]
 async fn create(
     account: web::Json<NewAccount>,
@@ -83,4 +94,5 @@ pub fn init_routes(config: &mut web::ServiceConfig) {
     config.service(create);
     config.service(update);
     config.service(delete);
+    config.service(is_subbed);
 }
