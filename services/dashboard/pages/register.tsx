@@ -7,16 +7,22 @@ import {
 	Paper,
 	PasswordInput,
 	Progress,
+	Stack,
 	Stepper,
 	Text,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { FormRulesRecord } from '@mantine/form/lib/types';
+import { showNotification } from '@mantine/notifications';
+import { setCookie } from 'ez-cookies';
+import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { CgCheck, CgClose } from 'react-icons/cg';
 import StateInput from '../components/Form/StateInput';
 import TextInputInfo from '../components/Form/TextInputInfo';
-import { RegisterAccount, RegisterUser } from '../types/utils';
+import { Account } from '../types/Account';
+import { Resource, Role, User } from '../types/User';
+import { NewAccount, NewUser, RegisterAccount, RegisterUser } from '../types/utils';
 import { callApi } from '../utils/apiHelpers';
 import { statesAbbr } from '../utils/states';
 
@@ -82,8 +88,9 @@ const userValidation: FormRulesRecord<RegisterUser> = {
 };
 
 const Register = () => {
+	const router = useRouter();
 	const [active, setActive] = useState(0);
-	const [creating, setCreating] = useState(true);
+	const [error, setError] = useState('');
 	const form = useForm<FormData>({
 		initialValues: {
 			account: {
@@ -124,17 +131,51 @@ const Register = () => {
 
 	const nextStep = () =>
 		setActive((current) => {
-			if (form.validate().hasErrors) {
-				return current;
-			}
+			if (form.validate().hasErrors) return current;
 			return current < NUM_STEPS ? current + 1 : current;
 		});
 	const prevStep = () => setActive((current) => (current > 0 ? current - 1 : current));
 
 	const onSubmit = (values: FormData) => {
-		if (active < NUM_STEPS) nextStep();
-		callApi({ route: 'register', body: values }).then(async (res) => {
-			if (res.ok) setCreating(false);
+		nextStep();
+		// active isn't updated yet
+		if (active + 1 < NUM_STEPS) return;
+		const account: NewAccount = {
+			...values.account,
+		};
+		const user: NewUser = {
+			active: true,
+			createPerms: [Resource.Carrier, Resource.Shipper, Resource.Load],
+			deletePerms: [Resource.Carrier, Resource.Shipper, Resource.Load],
+			updatePerms: [Resource.Carrier, Resource.Shipper, Resource.Load],
+			instances: [],
+			role: Role.Owner,
+			...values.user,
+		};
+		callApi({ route: 'register', body: { account, user } }).then(async (res) => {
+			if (res.ok) {
+				// If successful, log them in
+				const json: { account: Account; user: User } = await res.json();
+				return callApi({
+					route: 'login',
+					body: {
+						accountId: json.account.id,
+						username: user.username,
+						password: values.user.password,
+					},
+				}).then(() => {
+					setCookie('account', json.account.id);
+					showNotification({ message: 'Welcome to NAME HERE 😁!' });
+					router.push('/');
+				});
+			}
+			// error ocurred
+			setError(
+				await res
+					.json()
+					.then((json) => json?.message || 'An error ocurred.')
+					.catch(() => 'An error ocurred.'),
+			);
 		});
 	};
 
@@ -243,12 +284,7 @@ const Register = () => {
 						/>
 					</Group>
 					<Box mt='md'>
-						<Progress
-							color={color}
-							value={strength}
-							size={5}
-							style={{ marginBottom: 10 }}
-						/>
+						<Progress color={color} value={strength} size={5} mb='md' />
 						<PasswordRequirement
 							label='Includes at least 6 characters'
 							meets={form.values.user.password.length > 5}
@@ -257,11 +293,11 @@ const Register = () => {
 					</Box>
 				</Stepper.Step>
 				<Stepper.Completed>
-					{creating ? (
-						<Box>
+					{!error ? (
+						<Stack align='center'>
 							<Loader />
 							<Text>Creating account...</Text>
-						</Box>
+						</Stack>
 					) : (
 						<Box>
 							<Text>Account successfully created.</Text>
@@ -275,7 +311,11 @@ const Register = () => {
 						Back
 					</Button>
 				)}
-				{active < NUM_STEPS && <Button type='submit'>Next step</Button>}
+				{active < NUM_STEPS && (
+					<Button type='submit'>
+						{active + 1 === NUM_STEPS ? 'Submit' : 'Next step'}
+					</Button>
+				)}
 			</Group>
 		</Box>
 	);

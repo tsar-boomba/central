@@ -2,7 +2,7 @@ use actix_web::{delete, get, post, put, web, HttpResponse};
 use bcrypt::hash;
 use diesel::prelude::*;
 use models::types::Role;
-use models::{Account, NewUser, User, Model};
+use models::{Account, Model, NewUser, User};
 use payments_lib::routes::create_usage_record;
 
 use crate::{
@@ -51,10 +51,20 @@ async fn create(
     let new_user = new_user.into_inner();
     let hashed_pass =
         web::block(move || hash(new_user.password.clone(), bcrypt::DEFAULT_COST)).await??;
-    let with_hash = NewUser {
-        password: hashed_pass,
-        role: Role::User,
-        ..new_user
+    // If req came from user, use their account id instead of whatever they set
+    let with_hash = if let Some(req_account_id) = jwt.map(|jwt| jwt.account_id) {
+        NewUser {
+            password: hashed_pass,
+            role: Role::User,
+            account_id: req_account_id,
+            ..new_user
+        }
+    } else {
+        NewUser {
+            password: hashed_pass,
+            role: Role::User,
+            ..new_user
+        }
     };
 
     let owner_id = with_hash.account_id.clone();

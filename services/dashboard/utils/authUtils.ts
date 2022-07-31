@@ -1,8 +1,12 @@
 import { User } from '@/types/User';
-import { GetServerSideProps, GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
+import { GetServerSideProps, GetServerSidePropsResult } from 'next';
 import { api } from './apiHelpers';
 
-export const isAuthed = async ({ req }: GetServerSidePropsContext) => {
+export const isAuthed = async ({
+	req,
+}: {
+	req: { cookies: { [key: string]: string | undefined } };
+}) => {
 	return new Promise<User | undefined>((resolve) =>
 		fetch(api('verify'), {
 			headers: { Cookie: `at=${req.cookies.at}` },

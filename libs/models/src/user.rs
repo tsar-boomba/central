@@ -5,6 +5,7 @@ macro_rules! user_models {
         child_model! {
             i32, NaiveDateTime, "users", NewUser, $parent,
             User {
+                #[serde(default)]
                 account_id: String,
                 username: String,
                 first_name: String,

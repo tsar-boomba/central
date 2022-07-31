@@ -1,6 +1,5 @@
 import Layout from '@/components/Layout';
 import type { AppContext, AppInitialProps, AppProps } from 'next/app';
-import { useRouter } from 'next/router';
 import { useState, useMemo, ReactNode } from 'react';
 import Head from 'next/head';
 import {
@@ -12,12 +11,14 @@ import {
 	MantineThemeOverride,
 } from '@mantine/core';
 import { ModalsProvider } from '@mantine/modals';
-import { getCookie, setCookie } from 'ez-cookies';
+import { getCookie, parse, setCookie } from 'ez-cookies';
 import App from 'next/app';
 import { NotificationsProvider } from '@/components/NotificationsProvider';
 import { ColorProvider } from '@/components/ColorProvider';
 import { UserProvider } from '@/components/UserProvider';
 import { Spotlight } from '@/components/Spotlight';
+import { isAuthed } from '../utils/authUtils';
+import { User } from '../types/User';
 
 interface _App<P = {}> {
 	(props: AppProps & P): ReactNode;
@@ -43,13 +44,15 @@ const noLayoutPaths: string[] = [];
 const MyApp: _App<{
 	colorScheme: ColorScheme;
 	primaryColor: DefaultMantineColor;
+	user?: User;
 }> = ({
 	Component,
 	pageProps,
+	router,
+	user,
 	colorScheme: initialColorScheme,
 	primaryColor: initialPrimaryColor,
 }) => {
-	const router = useRouter();
 	const isNoLayout = noLayoutPaths.includes(router.pathname);
 
 	const [primaryColor, _setPrimaryColor] = useState(initialPrimaryColor);
@@ -88,7 +91,7 @@ const MyApp: _App<{
 						<ModalsProvider>
 							<NotificationsProvider>
 								<Spotlight>
-									<UserProvider>
+									<UserProvider fallback={user}>
 										{!isNoLayout ? (
 											<Layout>
 												<Component {...pageProps} />
@@ -109,9 +112,11 @@ const MyApp: _App<{
 
 MyApp.getInitialProps = async (appCtx) => {
 	const appProps = await App.getInitialProps(appCtx);
+	const cookies = parse(appCtx.ctx.req?.headers.cookie || '');
 
 	return {
 		...appProps,
+		user: await isAuthed({ req: { cookies } }),
 		colorScheme: (getCookie('colorScheme', { req: appCtx.ctx.req }) || 'light') as ColorScheme,
 		primaryColor: getCookie('primaryColor', { req: appCtx.ctx.req }) || 'orange',
 	};

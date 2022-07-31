@@ -50,6 +50,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(auth::middleware::Authorize)
             .wrap(middleware::Logger::default())
             .wrap(cors)
+            .service(register)
             .configure(auth::routes::init_routes)
             .configure(accounts::routes::init_routes)
             .configure(users::routes::init_routes)
@@ -112,7 +113,8 @@ async fn register(data: Json<RegisterBody>) -> Result<HttpResponse, ApiError> {
 
         let with_hash = models::NewUser {
             password: bcrypt::hash(data.user.password, bcrypt::DEFAULT_COST)?,
-            role: models::types::Role::User,
+            role: models::types::Role::Owner,
+            account_id: account.id.clone(),
             ..data.user
         };
         let user: models::User = diesel::insert_into(models::users::table)

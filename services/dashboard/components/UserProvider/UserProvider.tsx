@@ -2,19 +2,11 @@ import { api } from '@/utils/apiHelpers';
 import fetcher from '@/utils/swrFetcher';
 import { User } from '@/types/User';
 import { useRouter } from 'next/router';
-import {
-	createContext,
-	Dispatch,
-	PropsWithChildren,
-	SetStateAction,
-	useContext,
-	useState,
-} from 'react';
+import { createContext, ReactNode, useContext } from 'react';
 import useSWR, { KeyedMutator } from 'swr';
 
 interface UserContextValue {
 	user: User | undefined;
-	setFallback: Dispatch<SetStateAction<User | undefined>>;
 	mutate: KeyedMutator<User>;
 	error: any;
 	isLoading: boolean;
@@ -23,7 +15,6 @@ interface UserContextValue {
 
 const UserContext = createContext<UserContextValue>({
 	user: undefined,
-	setFallback: () => {},
 	mutate: () => Promise.resolve(undefined),
 	error: undefined,
 	isLoading: false,
@@ -32,10 +23,14 @@ const UserContext = createContext<UserContextValue>({
 
 const publicPaths = ['/login', '/register'];
 
-const UserProvider: React.FC<PropsWithChildren<unknown>> = ({ children }) => {
+interface Props {
+	children: ReactNode;
+	fallback?: User;
+}
+
+const UserProvider = ({ children, fallback }: Props) => {
 	const router = useRouter();
 	const isPublic = publicPaths.includes(router.pathname);
-	const [fallback, setFallback] = useState<User | undefined>(undefined);
 	const { data, error, isLoading, isValidating, mutate } = useSWR<User>(
 		!isPublic ? api('verify') : null,
 		fetcher,
@@ -52,16 +47,12 @@ const UserProvider: React.FC<PropsWithChildren<unknown>> = ({ children }) => {
 	}
 
 	return (
-		<UserContext.Provider
-			value={{ user: data, mutate, error, isLoading, isValidating, setFallback }}
-		>
+		<UserContext.Provider value={{ user: data, mutate, error, isLoading, isValidating }}>
 			{children}
 		</UserContext.Provider>
 	);
 };
 
 export const useUser = () => useContext(UserContext);
-
-export const useSetFallbackUser = (user: User | undefined) => useUser().setFallback(user);
 
 export default UserProvider;
