@@ -15,7 +15,7 @@ const SubscribeForm = () => {
 		}
 
 		const clientSecret = new URLSearchParams(window.location.search).get(
-			'payment_intent_client_secret',
+			'setup_intent_client_secret',
 		);
 
 		if (!clientSecret) {
@@ -55,7 +55,7 @@ const SubscribeForm = () => {
 			elements,
 			confirmParams: {
 				// Make sure to change this to your payment completion page
-				return_url: 'http://localhost:3000',
+				return_url: 'http://localhost:3000/subscribe',
 			},
 		});
 
