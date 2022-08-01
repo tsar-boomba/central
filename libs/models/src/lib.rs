@@ -18,7 +18,7 @@ pub use instance::model::*;
 pub use instance::schema::*;
 pub mod types;
 
-pub trait Model<Id, New, Err> {
+pub trait Model<Id, New, Up, Err> {
     fn find_all() -> Result<Vec<Self>, Err>
     where
         Self: Sized;
@@ -31,7 +31,7 @@ pub trait Model<Id, New, Err> {
     where
         Self: Sized;
 
-    fn update(target: Id, new_vals: New) -> Result<Self, Err>
+    fn update(target: Id, new_vals: Up) -> Result<Self, Err>
     where
         Self: Sized;
 

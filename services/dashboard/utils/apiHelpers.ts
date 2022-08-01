@@ -28,6 +28,7 @@ export const callApi = ({
 	const response = fetch(api(route), {
 		method,
 		body: JSON.stringify(body),
+		mode: 'cors',
 		credentials: 'include',
 		headers: {
 			'Content-Type': 'application/json',

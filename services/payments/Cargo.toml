@@ -9,8 +9,9 @@ edition = "2021"
 axum = "0.5"
 tokio = { version = "1.18", features = ["full"] }
 hyper = { version = "0.14", features = ["full"] }
-async-stripe = { version = "0.15", default-features = false, features = ["runtime-tokio-hyper", "billing", "webhook-events", "checkout", "connect"] }
+async-stripe = { git = "https://github.com/tsar-boomba/async-stripe", default-features = false, features = ["runtime-tokio-hyper", "billing", "webhook-events", "checkout", "connect"] }
 tower = { version = "0.4", features = ["make"] }
+tower-http = { version = "0.3", features = ["cors", "trace"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 dotenv = "0.15.0"
@@ -22,6 +23,7 @@ lazy_static = "1.4"
 log = "0.4"
 chrono = { version = "0.4", features = ["serde"] }
 models = { path = "../../libs/models" }
+auth = { path = "../../libs/auth", features = ["axum"] }
 
 [lib]
 name = "payments_lib"

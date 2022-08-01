@@ -266,8 +266,7 @@ dependencies = [
 [[package]]
 name = "async-stripe"
 version = "0.15.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "218899c49b60727fcc0041f2823f9ee011419d1a485d1ee2cb784acf520898e7"
+source = "git+https://github.com/tsar-boomba/async-stripe#75ac6fe16de05cfbac1b8ac5be9f5c8635c6f4c3"
 dependencies = [
  "chrono",
  "futures-util",
@@ -306,6 +305,16 @@ dependencies = [
  "hermit-abi",
  "libc",
  "winapi",
+]
+
+[[package]]
+name = "auth"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "axum",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -562,6 +571,7 @@ dependencies = [
  "actix-cors",
  "actix-http",
  "actix-web",
+ "auth",
  "bcrypt",
  "chrono",
  "diesel",
@@ -821,6 +831,7 @@ dependencies = [
 name = "gateway"
 version = "0.1.0"
 dependencies = [
+ "auth",
  "axum",
  "dotenv",
  "env_logger",
@@ -834,6 +845,7 @@ dependencies = [
  "serde_json",
  "tokio",
  "tower",
+ "tower-http",
  "tracing",
  "tracing-subscriber",
 ]
@@ -1445,6 +1457,7 @@ name = "payments"
 version = "0.1.0"
 dependencies = [
  "async-stripe",
+ "auth",
  "axum",
  "chrono",
  "dotenv",
@@ -1458,6 +1471,7 @@ dependencies = [
  "serde_json",
  "tokio",
  "tower",
+ "tower-http",
  "tracing",
  "tracing-subscriber",
 ]
@@ -2125,6 +2139,7 @@ dependencies = [
  "tower",
  "tower-layer",
  "tower-service",
+ "tracing",
 ]
 
 [[package]]

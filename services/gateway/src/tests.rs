@@ -10,7 +10,7 @@ use axum::{
 use hyper::{body, Body, Method, Request, StatusCode};
 use serde_json::from_slice;
 
-use crate::{app, services::crud, Client};
+use crate::{app, Client};
 
 lazy_static! {
     static ref INITIATED: Arc<Mutex<bool>> = Arc::new(Mutex::new(false));
@@ -41,14 +41,13 @@ async fn mock_crud() {
         .route(
             "/verify",
             get(|| async {
-                Json(crud::User {
-                    create_perms: vec![],
-                    update_perms: vec![],
-                    delete_perms: vec![],
+                Json(auth::ReqUser {
+                    id: 10,
+                    account_id: "account_id".into(),
                 })
             }),
         )
-        .route("/users", get(|| async { Json::<Vec<crud::User>>(vec![]) }));
+        .route("/users", get(|| async { Json::<Vec<auth::ReqUser>>(vec![]) }));
 
     let addr = SocketAddr::from(test_addr.parse::<SocketAddr>().unwrap());
     println!("server listening on {}", addr);
@@ -94,7 +93,7 @@ async fn e2e() {
         .unwrap();
     let res = client.request(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::OK);
-    let body_json: Vec<crud::User> =
+    let body_json: Vec<auth::ReqUser> =
         from_slice(&body::to_bytes(res.into_body()).await.unwrap()).unwrap();
 
     assert_eq!(body_json, vec![]);
@@ -106,15 +105,14 @@ async fn e2e() {
         .await
         .unwrap();
     assert_eq!(res.status(), StatusCode::OK);
-    let body_json: crud::User =
+    let body_json: auth::ReqUser =
         from_slice(&body::to_bytes(res.into_body()).await.unwrap()).unwrap();
 
     assert_eq!(
         body_json,
-        crud::User {
-            create_perms: vec![],
-            delete_perms: vec![],
-            update_perms: vec![]
+        auth::ReqUser {
+            id: 10,
+            account_id: "account_id".into()
         }
     );
 
@@ -123,6 +121,7 @@ async fn e2e() {
     let req = Request::builder()
         .method(Method::POST)
         .uri("http://localhost:4001/payments/webhooks")
+        .header("Cookie", "noop=noop")
         .body(Body::empty())
         .unwrap();
     let res = client.request(req).await.unwrap();

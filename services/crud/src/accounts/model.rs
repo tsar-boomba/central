@@ -1,10 +1,10 @@
 use diesel::prelude::*;
-use models::{Account, Model, NewAccount};
+use models::{Account, Model, NewAccount, UpdateAccount};
 use models::accounts::dsl::*;
 
 use crate::{api_error::ApiError, db, ID_SIZE};
 
-impl Model<String, NewAccount, ApiError> for Account {
+impl Model<String, NewAccount, UpdateAccount, ApiError> for Account {
     fn find_all() -> Result<Vec<Self>, ApiError> {
         let conn = db::connection()?;
         let result = accounts.load::<Self>(&conn)?;
@@ -32,7 +32,7 @@ impl Model<String, NewAccount, ApiError> for Account {
         Ok(result)
     }
 
-    fn update(target: String, new_vals: NewAccount) -> Result<Self, ApiError> {
+    fn update(target: String, new_vals: UpdateAccount) -> Result<Self, ApiError> {
         let conn = db::connection()?;
         let result = diesel::update(accounts)
             .filter(id.eq(target))

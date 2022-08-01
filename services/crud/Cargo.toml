@@ -30,6 +30,7 @@ bcrypt = "0.13"
 lazy_static = "1.4"
 log = "0.4"
 models = { path = "../../libs/models", features = ["diesel"] }
+auth = { path = "../../libs/auth", features = ["actix"] }
 payments = { path = "../payments" }
 
 [dev-dependencies]

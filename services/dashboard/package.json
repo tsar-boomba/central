@@ -20,6 +20,8 @@
 		"@mantine/notifications": "5.0.2",
 		"@mantine/spotlight": "5.0.2",
 		"@next/bundle-analyzer": "12.2.3",
+		"@stripe/react-stripe-js": "^1.10.0",
+		"@stripe/stripe-js": "^1.34.0",
 		"ez-cookies": "0.1.0",
 		"next": "12.2.3",
 		"react": "18.0.0",

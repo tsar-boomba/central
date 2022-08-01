@@ -1,6 +1,5 @@
 use std::future::{ready, Ready};
 
-use actix_web::cookie::Cookie;
 use actix_web::dev::{self, ServiceRequest, ServiceResponse};
 use actix_web::dev::{Service, Transform};
 use actix_web::{Error, HttpMessage};
@@ -43,15 +42,12 @@ where
     dev::forward_ready!(service);
 
     fn call(&self, request: ServiceRequest) -> Self::Future {
+        let user = request.headers().get("user");
         // Check if token
-        let authed_token = super::verify(
-            &request
-                .cookie("at")
-                .unwrap_or(Cookie::new("at", ""))
-                .value()
-                .into(),
-        )
-        .ok();
+        let authed_token = auth::extract(
+            user.map(|v| v.to_str().unwrap().to_string())
+                .unwrap_or_default(),
+        );
 
         // add claims into request extensions if they are there
         request.extensions_mut().insert(authed_token);

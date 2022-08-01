@@ -78,14 +78,17 @@ const Spotlight: React.FC<PropsWithChildren<unknown>> = ({ children }) => {
 			{
 				title: 'Instances',
 				icon: <CgDatabase size={24} />,
-				onTrigger: () => router.push('/load-status'),
-				href: 'load-status',
+				onTrigger: () => router.push('/instances'),
+				href: 'instances',
 			},
 			{
 				title: 'Users',
 				icon: <CgUser size={24} />,
-				onTrigger: () => router.push('/records/loads'),
-				href: '/records/loads',
+				onTrigger: () => {
+					console.log('spotlight trigered');
+					router.push('/users');
+				},
+				href: '/users',
 			},
 		],
 		[],
