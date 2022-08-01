@@ -1,7 +1,7 @@
 macro_rules! instance_models {
     ($parent:ident) => {
         child_model! {
-            String, NaiveDateTime, "instances", NewInstance, "sever gen", $parent,
+            String, NaiveDateTime, "instances", NewInstance, UpdateInstance, "sever gen", $parent,
             Instance {
                 account_id: String,
                 db_url: String,

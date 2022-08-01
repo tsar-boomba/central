@@ -6,7 +6,7 @@
 #[macro_export]
 macro_rules! model {
 	(
-		$id_type:ty, $t_stamp_type:ty, $table_name:tt, $new_name:ident
+		$id_type:ty, $t_stamp_type:ty, $table_name:tt, $new_name:ident, $up_name:ident,
 		$(#[$meta:meta])*
 		$struct_name:ident {
 			$(
@@ -29,8 +29,8 @@ macro_rules! model {
 			)*
 		}
 
-		#[derive(Debug, Clone, Serialize, Deserialize, AsChangeset, Insertable)]
-		#[cfg_attr(feature = "diesel", derive(AsChangeset, Insertable))]
+		#[derive(Debug, Clone, Serialize, Deserialize, Insertable)]
+		#[cfg_attr(feature = "diesel", derive(Insertable))]
 		#[serde(rename_all = "camelCase")]
 		#[cfg_attr(feature = "diesel", table_name=$table_name)]
 		pub struct $new_name {
@@ -39,10 +39,20 @@ macro_rules! model {
 				pub $field_name: $field_type,
 			)*
 		}
+
+		#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+		#[cfg_attr(feature = "diesel", derive(AsChangeset))]
+		#[cfg_attr(feature = "diesel", table_name=$table_name)]
+		pub struct $up_name {
+			$(
+				$(#[$field_meta])*
+				pub $field_name: Option<$field_type>,
+			)*
+		}
 	};
 	// For models which use the nanoid instead of db generating
 	(
-		$id_type:ty, $t_stamp_type:ty, $table_name:tt, $new_name:ident, $server_gen_id:tt,
+		$id_type:ty, $t_stamp_type:ty, $table_name:tt, $new_name:ident, $up_name:ident, $server_gen_id:tt,
 		$(#[$meta:meta])*
 		$struct_name:ident {
 			$(
@@ -66,7 +76,7 @@ macro_rules! model {
 		}
 
 		#[derive(Debug, Clone, Serialize, Deserialize)]
-		#[cfg_attr(feature = "diesel", derive(AsChangeset, Insertable))]
+		#[cfg_attr(feature = "diesel", derive(Insertable))]
 		#[cfg_attr(feature = "diesel", table_name=$table_name)]
 		#[serde(rename_all = "camelCase")]
 		pub struct $new_name {
@@ -75,6 +85,16 @@ macro_rules! model {
 			$(
 				$(#[$field_meta])*
 				pub $field_name: $field_type,
+			)*
+		}
+
+		#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+		#[cfg_attr(feature = "diesel", derive(AsChangeset))]
+		#[cfg_attr(feature = "diesel", table_name=$table_name)]
+		pub struct $up_name {
+			$(
+				$(#[$field_meta])*
+				pub $field_name: Option<$field_type>,
 			)*
 		}
 	}
@@ -83,7 +103,7 @@ macro_rules! model {
 #[macro_export]
 macro_rules! child_model {
 	(
-		$id_type:ty, $t_stamp_type:ty, $table_name:tt, $new_name:ident, $parent:ident,
+		$id_type:ty, $t_stamp_type:ty, $table_name:tt, $new_name:ident, $up_name:ident, $parent:ident,
 		$(#[$meta:meta])*
 		$struct_name:ident {
 			$(
@@ -109,7 +129,7 @@ macro_rules! child_model {
 		}
 
 		#[derive(Debug, Clone, Serialize, Deserialize)]
-		#[cfg_attr(feature = "diesel", derive(AsChangeset, Insertable))]
+		#[cfg_attr(feature = "diesel", derive(Insertable))]
 		#[serde(rename_all = "camelCase")]
 		#[cfg_attr(feature = "diesel", table_name=$table_name)]
 		pub struct $new_name {
@@ -118,10 +138,20 @@ macro_rules! child_model {
 				pub $field_name: $field_type,
 			)*
 		}
+
+		#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+		#[cfg_attr(feature = "diesel", derive(AsChangeset))]
+		#[cfg_attr(feature = "diesel", table_name=$table_name)]
+		pub struct $up_name {
+			$(
+				$(#[$field_meta])*
+				pub $field_name: Option<$field_type>,
+			)*
+		}
 	};
 	// For models which use the nanoid instead of db generating
 	(
-		$id_type:ty, $t_stamp_type:ty, $table_name:tt, $new_name:ident, $server_gen_id:tt, $parent:ident,
+		$id_type:ty, $t_stamp_type:ty, $table_name:tt, $new_name:ident, $up_name:ident, $server_gen_id:tt, $parent:ident,
 		$(#[$meta:meta])*
 		$struct_name:ident {
 			$(
@@ -146,7 +176,7 @@ macro_rules! child_model {
 		}
 
 		#[derive(Debug, Clone, Serialize, Deserialize)]
-		#[cfg_attr(feature = "diesel", derive(Identifiable, AsChangeset, Insertable))]
+		#[cfg_attr(feature = "diesel", derive(Identifiable, Insertable))]
 		#[cfg_attr(feature = "diesel", table_name=$table_name)]
 		#[serde(rename_all = "camelCase")]
 		pub struct $new_name {
@@ -155,6 +185,16 @@ macro_rules! child_model {
 			$(
 				$(#[$field_meta])*
 				pub $field_name: $field_type,
+			)*
+		}
+
+		#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+		#[cfg_attr(feature = "diesel", derive(AsChangeset))]
+		#[cfg_attr(feature = "diesel", table_name=$table_name)]
+		pub struct $up_name {
+			$(
+				$(#[$field_meta])*
+				pub $field_name: Option<$field_type>,
 			)*
 		}
 	}

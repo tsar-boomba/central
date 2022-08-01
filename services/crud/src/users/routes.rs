@@ -1,24 +1,25 @@
 use actix_web::{delete, get, post, put, web, HttpResponse};
+use auth::{ReqUser, belongs_to_account};
 use bcrypt::hash;
 use diesel::prelude::*;
 use models::types::Role;
-use models::{Account, Model, NewUser, User};
+use models::{Account, Model, NewUser, User, UpdateUser};
 use payments_lib::routes::create_usage_record;
 
 use crate::{
-    api_error::ApiError, auth::Claim, belongs_to_account, db, json::DeleteBody, PAYMENTS_URI,
+    api_error::ApiError, db, json::DeleteBody, PAYMENTS_URI,
 };
 
 #[get("/users")]
-async fn find_all(jwt: Option<Claim>) -> Result<HttpResponse, ApiError> {
+async fn find_all(req_user: Option<ReqUser>) -> Result<HttpResponse, ApiError> {
     let users = web::block(User::find_all).await??;
 
-    let users = if let Some(jwt) = jwt {
+    let users = if let Some(req_user) = req_user {
         // if filter func returns true item will be allowed into the iterator
         // so if the account ids match or if the user is admin of site they will see the user
         users
             .into_iter()
-            .filter(|x| x.account_id == jwt.account_id || jwt.account_id == "admin")
+            .filter(|x| x.account_id == req_user.account_id || req_user.account_id == "admin")
             .collect()
     } else {
         users
@@ -28,10 +29,10 @@ async fn find_all(jwt: Option<Claim>) -> Result<HttpResponse, ApiError> {
 }
 
 #[get("/users/{id}")]
-async fn find(id: web::Path<i32>, jwt: Option<Claim>) -> Result<HttpResponse, ApiError> {
+async fn find(id: web::Path<i32>, req_user: Option<ReqUser>) -> Result<HttpResponse, ApiError> {
     let user = web::block(move || User::find_by_id(id.into_inner())).await??;
 
-    if !belongs_to_account(&jwt, &user.account_id) {
+    if !belongs_to_account(&req_user, &user.account_id) {
         return Err(ApiError::forbidden());
     }
 
@@ -41,9 +42,9 @@ async fn find(id: web::Path<i32>, jwt: Option<Claim>) -> Result<HttpResponse, Ap
 #[post("/users")]
 async fn create(
     new_user: web::Json<NewUser>,
-    jwt: Option<Claim>,
+    req_user: Option<ReqUser>,
 ) -> Result<HttpResponse, ApiError> {
-    if !belongs_to_account(&jwt, &new_user.account_id) {
+    if !belongs_to_account(&req_user, &new_user.account_id) {
         return Err(ApiError::forbidden());
     }
     use models::users::dsl::*;
@@ -52,7 +53,7 @@ async fn create(
     let hashed_pass =
         web::block(move || hash(new_user.password.clone(), bcrypt::DEFAULT_COST)).await??;
     // If req came from user, use their account id instead of whatever they set
-    let with_hash = if let Some(req_account_id) = jwt.map(|jwt| jwt.account_id) {
+    let with_hash = if let Some(req_account_id) = req_user.map(|req_user| req_user.account_id) {
         NewUser {
             password: hashed_pass,
             role: Role::User,
@@ -141,24 +142,26 @@ async fn create(
 #[put("/users/{id}")]
 async fn update(
     id: web::Path<i32>,
-    user: web::Json<NewUser>,
-    jwt: Option<Claim>,
+    user: web::Json<UpdateUser>,
+    req_user: Option<ReqUser>,
 ) -> Result<HttpResponse, ApiError> {
-    if !belongs_to_account(&jwt, &user.account_id) {
+    let id = id.into_inner();
+    let to_be_updated = web::block(move || User::find_by_id(id)).await??;
+    if !belongs_to_account(&req_user, &to_be_updated.account_id) {
         return Err(ApiError::forbidden());
     }
 
-    let user = web::block(move || User::update(id.into_inner(), user.into_inner())).await??;
+    let user = web::block(move || User::update(id, user.into_inner())).await??;
 
     Ok(HttpResponse::Ok().json(user))
 }
 
 #[delete("/users/{id}")]
-async fn delete(target: web::Path<i32>, jwt: Option<Claim>) -> Result<HttpResponse, ApiError> {
+async fn delete(target: web::Path<i32>, req_user: Option<ReqUser>) -> Result<HttpResponse, ApiError> {
     let target = target.into_inner();
 
     let user = web::block(move || User::find_by_id(target)).await??;
-    if !belongs_to_account(&jwt, &user.account_id) {
+    if !belongs_to_account(&req_user, &user.account_id) {
         return Err(ApiError::forbidden());
     }
     use models::users::dsl::*;

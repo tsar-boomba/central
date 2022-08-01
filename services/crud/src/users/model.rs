@@ -1,12 +1,12 @@
 use bcrypt::{hash, DEFAULT_COST};
 use diesel::prelude::*;
 use models::{types::Role, Model, NewUser};
-use models::User;
+use models::{User, UpdateUser};
 use models::users::dsl::*;
 
 use crate::{api_error::ApiError, db};
 
-impl Model<i32, NewUser, ApiError> for User {
+impl Model<i32, NewUser, UpdateUser, ApiError> for User {
     fn find_all() -> Result<Vec<Self>, ApiError> {
         let conn = db::connection()?;
         let result = users.load::<Self>(&conn)?;
@@ -35,7 +35,7 @@ impl Model<i32, NewUser, ApiError> for User {
         Ok(result)
     }
 
-    fn update(target: i32, new_vals: NewUser) -> Result<Self, ApiError> {
+    fn update(target: i32, new_vals: UpdateUser) -> Result<Self, ApiError> {
         let conn = db::connection()?;
         let result = diesel::update(users.filter(id.eq(target)))
             .set(new_vals)

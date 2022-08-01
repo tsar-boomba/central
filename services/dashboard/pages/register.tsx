@@ -116,7 +116,6 @@ const Register = () => {
 			user: active === 1 ? userValidation : undefined,
 		},
 	});
-	console.log(form.values);
 
 	// make sure password is strong
 	const checks = requirements.map((requirement, index) => (

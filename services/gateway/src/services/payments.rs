@@ -1,9 +1,9 @@
 use std::{convert::Infallible, net::IpAddr};
 
-use axum::http::{Request, Response};
+use axum::http::{Request, Response, HeaderValue};
 use hyper::{Body, StatusCode};
 
-use crate::{proxy_call, Client};
+use crate::{proxy_call, Client, authorize_req, error_body};
 
 pub const PATH_BASE: &str = "/payments";
 
@@ -17,13 +17,28 @@ lazy_static! {
 
 pub async fn proxy(
     client_ip: IpAddr,
-    _client: Client,
-    req: Request<Body>,
+    client: Client,
+    mut req: Request<Body>,
     path: String,
 ) -> Result<Response<Body>, Infallible> {
     if !PRIVATE_PATHS.contains(&path.as_str()) {
-		// Allow reqs from outside
-        Ok(proxy_call(client_ip, URI.as_str(), req).await)
+		return match authorize_req(&client, &req).await {
+            // request was authed
+            Some(user) => {
+                req.headers_mut().append(
+                    "user",
+                    HeaderValue::from_str(&serde_json::to_string(&user).unwrap()).unwrap(),
+                );
+                Ok(proxy_call(client_ip, URI.as_str(), req).await)
+            },
+            // request was not authed
+            _ => Ok(Response::builder()
+                .status(StatusCode::UNAUTHORIZED)
+                .body(Body::from(error_body(
+                    "You are not authorized! Login before accessing this resource.",
+                )))
+                .unwrap()),
+        };
     } else {
 		// Only reqs from internal services (crud, instance-deploy, etc.) allowed
         Ok(Response::builder()

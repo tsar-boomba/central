@@ -6,10 +6,13 @@ import {
 	Stack,
 	Text,
 	ThemeIcon,
+	Transition,
 	UnstyledButton,
 } from '@mantine/core';
 import Link from 'next/link';
-import { CgDatabase, CgUser } from 'react-icons/cg';
+import { CgBolt, CgDatabase, CgUser } from 'react-icons/cg';
+import GradientCard from '../components/GradientCard';
+import { useIsSubbed } from '../utils/useIsSubbed';
 
 const useStyles = createStyles((theme) => {
 	const colors = theme.fn.variant({ variant: 'outline' });
@@ -33,11 +36,23 @@ const useStyles = createStyles((theme) => {
 			fontWeight: 600,
 			fontSize: 20,
 		},
+
+		subButton: {
+			display: 'flex',
+			alignItems: 'center',
+			color: colors.color,
+			backgroundColor: colors.background,
+			padding: theme.spacing.xl,
+			flex: 1,
+			borderRadius: theme.radius.sm,
+			...theme.fn.focusStyles(),
+		},
 	};
 });
 
 const Home = () => {
-	const { classes } = useStyles();
+	const { classes, theme } = useStyles();
+	const isSubbed = useIsSubbed();
 
 	return (
 		<>
@@ -54,30 +69,66 @@ const Home = () => {
 				</Text>
 			</Container>
 			<Container size='sm' mt={64}>
-				<Group position='center' align='stretch'>
-					<Link href='/instances' passHref>
-						<UnstyledButton component='a' className={classes.control}>
-							<ThemeIcon radius='xl' size={64} variant='light'>
-								<CgDatabase size={32} />
-							</ThemeIcon>
-							<Stack spacing={0} ml='md'>
-								<Text className={classes.controlTitle}>Instances</Text>
-								<Text color='dimmed'>Manage your instances and their settings</Text>
-							</Stack>
-						</UnstyledButton>
-					</Link>
-					<Link href='/users' passHref>
-						<UnstyledButton component='a' className={classes.control}>
-							<ThemeIcon radius='xl' size={64} variant='light'>
-								<CgUser size={32} />
-							</ThemeIcon>
-							<Stack spacing={0} ml='md'>
-								<Text className={classes.controlTitle}>Users</Text>
-								<Text color='dimmed'>Manage your users and their information</Text>
-							</Stack>
-						</UnstyledButton>
-					</Link>
-				</Group>
+				<Stack align='center'>
+					<Group position='center' align='stretch'>
+						<Link href='/instances' passHref>
+							<UnstyledButton component='a' className={classes.control}>
+								<ThemeIcon radius='xl' size={64} variant='light'>
+									<CgDatabase size={32} />
+								</ThemeIcon>
+								<Stack spacing={0} ml='md'>
+									<Text className={classes.controlTitle}>Instances</Text>
+									<Text color='dimmed'>
+										Manage your instances and their settings
+									</Text>
+								</Stack>
+							</UnstyledButton>
+						</Link>
+						<Link href='/users' passHref>
+							<UnstyledButton component='a' className={classes.control}>
+								<ThemeIcon radius='xl' size={64} variant='light'>
+									<CgUser size={32} />
+								</ThemeIcon>
+								<Stack spacing={0} ml='md'>
+									<Text className={classes.controlTitle}>Users</Text>
+									<Text color='dimmed'>
+										Manage your users and their information
+									</Text>
+								</Stack>
+							</UnstyledButton>
+						</Link>
+					</Group>
+					<Transition mounted={!isSubbed} transition='fade' duration={500}>
+						{(styles) => (
+							<Link href='/subscribe' passHref>
+								<GradientCard
+									sx={{ color: 'white', maxWidth: 540 }}
+									style={styles}
+									className={classes.subButton}
+									component='a'
+								>
+									<ThemeIcon radius='xl' size={64} color='white'>
+										<CgBolt
+											color={
+												theme.colors[theme.primaryColor][
+													theme.fn.primaryShade()
+												]
+											}
+											size={32}
+										/>
+									</ThemeIcon>
+									<Stack spacing={0} ml='md'>
+										<Text className={classes.controlTitle}>Subscribe</Text>
+										<Text color='white'>
+											Add a payment method and begin managing your loads and
+											customers more efficiently.
+										</Text>
+									</Stack>
+								</GradientCard>
+							</Link>
+						)}
+					</Transition>
+				</Stack>
 			</Container>
 		</>
 	);

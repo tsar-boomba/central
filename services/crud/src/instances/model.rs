@@ -1,10 +1,10 @@
 use diesel::prelude::*;
-use models::{Instance, Model, NewInstance};
+use models::{Instance, Model, NewInstance, UpdateInstance};
 use models::instances::dsl::*;
 
 use crate::{api_error::ApiError, db, ID_SIZE};
 
-impl Model<String, NewInstance, ApiError> for Instance {
+impl Model<String, NewInstance, UpdateInstance, ApiError> for Instance {
     fn find_all() -> Result<Vec<Self>, ApiError> {
         let conn = db::connection()?;
         let result = instances.load::<Self>(&conn)?;
@@ -32,7 +32,7 @@ impl Model<String, NewInstance, ApiError> for Instance {
         Ok(result)
     }
 
-    fn update(target: String, new_vals: NewInstance) -> Result<Self, ApiError> {
+    fn update(target: String, new_vals: UpdateInstance) -> Result<Self, ApiError> {
         let conn = db::connection()?;
         let result = diesel::update(instances)
             .filter(id.eq(target))

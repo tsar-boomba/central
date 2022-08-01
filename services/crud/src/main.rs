@@ -21,10 +21,8 @@ mod accounts;
 mod instances;
 mod users;
 
-use actix_cors::Cors;
 use actix_web::{middleware, post, web::Json, App, HttpResponse, HttpServer};
 use api_error::ApiError;
-use auth::Claim;
 use dotenv::dotenv;
 use serde::{Deserialize, Serialize};
 
@@ -41,15 +39,9 @@ async fn main() -> std::io::Result<()> {
     info!("Starting HTTP server at http://localhost:8080");
 
     HttpServer::new(move || {
-        let cors = Cors::default()
-            .allow_any_origin()
-            .allow_any_header()
-            .allow_any_method()
-            .supports_credentials();
         App::new()
             .wrap(auth::middleware::Authorize)
             .wrap(middleware::Logger::default())
-            .wrap(cors)
             .service(register)
             .configure(auth::routes::init_routes)
             .configure(accounts::routes::init_routes)
@@ -59,18 +51,6 @@ async fn main() -> std::io::Result<()> {
     .bind(("127.0.0.1", 8080))?
     .run()
     .await
-}
-
-/// Make sure user is requesting something within their account
-pub fn belongs_to_account(jwt: &Option<Claim>, expected: &str) -> bool {
-    if let Some(jwt) = jwt {
-        // is true if user and expected id match or user is in admin account
-        jwt.account_id == expected || jwt.account_id == "admin"
-    } else {
-        // if no jwt just let it through
-        // means the request came from internally
-        true
-    }
 }
 
 lazy_static! {

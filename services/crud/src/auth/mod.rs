@@ -1,15 +1,11 @@
 pub mod middleware;
 pub mod routes;
 
-use actix_web::{dev, FromRequest, HttpMessage, HttpRequest};
 use chrono::prelude::*;
-use futures_util::future::{ready, Ready};
 use hmac::{Hmac, Mac};
 use jwt::{SignWithKey, VerifyWithKey};
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
-
-use crate::api_error::ApiError;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -43,37 +39,22 @@ impl Claim {
     }
 }
 
-impl FromRequest for Claim {
-    type Error = ApiError;
-    type Future = Ready<Result<Self, Self::Error>>;
-
-    fn from_request(req: &HttpRequest, _payload: &mut dev::Payload) -> Self::Future {
-        let value = req.extensions().get::<Option<Self>>().cloned().unwrap();
-
-        // convert to result and return
-        ready(value.ok_or(ApiError {
-            status_code: 200,
-            message: "".into(),
-        }))
-    }
-}
-
-fn get_secret() -> Hmac<Sha256> {
-    Hmac::new_from_slice(
+lazy_static! {
+    static ref JWT_SECRET: Hmac<Sha256> = Hmac::new_from_slice(
         std::env::var("JWT_SECRET")
             .expect("No JWT_SECRET env variable!")
             .as_bytes(),
     )
-    .expect("Failed to encode secret")
+    .expect("Failed to encode secret");
 }
 
 fn sign(id: i32, account_id: String) -> Result<String, jwt::Error> {
     let claim = Claim::new(id, account_id);
-    claim.sign_with_key(&get_secret())
+    claim.sign_with_key(&*JWT_SECRET)
 }
 
 fn verify(token: &String) -> Result<Claim, jwt::Error> {
-    let result: Result<Claim, jwt::Error> = token.verify_with_key(&get_secret());
+    let result: Result<Claim, jwt::Error> = token.verify_with_key(&*JWT_SECRET);
     match result {
         Ok(claim) => {
             if Utc::now().timestamp_millis() > claim.exp {

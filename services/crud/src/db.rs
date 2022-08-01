@@ -56,6 +56,7 @@ pub fn init() {
             short_name: "admin".into(),
             zip_code: "admin".into(),
             stripe_id: None,
+            sub_id: None,
             state: "nc".into(),
         })
         .on_conflict_do_nothing()

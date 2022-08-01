@@ -1,4 +1,4 @@
-use models::{NewInstance, Instance, instances::dsl::*};
+use models::{NewInstance, Instance, instances::dsl::*, UpdateInstance};
 use crate::{db, json::DeleteBody, tests, ID_SIZE};
 use actix_web::test;
 use diesel::prelude::*;
@@ -129,7 +129,7 @@ async fn post() {
 
 #[actix_web::test]
 async fn put() {
-    let (default1, default2) = defaults();
+    let (default1, _default2) = defaults();
 
     let app = tests::init(super::routes::init_routes).await;
     let conn = db::connection().unwrap();
@@ -142,7 +142,7 @@ async fn put() {
     // update record 1, to be record 2's values
     let req = test::TestRequest::put()
         .uri(&format!("/instances/{}", result1.id))
-        .set_json(&default2)
+        .set_json(&UpdateInstance { city: Some("austin".into()), ..Default::default() })
         .to_request();
 
     // call route
@@ -156,7 +156,7 @@ async fn put() {
         .expect("Failed to get instance");
 
     // make sure record 1 got updated
-    compare(&result1, &default2);
+    assert_eq!(result1.city, "austin");
 
     remove(result1.id, &conn);
 }

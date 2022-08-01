@@ -72,6 +72,7 @@ pub fn test_account() {
             short_name: "test".into(),
             zip_code: "28282".into(),
             stripe_id: Some("something".into()),
+            sub_id: Some("totally_subbed".into()),
             state: "nc".into(),
         })
         .on_conflict_do_nothing()

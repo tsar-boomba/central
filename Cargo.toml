@@ -4,5 +4,6 @@ members = [
 	"services/crud",
 	"services/gateway",
 	"services/payments",
-	"libs/models"
+	"libs/models",
+	"libs/auth"
 ]

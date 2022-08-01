@@ -3,7 +3,7 @@ mod services;
 #[macro_use(lazy_static)]
 extern crate lazy_static;
 
-use axum::http::{Request, Response};
+use axum::http::{HeaderValue, Request, Response};
 use hyper::{
     body,
     client::HttpConnector,
@@ -28,7 +28,22 @@ async fn app(port: u16) {
         async move {
             Ok::<_, Infallible>(service_fn(move |req: Request<Body>| {
                 let client = temp_client.clone();
-                crate::handle(client_ip, client, req)
+                let res = async move {
+                    log(&req).await;
+                    match req.method() {
+                        &Method::OPTIONS => {
+                            corsify(
+                                Response::builder()
+                                    .status(StatusCode::OK)
+                                    .body(Body::empty())
+                                    .unwrap(),
+                            )
+                            .await
+                        }
+                        _ => corsify(crate::handle(client_ip, client, req).await.unwrap()).await,
+                    }
+                };
+                res
             }))
         }
     });
@@ -40,6 +55,7 @@ async fn app(port: u16) {
 
 #[tokio::main]
 async fn main() {
+    std::env::set_var("RUST_LOG", "debug");
     tracing_subscriber::fmt::init();
     app(4000).await
 }
@@ -109,24 +125,56 @@ pub async fn proxy_call(
     }
 }
 
-pub async fn authorize_req(client: &Client, req: &Request<Body>) -> Option<crud::User> {
+pub async fn authorize_req(client: &Client, req: &Request<Body>) -> Option<auth::ReqUser> {
     let req_cookies = req.headers().get("Cookie");
 
-    if let Some(req_cookies) = req_cookies {
-        let auth_req = Request::builder()
-            .method(Method::GET)
-            .uri(format!("{}/verify", crud::URI.as_str()))
-            .header("Cookie", req_cookies)
-            .body(Body::empty())
-            .unwrap();
+    let req_cookies = req_cookies?;
+    let auth_req = Request::builder()
+        .method(Method::GET)
+        .uri(crud::URI.clone() + "/verify")
+        .header("Cookie", req_cookies)
+        .body(Body::empty())
+        .unwrap();
 
-        return match client.request(auth_req).await {
-            Ok(res) => serde_json::from_slice(&body::to_bytes(res.into_body()).await.unwrap()).ok(),
-            _ => None,
-        };
-    } else {
-        return None;
+    match client.request(auth_req).await {
+        Ok(res) => {
+            let body = body::to_bytes(res.into_body()).await.unwrap();
+            println!("{:?}", body);
+            let opt = serde_json::from_slice(&body);
+            println!("{:?}", opt);
+            opt.ok()
+        }
+        _ => None,
     }
+}
+
+pub async fn corsify(mut res: Response<Body>) -> Result<Response<Body>, Infallible> {
+    let new_headers = res.headers_mut();
+    new_headers.append(
+        "Access-Control-Allow-Origin",
+        "http://localhost:3000".parse::<HeaderValue>().unwrap(),
+    );
+    new_headers.append(
+        "Access-Control-Allow-Headers",
+        "Cookie, Content-Type".parse::<HeaderValue>().unwrap(),
+    );
+    new_headers.append(
+        "Access-Control-Allow-Methods",
+        "POST, GET, DELETE, PUT, OPTIONS"
+            .parse::<HeaderValue>()
+            .unwrap(),
+    );
+    new_headers.append(
+        "Access-Control-Allow-Credentials",
+        "true".parse::<HeaderValue>().unwrap(),
+    );
+
+    Ok(res)
+}
+
+// TODO make better logger
+pub async fn log(req: &Request<Body>) {
+    tracing::info!("[Logger] {} {}", req.method(), req.uri());
 }
 
 pub fn error_body(message: impl Into<String>) -> String {

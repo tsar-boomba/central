@@ -1,4 +1,4 @@
-use models::{User, NewUser, users::dsl::*};
+use models::{User, NewUser, users::dsl::*, UpdateUser};
 use crate::{db, json::DeleteBody, tests};
 use actix_web::test;
 use diesel::prelude::*;
@@ -120,7 +120,7 @@ async fn post() {
 
 #[actix_web::test]
 async fn put() {
-    let (default1, default2) = defaults("users put");
+    let (default1, _default2) = defaults("users put");
 
     let app = tests::init(super::routes::init_routes).await;
     let conn = db::connection().unwrap();
@@ -135,7 +135,7 @@ async fn put() {
     // update record 1, to be record 2's values
     let req = test::TestRequest::put()
         .uri(&format!("/users/{}", result1.id))
-        .set_json(&default2)
+        .set_json(&UpdateUser { username: Some("new_username".into()), ..Default::default() })
         .to_request();
 
     // call route
@@ -149,7 +149,7 @@ async fn put() {
         .expect("Failed to get user");
 
     // make sure record 1 got updated
-    compare(&result1, &default2);
+    assert_eq!(result1.username, "new_username");
 
     remove(result1.id, &conn);
 }

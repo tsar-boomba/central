@@ -1,6 +1,6 @@
 use std::{convert::Infallible, net::IpAddr};
 
-use axum::http::{Request, Response};
+use axum::http::{HeaderValue, Request, Response};
 use hyper::{Body, StatusCode};
 use serde::{Deserialize, Serialize};
 
@@ -23,18 +23,10 @@ pub enum Resource {
     Shipper,
 }
 
-#[derive(Debug, Deserialize, Serialize, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct User {
-    pub create_perms: Vec<Resource>,
-    pub update_perms: Vec<Resource>,
-    pub delete_perms: Vec<Resource>,
-}
-
 pub async fn proxy(
     client_ip: IpAddr,
     client: Client,
-    req: Request<Body>,
+    mut req: Request<Body>,
     path: String,
 ) -> Result<Response<Body>, Infallible> {
     if PUBLIC_PATHS.contains(&path.as_str()) {
@@ -43,7 +35,13 @@ pub async fn proxy(
     } else {
         return match authorize_req(&client, &req).await {
             // request was authed
-            Some(_) => Ok(proxy_call(client_ip, URI.as_str(), req).await),
+            Some(user) => {
+                req.headers_mut().append(
+                    "user",
+                    HeaderValue::from_str(&serde_json::to_string(&user).unwrap()).unwrap(),
+                );
+                Ok(proxy_call(client_ip, URI.as_str(), req).await)
+            }
             // request was not authed
             _ => Ok(Response::builder()
                 .status(StatusCode::UNAUTHORIZED)

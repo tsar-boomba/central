@@ -1,4 +1,4 @@
-use models::{Account, NewAccount, accounts::dsl::*};
+use models::{Account, NewAccount, accounts::dsl::*, UpdateAccount};
 use crate::{db, json::DeleteBody, tests, ID_SIZE};
 use actix_web::test;
 use diesel::prelude::*;
@@ -26,6 +26,7 @@ fn defaults(test_name: String /*fk: String*/) -> (NewAccount, NewAccount) {
             phone_number: "704-805-1261".into(),
             stripe_id: Some("cust_baklakgjaslk".into()),
             state: "nc".into(),
+            sub_id: None,
         },
         NewAccount {
             id: nanoid!(ID_SIZE),
@@ -37,6 +38,7 @@ fn defaults(test_name: String /*fk: String*/) -> (NewAccount, NewAccount) {
             zip_code: "28254".into(),
             phone_number: "980-335-6090".into(),
             stripe_id: Some("cust_blizgonbop".into()),
+            sub_id: None,
             state: "south carolina".into(),
         },
     )
@@ -117,7 +119,7 @@ async fn post() {
 
 #[actix_web::test]
 async fn put() {
-    let (default1, default2) = defaults("accounts-put".into());
+    let (default1, _default2) = defaults("accounts-put".into());
 
     let app = tests::init(super::routes::init_routes).await;
     let conn = db::connection().unwrap();
@@ -130,7 +132,7 @@ async fn put() {
     // update record 1, to be record 2's values
     let req = test::TestRequest::put()
         .uri(&format!("/accounts/{}", result1.id))
-        .set_json(&default2)
+        .set_json(&UpdateAccount { email: Some("ibumbus@gmail.com".into()), ..Default::default() })
         .to_request();
 
     // call route
@@ -144,7 +146,7 @@ async fn put() {
         .expect("Failed to get account");
 
     // make sure record 1 got updated
-    compare(&result1, &default2);
+    assert_eq!(result1.email, "ibumbus@gmail.com");
 
     remove(result1.id, &conn);
 }

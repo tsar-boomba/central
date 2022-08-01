@@ -1,7 +1,7 @@
 macro_rules! account_models {
     () => {
         model! {
-            String, NaiveDateTime, "accounts", NewAccount, "server gen",
+            String, NaiveDateTime, "accounts", NewAccount, UpdateAccount, "server gen",
             Account {
                 address: String,
                 email: String,
@@ -10,8 +10,8 @@ macro_rules! account_models {
                 city: String,
                 zip_code: String,
                 phone_number: String,
-                #[serde(skip)]
                 stripe_id: Option<String>,
+                sub_id: Option<String>,
                 state: String,
             }
         }
@@ -35,6 +35,7 @@ pub mod schema {
             zip_code -> Text,
             phone_number -> Text,
             stripe_id -> Nullable<Text>,
+            sub_id -> Nullable<Text>,
             state -> Text,
         }
     }

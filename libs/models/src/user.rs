@@ -3,7 +3,7 @@
 macro_rules! user_models {
     ($parent:ident) => {
         child_model! {
-            i32, NaiveDateTime, "users", NewUser, $parent,
+            i32, NaiveDateTime, "users", NewUser, UpdateUser, $parent,
             User {
                 #[serde(default)]
                 account_id: String,
@@ -74,7 +74,7 @@ pub mod model {
         SKIP_SERIALIZE_PASS.swap(1, Ordering::SeqCst);
     }
 
-    fn skip_serialize_pass(_: &String) -> bool {
+    fn skip_serialize_pass<T>(_: T) -> bool {
         SKIP_SERIALIZE_PASS.load(Ordering::SeqCst) == 1
     }
 

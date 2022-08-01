@@ -60,7 +60,8 @@ CREATE TABLE public.accounts (
     zip_code		TEXT		NOT NULL,
     phone_number	TEXT		NOT NULL,
 	state			TEXT		NOT NULL,
-	stripe_id		TEXT
+	stripe_id		TEXT,
+	sub_id			TEXT
 );
 
 CREATE UNIQUE INDEX email_idx ON public.accounts (email);
