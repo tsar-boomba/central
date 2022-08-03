@@ -158,14 +158,13 @@ pub async fn subscribe(
         .unwrap();
 
     let res = client.request(req).await?;
-    tracing::info!("{}", res.status());
     // just need to count them not actually the data
     #[derive(Deserialize)]
-    struct Noop {
+    struct MinUser {
         pub id: i32,
     }
     let acct_users =
-        serde_json::from_slice::<Vec<Noop>>(&body::to_bytes(res.into_body()).await.unwrap())?;
+        serde_json::from_slice::<Vec<MinUser>>(&body::to_bytes(res.into_body()).await.unwrap())?;
 
     // new subs always have at least one user
     UsageRecord::create(
@@ -246,7 +245,7 @@ pub async fn create_usage_record(
     };
 
     let subscription =
-        Subscription::retrieve(&stripe, &SubscriptionId::from_str(&data.stripe_id)?, &[]).await?;
+        Subscription::retrieve(&stripe, &SubscriptionId::from_str(&data.sub_id)?, &[]).await?;
 
     let user_sub_item = subscription.items.data.iter().find(|&item| {
         if let Some(price) = item.price.as_ref() {

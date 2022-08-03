@@ -1,14 +1,17 @@
 use std::{convert::Infallible, net::IpAddr};
 
-use axum::http::{Request, Response, HeaderValue};
+use axum::http::{HeaderValue, Request, Response};
 use hyper::{Body, StatusCode};
 
-use crate::{proxy_call, Client, authorize_req, error_body};
+use crate::{authorize_req, error_body, proxy_call, Client};
 
 pub const PATH_BASE: &str = "/payments";
 
 /// Paths which can only be accessed by other services
 const PRIVATE_PATHS: [&str; 1] = ["/create-usage-record"];
+
+/// Paths which don't need to be authenticated
+const PUBLIC_PATHS: [&str; 1] = ["/webhooks"];
 
 lazy_static! {
     pub static ref URI: String =
@@ -21,8 +24,10 @@ pub async fn proxy(
     mut req: Request<Body>,
     path: String,
 ) -> Result<Response<Body>, Infallible> {
-    if !PRIVATE_PATHS.contains(&path.as_str()) {
-		return match authorize_req(&client, &req).await {
+    if PUBLIC_PATHS.contains(&path.as_str()) {
+        Ok(proxy_call(client_ip, URI.as_str(), req).await)
+    } else if !PRIVATE_PATHS.contains(&path.as_str()) {
+        return match authorize_req(&client, &req).await {
             // request was authed
             Some(user) => {
                 req.headers_mut().append(
@@ -30,7 +35,7 @@ pub async fn proxy(
                     HeaderValue::from_str(&serde_json::to_string(&user).unwrap()).unwrap(),
                 );
                 Ok(proxy_call(client_ip, URI.as_str(), req).await)
-            },
+            }
             // request was not authed
             _ => Ok(Response::builder()
                 .status(StatusCode::UNAUTHORIZED)
@@ -40,7 +45,7 @@ pub async fn proxy(
                 .unwrap()),
         };
     } else {
-		// Only reqs from internal services (crud, instance-deploy, etc.) allowed
+        // Only reqs from internal services (crud, instance-deploy, etc.) allowed
         Ok(Response::builder()
             .status(StatusCode::NOT_FOUND)
             .body(Body::from(format!(

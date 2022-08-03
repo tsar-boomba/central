@@ -4,7 +4,7 @@ pub mod create_usage_record {
 
     #[derive(Debug, Deserialize, Serialize)]
     pub struct CreateUsageRecordParams {
-        pub stripe_id: String,
+        pub sub_id: String,
         /// Should be either "instances" or "users"
         pub resource: String,
         pub number: u64,

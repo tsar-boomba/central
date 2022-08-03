@@ -15,7 +15,7 @@ pub type Client = hyper::client::Client<HttpConnector, Body>;
 #[tokio::main]
 async fn main() {
     dotenv::dotenv().ok();
-    std::env::set_var("RUST_LOG", "trace");
+    std::env::set_var("RUST_LOG", "error,info");
     tracing_subscriber::fmt::init();
 
     let http_client = Client::new();
@@ -43,11 +43,13 @@ async fn main() {
 
 lazy_static! {
     pub static ref STRIPE_KEY: String = std::env::var("STRIPE_KEY").unwrap();
+    pub static ref STRIPE_WEBHOOK_KEY: String = std::env::var("STRIPE_WEBHOOK_KEY").unwrap();
     pub static ref CRUD_URI: String =
         std::env::var("CRUD_URI").unwrap_or("http://127.0.0.1:8080".into());
     pub static ref INSTANCE_PRICE_ID: String = if STRIPE_KEY.contains("test") {
         "price_1LP8pMAMMTQqCw55f1MxzIjC".to_string()
     } else {
+        // TODO prod ids
         "".to_string()
     };
     pub static ref USER_PRICE_ID: String = if STRIPE_KEY.contains("test") {

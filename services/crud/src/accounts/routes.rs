@@ -1,7 +1,7 @@
 use actix_web::{delete, get, post, put, web, HttpResponse};
 use auth::{ReqUser, belongs_to_account};
 use diesel::prelude::*;
-use models::{Account, Model, NewAccount, UpdateAccount, User};
+use models::{Account, Model, NewAccount, UpdateAccount, User, Instance};
 
 use crate::{api_error::ApiError, db, json::DeleteBody};
 
@@ -58,6 +58,30 @@ async fn find_users(
     Ok(HttpResponse::Ok().json(account))
 }
 
+// TODO tests
+#[get("/accounts/{id}/instances")]
+async fn find_instances(
+    target: web::Path<String>,
+    req_user: Option<ReqUser>,
+) -> Result<HttpResponse, ApiError> {
+    let target = target.into_inner();
+    let for_find_to_be_found = target.clone();
+    let to_be_found = web::block(move || Account::find_by_id(for_find_to_be_found)).await??;
+    if !belongs_to_account(&req_user, &to_be_found.id) {
+        return Err(ApiError::forbidden());
+    }
+
+    use models::instances::dsl::*;
+    let account = web::block::<_, Result<Vec<Instance>, ApiError>>(move || {
+        Ok(models::instances::table
+            .filter(account_id.eq(target))
+            .get_results(&db::connection()?)?)
+    })
+    .await??;
+
+    Ok(HttpResponse::Ok().json(account))
+}
+
 #[get("/accounts/{id}/is-subbed")]
 async fn is_subbed(id: web::Path<String>, req_user: Option<ReqUser>) -> Result<HttpResponse, ApiError> {
     let account = web::block(move || Account::find_by_id(id.into_inner())).await??;
@@ -67,6 +91,19 @@ async fn is_subbed(id: web::Path<String>, req_user: Option<ReqUser>) -> Result<H
     }
 
     Ok(HttpResponse::Ok().body(account.sub_id.is_some().to_string()))
+}
+
+#[get("/accounts/by-sub/{id}")]
+async fn find_by_sub(target: web::Path<String>, req_user: Option<ReqUser>) -> Result<HttpResponse, ApiError> {
+    use models::accounts::dsl::*;
+    let conn = db::connection()?;
+    let account = web::block(move || models::accounts::table.filter(sub_id.eq(target.into_inner())).first::<Account>(&conn)).await??;
+
+    if !belongs_to_account(&req_user, &account.id) {
+        return Err(ApiError::forbidden());
+    }
+
+    Ok(HttpResponse::Ok().json(account))
 }
 
 #[post("/accounts")]
@@ -120,8 +157,10 @@ pub fn init_routes(config: &mut web::ServiceConfig) {
     config.service(find_all);
     config.service(find);
     config.service(find_users);
+    config.service(find_instances);
     config.service(create);
     config.service(update);
     config.service(delete);
     config.service(is_subbed);
+    config.service(find_by_sub);
 }

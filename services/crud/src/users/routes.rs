@@ -230,7 +230,7 @@ fn update_user_usage(
     return Ok(client
         .post(PAYMENTS_URI.to_string() + create_usage_record::ROUTE)
         .json(&create_usage_record::CreateUsageRecordParams {
-            stripe_id: owner.stripe_id.clone().unwrap(),
+            sub_id: owner.sub_id.clone().unwrap(),
             number: new_value.try_into().unwrap(),
             resource: "users".into(),
         })
