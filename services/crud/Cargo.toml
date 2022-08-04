@@ -35,3 +35,7 @@ payments-lib = { path = "../../libs/payments-lib" }
 
 [dev-dependencies]
 actix-http = "3"
+
+[[bin]]
+name = "crud"
+path = "src/main.rs"

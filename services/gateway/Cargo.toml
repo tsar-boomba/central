@@ -23,3 +23,7 @@ lazy_static = "1.4"
 log = "0.4"
 models = { path = "../../libs/models" }
 auth = { path = "../../libs/auth" }
+
+[[bin]]
+name = "gateway"
+path = "src/main.rs"

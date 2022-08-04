@@ -25,8 +25,8 @@ export const httpsListenerParams = ({
 	Certificates: [
 		{
 			CertificateArn:
-				// TODO: is currently igamble ssl cert
-				'arn:aws:acm:us-east-1:740633958367:certificate/429a2d02-a978-4b41-b9b7-f0c9f317cfb4',
+				// milkyweb.app cert
+				'arn:aws:acm:us-east-1:262246349843:certificate/67e2142a-df92-424b-b92c-f5af04d12952',
 		},
 	],
 	SslPolicy: 'ELBSecurityPolicy-2016-08',
