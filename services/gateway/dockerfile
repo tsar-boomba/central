@@ -17,7 +17,7 @@ COPY --from=cacher $CARGO_HOME $CARGO_HOME
 COPY . .
 RUN cargo build --release -p gateway
 
-# We do not need the Rust toolchain to run the binary! need rebuild
+# We do not need the Rust toolchain to run the binary! need rebuil
 FROM debian:buster-slim AS runtime
 WORKDIR /gateway
 COPY --from=builder /gateway/target/release/gateway /usr/local/bin
