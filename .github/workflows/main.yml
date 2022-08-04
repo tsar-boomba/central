@@ -27,7 +27,7 @@ jobs:
       - run: docker pull lukemathwalker/cargo-chef:0.1.39-rust-latest
       - uses: satackey/action-docker-layer-caching@v0.0.11
         with:
-          key: central-crud-docker2-{hash}
+          key: central-crud-docker3-{hash}
         # Ignore the failure of a step and avoid terminating the job.
         continue-on-error: true
       - name: Build Image
@@ -56,7 +56,7 @@ jobs:
       - run: docker pull lukemathwalker/cargo-chef:0.1.39-rust-latest
       - uses: satackey/action-docker-layer-caching@v0.0.11
         with:
-          key: central-gateway-docker2-{hash}
+          key: central-gateway-docker3-{hash}
         # Ignore the failure of a step and avoid terminating the job.
         continue-on-error: true
       - name: Build Image
@@ -85,7 +85,7 @@ jobs:
       - run: docker pull lukemathwalker/cargo-chef:0.1.39-rust-latest
       - uses: satackey/action-docker-layer-caching@v0.0.11
         with:
-          key: central-payments-docker2-{hash}
+          key: central-payments-docker3-{hash}
         # Ignore the failure of a step and avoid terminating the job.
         continue-on-error: true
       - name: Build Image
