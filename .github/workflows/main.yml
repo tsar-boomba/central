@@ -65,10 +65,38 @@ jobs:
           repo: central-gateway
           access-key: ${{ secrets.ECR_ACCESS_KEY }}
           secret-key: ${{ secrets.ECR_SECRET_KEY }}
+
+  payments-changes:
+    uses: ./.github/workflows/changes.yml
+    with:
+      path: services/payments/**
+
+  payments-ci:
+    uses: ./.github/workflows/payments-ci.yml
+
+  push-payments:
+    runs-on: ubuntu-latest
+    needs: [payments-ci, payments-changes]
+    if: needs.payments-changes.outputs.changed == 'true'
+    steps:
+      - uses: actions/checkout@v3
+      - uses: satackey/action-docker-layer-caching@v0.0.11
+        with:
+          key: central-payments-docker-{hash}
+        # Ignore the failure of a step and avoid terminating the job.
+        continue-on-error: true
+      - name: Build Image
+        run: docker build . -f ./services/payments/dockerfile -t central-payments:latest
+      - name: Push to ECR
+        uses: ./.github/push-image
+        with:
+          repo: central-payments
+          access-key: ${{ secrets.ECR_ACCESS_KEY }}
+          secret-key: ${{ secrets.ECR_SECRET_KEY }}
           
   deploy:
     runs-on: ubuntu-latest
-    needs: [push-gateway, push-crud]
+    needs: [push-gateway, push-crud, push-payments]
     if: ${{ !failure() && !cancelled() }}
     steps:
       - run: echo "pretend this is deploying"

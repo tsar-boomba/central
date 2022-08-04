@@ -264,9 +264,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "async-stripe"
-version = "0.15.0"
-source = "git+https://github.com/tsar-boomba/async-stripe#75ac6fe16de05cfbac1b8ac5be9f5c8635c6f4c3"
+name = "async-stripe-tsar"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4741e14096046cc832a2431e798366ce11a904367dfb57366106854063632b89"
 dependencies = [
  "chrono",
  "futures-util",
@@ -585,7 +586,7 @@ dependencies = [
  "log",
  "models",
  "nanoid",
- "payments",
+ "payments-lib",
  "reqwest",
  "serde",
  "serde_json",
@@ -1456,17 +1457,16 @@ checksum = "0c520e05135d6e763148b6426a837e239041653ba7becd2e538c076c738025fc"
 name = "payments"
 version = "0.1.0"
 dependencies = [
- "async-stripe",
+ "async-stripe-tsar",
  "auth",
  "axum",
  "chrono",
  "dotenv",
- "env_logger",
- "futures-util",
  "hyper",
  "lazy_static",
  "log",
  "models",
+ "payments-lib",
  "serde",
  "serde_json",
  "tokio",
@@ -1474,6 +1474,14 @@ dependencies = [
  "tower-http",
  "tracing",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "payments-lib"
+version = "0.1.0"
+dependencies = [
+ "models",
+ "serde",
 ]
 
 [[package]]

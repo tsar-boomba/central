@@ -42,10 +42,5 @@ jobs:
       run: |
         sudo -u postgres createdb --owner=central_server central
         PGPASSWORD=cntrl psql --username=central_server --host=localhost --list central
-    - uses: taiki-e/install-action@v1
-      with:
-        tool: nextest
-        ## version (defaults to "latest") can be a series like 0.9:
-        version: 0.9
     - name: Run tests
       run: cargo test --verbose

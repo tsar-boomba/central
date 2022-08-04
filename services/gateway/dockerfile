@@ -3,15 +3,19 @@ WORKDIR /gateway
 
 FROM chef AS planner
 COPY . .
-RUN cargo chef prepare --recipe-path recipe.json
+RUN cargo chef prepare --bin services/gateway --recipe-path recipe.json
 
-FROM chef AS builder 
+FROM chef AS cacher 
 COPY --from=planner /gateway/recipe.json recipe.json
 # Build dependencies - this is the caching Docker layer!
-RUN cargo chef cook --release --recipe-path recipe.json
-# Build application
+RUN cargo chef cook --release --bin gateway --recipe-path recipe.json
+
+FROM chef as builder
+# Build gatewaylication
+COPY --from=cacher /gateway/target target
+COPY --from=cacher $CARGO_HOME $CARGO_HOME
 COPY . .
-RUN cargo build --release --bin gateway
+RUN cargo build --release -p gateway
 
 # We do not need the Rust toolchain to run the binary!
 FROM debian:buster-slim AS runtime

@@ -1,17 +1,22 @@
 FROM lukemathwalker/cargo-chef:latest-rust-latest AS chef
 WORKDIR /payments
+ENV RUST_BACKTRACE=full
 
 FROM chef AS planner
 COPY . .
-RUN cargo chef prepare --recipe-path recipe.json
+RUN cargo chef prepare --bin services/payments --recipe-path recipe.json
 
-FROM chef AS builder 
+FROM chef AS cacher 
 COPY --from=planner /payments/recipe.json recipe.json
 # Build dependencies - this is the caching Docker layer!
-RUN cargo chef cook --release --recipe-path recipe.json
-# Build application
+RUN cargo chef cook --release --bin payments --recipe-path recipe.json
+
+FROM chef as builder
+# Build paymentslication
+COPY --from=cacher /payments/target target
+COPY --from=cacher $CARGO_HOME $CARGO_HOME
 COPY . .
-RUN cargo build --release --bin payments
+RUN cargo build --release -p payments
 
 # We do not need the Rust toolchain to run the binary!
 FROM debian:buster-slim AS runtime

@@ -31,7 +31,7 @@ lazy_static = "1.4"
 log = "0.4"
 models = { path = "../../libs/models", features = ["diesel"] }
 auth = { path = "../../libs/auth", features = ["actix"] }
-payments = { path = "../payments" }
+payments-lib = { path = "../../libs/payments-lib" }
 
 [dev-dependencies]
 actix-http = "3"
