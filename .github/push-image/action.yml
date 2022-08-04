@@ -30,3 +30,4 @@ runs:
       run: |
         docker tag $REPO:latest $REGISTRY/$REPO:latest
         docker push $REGISTRY/$REPO:latest
+        docker image prune -a --force --filter "label=repository!=${{ inputs.repo }}"
