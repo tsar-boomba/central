@@ -12,7 +12,6 @@ diesel = []
 [dependencies]
 actix-web = "4"
 reqwest = { version = "0.11", features = ["blocking", "json"] }
-actix-cors = "0.6"
 chrono = { version = "0.4", features = ["serde"] }
 dotenv = "0.15.0"
 diesel = { version = "1.4", features = ["postgres", "r2d2", "chrono"] }
@@ -30,7 +29,7 @@ bcrypt = "0.13"
 lazy_static = "1.4"
 log = "0.4"
 models = { path = "../../libs/models", features = ["diesel"] }
-auth = { path = "../../libs/auth", features = ["actix"] }
+auth = { path = "../../libs/auth", features = ["actix", "diesel"] }
 payments-lib = { path = "../../libs/payments-lib" }
 
 [dev-dependencies]

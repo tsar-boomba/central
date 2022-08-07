@@ -29,6 +29,11 @@ impl ApiError {
     pub fn forbidden() -> ApiError {
         ApiError::new(403, "You do not have access to this resource".into())
     }
+
+
+    pub fn not_subbed() -> ApiError {
+        ApiError::new(403, "You cannot do this while not subscribed.".into())
+    }
 }
 
 impl fmt::Display for ApiError {

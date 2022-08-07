@@ -63,7 +63,7 @@ export const configLoadBalancer = async (instanceData: CreateEnvironmentCommandO
 	await elbClient.send(
 		new SetSecurityGroupsCommand({
 			LoadBalancerArn: balancerArn,
-			SecurityGroups: ['sg-077eb643ac061a5f8'],
+			SecurityGroups: ['sg-0e949ec585c11b34a'],
 		}),
 	);
 

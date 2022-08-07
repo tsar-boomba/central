@@ -92,7 +92,7 @@ const Home = () => {
 								<Stack spacing={0} ml='md'>
 									<Text className={classes.controlTitle}>Users</Text>
 									<Text color='dimmed'>
-										Manage your users and their information
+										Manage your users and their permissions
 									</Text>
 								</Stack>
 							</UnstyledButton>

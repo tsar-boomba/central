@@ -39,9 +39,14 @@ const Login: NextPage<Props> = ({ accountId }) => {
 
 	if (!accountId)
 		return (
-			<Text mt='lg' style={{ fontSize: 40, fontWeight: 700 }}>
-				In order to login, get a link from an account owner.
-			</Text>
+			<>
+				<Text mt='lg' style={{ fontSize: 40, fontWeight: 700 }}>
+					In order to login, get a link from an account owner.
+				</Text>
+				<Link href='/register'>
+					<Anchor size='xl'>Interested in Milky Web? Create an account.</Anchor>
+				</Link>
+			</>
 		);
 
 	return (
@@ -62,7 +67,7 @@ const Login: NextPage<Props> = ({ accountId }) => {
 				</form>
 			</Paper>
 			<Link href='/register'>
-				<Anchor>Interested in NAME_HERE? Create an account.</Anchor>
+				<Anchor>Interested in Milky Web? Create an account.</Anchor>
 			</Link>
 		</>
 	);

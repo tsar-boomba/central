@@ -1,6 +1,4 @@
 #[macro_use]
-extern crate diesel;
-#[macro_use]
 extern crate diesel_migrations;
 #[macro_use]
 extern crate lazy_static;
@@ -15,7 +13,6 @@ mod api_error;
 mod auth;
 mod db;
 mod json;
-mod sql_types;
 
 mod accounts;
 mod instances;
@@ -24,6 +21,8 @@ mod users;
 use actix_web::{middleware, post, web::Json, App, HttpResponse, HttpServer};
 use api_error::ApiError;
 use dotenv::dotenv;
+use models::Account;
+use payments_lib::routes::create_usage_record;
 use serde::{Deserialize, Serialize};
 
 use crate::json::ErrorBody;
@@ -56,6 +55,8 @@ async fn main() -> std::io::Result<()> {
 lazy_static! {
     pub static ref PAYMENTS_URI: String =
         std::env::var("PAYMENTS_URI").unwrap_or("http://127.0.0.1:6000".into());
+    pub static ref INSTANCES_URI: String =
+        std::env::var("INSTANCES_URI").unwrap_or("http://127.0.0.1:3001".into());
 }
 
 #[derive(Debug, Deserialize)]
@@ -103,6 +104,24 @@ async fn register(data: Json<RegisterBody>) -> Result<HttpResponse, ApiError> {
 
         Ok(HttpResponse::Ok().json(RegisterResponse { account, user }))
     })
+}
+
+fn update_usage(
+    owner: &Account,
+    resource: String,
+    new_value: i64,
+) -> Result<reqwest::blocking::Response, ApiError> {
+    let client = reqwest::blocking::Client::new();
+
+    return client
+        .post(PAYMENTS_URI.to_string() + create_usage_record::ROUTE)
+        .json(&create_usage_record::CreateUsageRecordParams {
+            sub_id: owner.sub_id.clone().unwrap(),
+            number: new_value.try_into().unwrap(),
+            resource,
+        })
+        .send()
+        .map_err(|e| e.into());
 }
 
 #[cfg(test)]

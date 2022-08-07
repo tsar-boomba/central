@@ -58,6 +58,24 @@ pub async fn mock_payments() -> std::io::Result<()> {
     .await
 }
 
+pub async fn mock_instance_deploy() -> std::io::Result<()> {
+    std::env::set_var("INSTANCES_URI", "http://127.0.0.1:7777");
+
+    async fn deploy() -> Result<HttpResponse, ApiError> {
+        Ok(HttpResponse::Ok().finish())
+    }
+
+    HttpServer::new(|| {
+        App::new().route(
+            "/",
+            web::post().to(deploy),
+        )
+    })
+    .bind(("127.0.0.1", 7777))?
+    .run()
+    .await
+}
+
 /// Creates an account to ensure foreign keys are satisfied during testing
 pub fn test_account() {
     use models::accounts::dsl::*;
@@ -77,7 +95,7 @@ pub fn test_account() {
         })
         .on_conflict_do_nothing()
         .get_result::<Account>(&db::connection().unwrap())
-        .unwrap();
+        .ok();
 }
 
 // pub fn remove_test_account() {

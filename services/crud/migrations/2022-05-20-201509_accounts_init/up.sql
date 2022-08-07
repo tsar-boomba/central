@@ -25,20 +25,25 @@ SELECT diesel_manage_updated_at ('users');
 
 CREATE UNIQUE INDEX username_account_id_idx ON public.users (username, account_id);
 
+CREATE TYPE InstanceStatus AS ENUM ('deploying', 'failed', 'ok', 'unhealthy', 'inactive', 'configured');
+
 CREATE TABLE public.instances (
-	id				TEXT		NOT NULL PRIMARY KEY,
-	created_at		TIMESTAMP	NOT NULL DEFAULT NOW(),
-	updated_at		TIMESTAMP	NOT NULL DEFAULT NOW(),
-	account_id		TEXT		NOT NULL,
-	db_url			TEXT		NOT NULL,
-	url				TEXT		NOT	NULL,
-	business_name	TEXT		NOT NULL,
-	short_name		TEXT		NOT	NULL,
-    address			TEXT		NOT NULL,
-    city			TEXT		NOT NULL,
-    zip_code		TEXT		NOT NULL,
-    phone_number	TEXT		NOT NULL,
-	rate_conf_email	TEXT		NOT	NULL,
+	id				TEXT			NOT NULL PRIMARY KEY,
+	created_at		TIMESTAMP		NOT NULL DEFAULT NOW(),
+	updated_at		TIMESTAMP		NOT NULL DEFAULT NOW(),
+	account_id		TEXT			NOT NULL,
+	url				TEXT,
+	name			TEXT,
+	status			InstanceStatus	NOT NULL,
+	business_name	TEXT			NOT NULL,
+	short_name		TEXT			NOT	NULL,
+    address			TEXT			NOT NULL,
+    city			TEXT			NOT NULL,
+    zip_code		TEXT			NOT NULL,
+    phone_number	TEXT			NOT NULL,
+	rate_conf_email	TEXT			NOT	NULL,
+	env_id			TEXT,
+	key				TEXT,
 	instance_name	TEXT,
 	top_terms		TEXT,
 	bottom_terms	TEXT[]
@@ -47,6 +52,8 @@ CREATE TABLE public.instances (
 SELECT diesel_manage_updated_at ('instances');
 
 CREATE INDEX instances_account_id ON public.instances (account_id);
+
+CREATE UNIQUE INDEX name_account_id_idx ON public.instances (name, account_id);
 
 CREATE TABLE public.accounts (
 	id				TEXT		NOT NULL PRIMARY KEY,

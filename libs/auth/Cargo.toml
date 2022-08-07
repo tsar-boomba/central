@@ -9,10 +9,12 @@ edition = "2021"
 default = []
 axum = ["dep:axum"]
 actix = ["dep:actix-web"]
+diesel = ["models/diesel"]
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+models = { path = "../models", default-features = false }
 axum = { version = "0.5", optional = true }
 actix-web = { version = "4", optional = true }
 

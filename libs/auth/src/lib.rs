@@ -1,5 +1,6 @@
 pub mod error;
 
+use models::types::Role;
 use serde::{Deserialize, Serialize};
 
 /// User data passed to services through "user" header
@@ -8,6 +9,7 @@ use serde::{Deserialize, Serialize};
 pub struct ReqUser {
     pub id: i32,
     pub account_id: String,
+    pub role: models::types::Role,
 }
 
 /// Takes a value (such as a header) and attempts to deserialize into ReqUser
@@ -44,6 +46,27 @@ impl actix_web::FromRequest for ReqUser {
             status_code: 200,
             message: "".into(),
         }))
+    }
+}
+
+/// 0 - any user
+/// 1 - at least moderator
+/// 2 - at least admin
+/// 3 - only owner
+fn role_to_number(role: &Role) -> i32 {
+    match role {
+        Role::Owner => 3,
+        Role::Admin => 2,
+        Role::Moderator => 1,
+        Role::User => 0,
+    }
+}
+
+/// Checks if reqUser has a role of at least requirement
+pub fn require_role(user: &Option<ReqUser>, requirement: Role) -> bool {
+    match user {
+        Some(user) => role_to_number(&user.role) >= role_to_number(&requirement),
+        None => true,
     }
 }
 

@@ -1,7 +1,7 @@
 use actix_web::{delete, get, post, put, web, HttpResponse};
-use auth::{ReqUser, belongs_to_account};
+use auth::{belongs_to_account, ReqUser};
 use diesel::prelude::*;
-use models::{Account, Model, NewAccount, UpdateAccount, User, Instance};
+use models::{Account, Instance, Model, NewAccount, UpdateAccount, User};
 
 use crate::{api_error::ApiError, db, json::DeleteBody};
 
@@ -83,7 +83,10 @@ async fn find_instances(
 }
 
 #[get("/accounts/{id}/is-subbed")]
-async fn is_subbed(id: web::Path<String>, req_user: Option<ReqUser>) -> Result<HttpResponse, ApiError> {
+async fn is_subbed(
+    id: web::Path<String>,
+    req_user: Option<ReqUser>,
+) -> Result<HttpResponse, ApiError> {
     let account = web::block(move || Account::find_by_id(id.into_inner())).await??;
 
     if !belongs_to_account(&req_user, &account.id) {
@@ -94,10 +97,18 @@ async fn is_subbed(id: web::Path<String>, req_user: Option<ReqUser>) -> Result<H
 }
 
 #[get("/accounts/by-sub/{id}")]
-async fn find_by_sub(target: web::Path<String>, req_user: Option<ReqUser>) -> Result<HttpResponse, ApiError> {
+async fn find_by_sub(
+    target: web::Path<String>,
+    req_user: Option<ReqUser>,
+) -> Result<HttpResponse, ApiError> {
     use models::accounts::dsl::*;
     let conn = db::connection()?;
-    let account = web::block(move || models::accounts::table.filter(sub_id.eq(target.into_inner())).first::<Account>(&conn)).await??;
+    let account = web::block(move || {
+        models::accounts::table
+            .filter(sub_id.eq(target.into_inner()))
+            .first::<Account>(&conn)
+    })
+    .await??;
 
     if !belongs_to_account(&req_user, &account.id) {
         return Err(ApiError::forbidden());
@@ -133,13 +144,27 @@ async fn update(
         return Err(ApiError::forbidden());
     }
 
-    let account = web::block(move || Account::update(id, account.into_inner())).await??;
+    let update_set: UpdateAccount = if req_user == None {
+        account.into_inner()
+    } else {
+        // fields which should never be updated from external sources
+        UpdateAccount {
+            stripe_id: None,
+            sub_id: None,
+            ..account.into_inner()
+        }
+    };
+
+    let account = web::block(move || Account::update(id, update_set)).await??;
 
     Ok(HttpResponse::Ok().json(account))
 }
 
 #[delete("/accounts/{id}")]
-async fn delete(id: web::Path<String>, req_user: Option<ReqUser>) -> Result<HttpResponse, ApiError> {
+async fn delete(
+    id: web::Path<String>,
+    req_user: Option<ReqUser>,
+) -> Result<HttpResponse, ApiError> {
     let find_id = id.clone();
     if !belongs_to_account(
         &req_user,

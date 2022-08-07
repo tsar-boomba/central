@@ -8,6 +8,7 @@ use axum::{
     Json, Router,
 };
 use hyper::{body, Body, Method, Request, StatusCode};
+use models::types::Role;
 use serde_json::from_slice;
 
 use crate::{app, Client};
@@ -44,10 +45,14 @@ async fn mock_crud() {
                 Json(auth::ReqUser {
                     id: 10,
                     account_id: "account_id".into(),
+                    role: Role::User,
                 })
             }),
         )
-        .route("/users", get(|| async { Json::<Vec<auth::ReqUser>>(vec![]) }));
+        .route(
+            "/users",
+            get(|| async { Json::<Vec<auth::ReqUser>>(vec![]) }),
+        );
 
     let addr = SocketAddr::from(test_addr.parse::<SocketAddr>().unwrap());
     println!("server listening on {}", addr);
@@ -60,7 +65,7 @@ async fn mock_crud() {
 const WEBHOOK_BODY: &str = "Web hooked";
 
 async fn mock_payments() {
-    let test_addr = "127.0.0.1:6000";
+    let test_addr = "127.0.0.1:6001";
     std::env::set_var("PAYMENTS_URI", "http://".to_string() + test_addr);
     let app = Router::new()
         .route(
@@ -112,7 +117,8 @@ async fn e2e() {
         body_json,
         auth::ReqUser {
             id: 10,
-            account_id: "account_id".into()
+            account_id: "account_id".into(),
+            role: Role::User
         }
     );
 

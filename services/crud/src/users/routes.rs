@@ -1,14 +1,12 @@
 use actix_web::{delete, get, post, put, web, HttpResponse};
-use auth::{ReqUser, belongs_to_account};
+use auth::{belongs_to_account, ReqUser};
 use bcrypt::hash;
 use diesel::prelude::*;
 use models::types::Role;
-use models::{Account, Model, NewUser, User, UpdateUser};
-use payments_lib::routes::create_usage_record;
+use models::{Account, Model, NewUser, UpdateUser, User};
 
-use crate::{
-    api_error::ApiError, db, json::DeleteBody, PAYMENTS_URI,
-};
+use crate::update_usage;
+use crate::{api_error::ApiError, db, json::DeleteBody};
 
 #[get("/users")]
 async fn find_all(req_user: Option<ReqUser>) -> Result<HttpResponse, ApiError> {
@@ -93,12 +91,9 @@ async fn create(
             match user {
                 Ok(user) => match owner {
                     Ok(owner) => {
-                        if None == owner.stripe_id {
+                        if None == owner.sub_id {
                             // err variant causes rollback
-                            return Err(ApiError::new(
-                                400,
-                                "Cannot create users while not subscribed.".into(),
-                            ));
+                            return Err(ApiError::not_subbed());
                         }
 
                         let num_user = users
@@ -106,7 +101,7 @@ async fn create(
                             .filter(account_id.eq(owner.id.clone()))
                             .get_result::<i64>(&conn)?;
 
-                        let res = update_user_usage(&owner, num_user)?;
+                        let res = update_usage(&owner, "users".into(), num_user)?;
 
                         println!("{:?}", res);
 
@@ -151,13 +146,21 @@ async fn update(
         return Err(ApiError::forbidden());
     }
 
-    let user = web::block(move || User::update(id, user.into_inner())).await??;
+    let update_set: UpdateUser = UpdateUser {
+        account_id: None,
+        ..user.into_inner()
+    };
+
+    let user = web::block(move || User::update(id, update_set)).await??;
 
     Ok(HttpResponse::Ok().json(user))
 }
 
 #[delete("/users/{id}")]
-async fn delete(target: web::Path<i32>, req_user: Option<ReqUser>) -> Result<HttpResponse, ApiError> {
+async fn delete(
+    target: web::Path<i32>,
+    req_user: Option<ReqUser>,
+) -> Result<HttpResponse, ApiError> {
     let target = target.into_inner();
 
     let user = web::block(move || User::find_by_id(target)).await??;
@@ -186,12 +189,9 @@ async fn delete(target: web::Path<i32>, req_user: Option<ReqUser>) -> Result<Htt
 
             match owner {
                 Ok(owner) => {
-                    if None == owner.stripe_id {
+                    if None == owner.sub_id {
                         // err variant causes rollback
-                        return Err(ApiError::new(
-                            400,
-                            "Cannot delete users while not subscribed.".into(),
-                        ));
+                        return Err(ApiError::not_subbed());
                     }
 
                     let num_user = users
@@ -199,7 +199,7 @@ async fn delete(target: web::Path<i32>, req_user: Option<ReqUser>) -> Result<Htt
                         .filter(account_id.eq(owner.id.clone()))
                         .get_result::<i64>(&conn)?;
 
-                    let res = update_user_usage(&owner, num_user)?;
+                    let res = update_usage(&owner, "users".into(), num_user)?;
 
                     match res.error_for_status() {
                         Ok(_) => Ok(affected),
@@ -219,22 +219,6 @@ async fn delete(target: web::Path<i32>, req_user: Option<ReqUser>) -> Result<Htt
         Ok(affected) => Ok(HttpResponse::Ok().json(DeleteBody::new(affected.try_into().unwrap()))),
         Err(err) => Err(err),
     }
-}
-
-fn update_user_usage(
-    owner: &Account,
-    new_value: i64,
-) -> Result<reqwest::blocking::Response, ApiError> {
-    let client = reqwest::blocking::Client::new();
-
-    return Ok(client
-        .post(PAYMENTS_URI.to_string() + create_usage_record::ROUTE)
-        .json(&create_usage_record::CreateUsageRecordParams {
-            sub_id: owner.sub_id.clone().unwrap(),
-            number: new_value.try_into().unwrap(),
-            resource: "users".into(),
-        })
-        .send()?);
 }
 
 pub fn init_routes(config: &mut web::ServiceConfig) {

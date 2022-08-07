@@ -3,20 +3,43 @@ import { config } from 'dotenv';
 import { createEnv } from './createEnv';
 import { configLoadBalancer } from './configLoadBalancer';
 import { configDomain } from './configDomain';
+import fetch from 'node-fetch';
 
 config({ path: '.env.local' });
 
-const app = fastify({});
+const API_URI = process.env.API_URI || 'http://localhost:4000';
+
+const app = fastify({
+	logger: true,
+});
 
 app.post('/', async (req, res) => {
-	const instanceData = await createEnv('hatfield', 'SgUi7_d');
+	const jwt = req.headers.jwt;
+	if (!jwt) {
+		res.statusCode = 400;
+		return res.send({ message: 'No key provided.' });
+	}
+	const { accountId, name, instanceId } = req.body as any;
+	const instanceData = await createEnv(name, accountId);
 
 	console.log(instanceData);
 
-	res.send(instanceData);
+	res.send();
 
 	await configLoadBalancer(instanceData);
 	const domainInfo = await configDomain(instanceData);
+
+	// call back to main server with info about instance
+	await fetch(`${API_URI}/instances/${instanceId}/callback`, {
+		headers: { jwt: String(jwt) },
+		method: 'POST',
+		body: JSON.stringify({
+			env_id: instanceData.EnvironmentId,
+			url: domainInfo.name,
+			accountId,
+		}),
+	});
+
 	console.log('Configuration done!');
 	console.log('Will be available at:', `https://${domainInfo.name}`);
 });

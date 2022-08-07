@@ -3,6 +3,7 @@ import {
 	CreateEnvironmentCommand,
 	CreateEnvironmentCommandInput,
 	CreateEnvironmentCommandOutput,
+	ListAvailableSolutionStacksCommand,
 } from '@aws-sdk/client-elastic-beanstalk';
 import { randomBytes } from 'crypto';
 import { ebClient } from '../clients';
@@ -13,7 +14,6 @@ import { envOptions } from './envOptions';
 
 const baseParams: CreateEnvironmentCommandInput = {
 	ApplicationName: APPLICATION_NAME,
-	SolutionStackName: '64bit Amazon Linux 2 v3.4.16 running Docker',
 	Tier: { Name: 'WebServer', Type: 'Standard' },
 };
 
@@ -34,16 +34,22 @@ const jwtEnvOption = (secret: string): ConfigurationOptionSetting => ({
  * @param accountName
  */
 export const createEnv = async (
-	accountName: string,
+	name: string,
 	accountId: string,
 ): Promise<
 	{ dbPass: string; jwtSecret: string; envName: string } & CreateEnvironmentCommandOutput
 > => {
 	const versions = await getVersions();
+	const solutionStacks = await ebClient.send(new ListAvailableSolutionStacksCommand({}));
+	const solutionStack = solutionStacks.SolutionStacks?.find((stack) =>
+		stack.includes('running Docker'),
+	);
+
+	if (!solutionStack) throw new Error('No solution stack was found');
 
 	if (!versions.ApplicationVersions) throw new Error('No application versions found!');
 
-	const envName = `${accountName}-${Date.now()}-env`;
+	const envName = `${name}-${accountId}`;
 	const dbPass = randomBytes(20).toString('hex');
 	const jwtSecret = randomBytes(24).toString('hex');
 
@@ -51,6 +57,7 @@ export const createEnv = async (
 		...baseParams,
 		VersionLabel: versions.ApplicationVersions[0].VersionLabel,
 		EnvironmentName: envName,
+		SolutionStackName: solutionStack,
 		// Most configuration happens here, db, load balancer, etc...
 		OptionSettings: [
 			...dbOptions,

@@ -27,15 +27,15 @@ const launchIamProfile: ConfigurationOptionSetting = {
 const securityGroup: ConfigurationOptionSetting = {
 	Namespace: 'aws:autoscaling:launchconfiguration',
 	OptionName: 'SecurityGroups',
-	Value: 'instances',
+	Value: 'central-instances',
 };
 
 // key pair for sshing if needed
-const ec2KeyPair: ConfigurationOptionSetting = {
-	Namespace: 'aws:autoscaling:launchconfiguration',
-	OptionName: 'EC2KeyName',
-	Value: 'eb-debug',
-};
+// const ec2KeyPair: ConfigurationOptionSetting = {
+// 	Namespace: 'aws:autoscaling:launchconfiguration',
+// 	OptionName: 'EC2KeyName',
+// 	Value: 'eb-debug',
+// };
 
 const setDefaultProcess = createOptionSetter('aws:elasticbeanstalk:environment:process:default');
 
@@ -49,7 +49,6 @@ export const envOptions = Object.values({
 	instanceType,
 	launchIamProfile,
 	securityGroup,
-	ec2KeyPair,
 	healthCheckPath,
 	healthCheckCode,
 });

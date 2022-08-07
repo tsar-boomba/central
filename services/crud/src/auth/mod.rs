@@ -46,6 +46,10 @@ lazy_static! {
             .as_bytes(),
     )
     .expect("Failed to encode secret");
+    static ref INSTANCE_SECRET: Hmac<Sha256> = Hmac::new_from_slice(
+        std::env::var("INSTANCE_SECRET").unwrap().as_bytes()
+    )
+    .unwrap();
 }
 
 fn sign(id: i32, account_id: String) -> Result<String, jwt::Error> {
@@ -55,6 +59,39 @@ fn sign(id: i32, account_id: String) -> Result<String, jwt::Error> {
 
 fn verify(token: &String) -> Result<Claim, jwt::Error> {
     let result: Result<Claim, jwt::Error> = token.verify_with_key(&*JWT_SECRET);
+    match result {
+        Ok(claim) => {
+            if Utc::now().timestamp_millis() > claim.exp {
+                return Err(jwt::Error::Format);
+            }
+            Ok(claim)
+        }
+        Err(err) => Err(err),
+    }
+}
+
+const INSTANCE_TOKEN_EXPIRY: i64 = 900_000;
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct InstanceClaim {
+    pub iat: i64,
+    pub exp: i64,
+}
+
+impl InstanceClaim {
+    pub fn new() -> Self {
+        let now = Utc::now().timestamp_millis();
+        InstanceClaim { iat: now, exp: now + INSTANCE_TOKEN_EXPIRY, }
+    }
+}
+
+pub fn sign_instance() -> Result<String, jwt::Error> {
+    let claim = InstanceClaim::new();
+    claim.sign_with_key(&*INSTANCE_SECRET)
+}
+
+pub fn verify_instance(token: &String) -> Result<InstanceClaim, jwt::Error> {
+    let result: Result<InstanceClaim, jwt::Error> = token.verify_with_key(&*INSTANCE_SECRET);
     match result {
         Ok(claim) => {
             if Utc::now().timestamp_millis() > claim.exp {

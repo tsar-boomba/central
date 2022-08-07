@@ -1,12 +1,10 @@
-use models::{NewInstance, Instance, instances::dsl::*, UpdateInstance};
-use crate::{db, json::DeleteBody, tests, ID_SIZE};
+use models::{NewInstance, Instance, instances::dsl::*, UpdateInstance, types::InstanceStatus};
+use crate::{db, json::DeleteBody, tests::{self, mock_instance_deploy}, ID_SIZE};
 use actix_web::test;
 use diesel::prelude::*;
 
 fn compare(got: &Instance, exp: &NewInstance) {
     assert_eq!(got.account_id, exp.account_id);
-    assert_eq!(got.db_url, exp.db_url);
-    assert_eq!(got.url, exp.url);
     assert_eq!(got.business_name, exp.business_name);
     assert_eq!(got.short_name, exp.short_name);
     assert_eq!(got.address, exp.address);
@@ -14,40 +12,44 @@ fn compare(got: &Instance, exp: &NewInstance) {
     assert_eq!(got.zip_code, exp.zip_code);
     assert_eq!(got.phone_number, exp.phone_number);
     assert_eq!(got.rate_conf_email, exp.rate_conf_email);
-    assert_eq!(got.instance_name, exp.instance_name);
+    assert_eq!(got.name, exp.name);
 }
 
-fn defaults(/*fk: String*/) -> (NewInstance, NewInstance) {
+fn defaults(test_name: String) -> (NewInstance, NewInstance) {
     (
         NewInstance {
             id: nanoid!(ID_SIZE),
             account_id: "test".into(),
-            db_url: "postgres".into(),
-            url: "https://instance.loadmngr.com".into(),
+            url: Some("yumyum.milkyweb.app".into()),
             business_name: "hatfield llc".into(),
             short_name: "hatfield".into(),
             address: "123 alphabet street".into(),
             city: "charlotte".into(),
+            status: InstanceStatus::Ok,
             zip_code: "28254".into(),
             phone_number: "704-805-1261".into(),
             rate_conf_email: "igamble@gmail.com".into(),
-            instance_name: Some("our deployment".into()),
+            name: test_name.clone() + "our deployment".into(),
             top_terms: Some("you must not be sus!".into()),
+            env_id: Some("augagjaijg".into()),
+            key: Some("agouajpigjaipsjg".into()),
             bottom_terms: None,
         },
         NewInstance {
             id: nanoid!(ID_SIZE),
             account_id: "test".into(),
-            db_url: "postgres".into(),
-            url: "https://instance.loadmngr.com".into(),
+            url: None,
             business_name: "logh llc".into(),
             short_name: "hatfield".into(),
             address: "456 beta lane".into(),
             city: "charlotte".into(),
+            status: InstanceStatus::Deploying,
             zip_code: "28254".into(),
             phone_number: "980-335-6090".into(),
             rate_conf_email: "ugamble@gmail.com".into(),
-            instance_name: None,
+            name: test_name + "load mgner".into(),
+            env_id: None,
+            key: None,
             top_terms: None,
             bottom_terms: Some(vec!["You will pay us $1000".into()]),
         },
@@ -62,7 +64,7 @@ fn remove(target: String, conn: &db::PoolConn) {
 
 #[actix_web::test]
 async fn get() {
-    let (default1, default2) = defaults();
+    let (default1, default2) = defaults("get".into());
 
     let app = tests::init(super::routes::init_routes).await;
     let conn = db::connection().unwrap();
@@ -101,7 +103,8 @@ async fn get() {
 
 #[actix_web::test]
 async fn post() {
-    let (default1, _default2) = defaults();
+    actix_web::rt::spawn(mock_instance_deploy());
+    let (default1, _default2) = defaults("post".into());
 
     let app = tests::init(super::routes::init_routes).await;
 
@@ -129,7 +132,7 @@ async fn post() {
 
 #[actix_web::test]
 async fn put() {
-    let (default1, _default2) = defaults();
+    let (default1, _default2) = defaults("put".into());
 
     let app = tests::init(super::routes::init_routes).await;
     let conn = db::connection().unwrap();
@@ -163,7 +166,7 @@ async fn put() {
 
 #[actix_web::test]
 async fn delete() {
-    let (default1, default2) = defaults();
+    let (default1, default2) = defaults("delete".into());
 
     let app = tests::init(super::routes::init_routes).await;
     let conn = db::connection().unwrap();

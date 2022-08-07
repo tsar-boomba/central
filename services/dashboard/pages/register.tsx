@@ -221,6 +221,9 @@ const Register = () => {
 							{...form.getInputProps('account.phoneNumber')}
 						/>
 						<Divider my='md' mx={-8} />
+						<Text align='center'>
+							This information is used for billing, if you decide to subscribe
+						</Text>
 						<TextInputInfo
 							required
 							placeholder='123 Abc ln'
