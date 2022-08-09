@@ -1,18 +1,22 @@
 use std::str::FromStr;
 
 use auth::{belongs_to_account, ExtractReqUser};
-use axum::{Extension, Json};
+use axum::{
+    extract::Query,
+    Extension, Json,
+};
 use hyper::{body, Body, Method, Request, Response, StatusCode};
 use payments_lib::routes::{
     create_usage_record, customer,
-    subscribe::{SubscribeParams, SubscribeResponse},
+    is_subbed::IsSubbedQuery,
+    subscribe::SubscribeParams,
 };
 use serde::Deserialize;
 use stripe::{
-    Address, CreateCustomer, CreateSubscription, CreateSubscriptionItems,
+    Address, AttachPaymentMethod, CreateCustomer, CreateSubscription, CreateSubscriptionItems,
     CreateSubscriptionPaymentSettings, CreateSubscriptionPaymentSettingsSaveDefaultPaymentMethod,
-    CreateUsageRecord, Customer, CustomerId, Subscription, SubscriptionId, UsageRecord,
-    UsageRecordAction,
+    CreateUsageRecord, Customer, CustomerId, PaymentMethod, PaymentMethodId, Subscription,
+    SubscriptionId, SubscriptionStatus, UsageRecord, UsageRecordAction, UpdateCustomer, CustomerInvoiceSettings,
 };
 
 use crate::{error::ApiError, Client, CRUD_URI, INSTANCE_PRICE_ID, USER_PRICE_ID};
@@ -79,13 +83,12 @@ pub async fn customer(
 }
 
 pub async fn subscribe(
-    Json(account): Json<SubscribeParams>,
+    Json(data): Json<SubscribeParams>,
     Extension(stripe): Extension<stripe::Client>,
     Extension(client): Extension<Client>,
     ExtractReqUser(req_user): ExtractReqUser,
 ) -> Result<Response<Body>, ApiError> {
-    tracing::info!("subscribe runnign");
-    if !belongs_to_account(&req_user, &account.id) {
+    if !belongs_to_account(&req_user, &data.account.id) {
         return Ok(Response::builder()
             .status(StatusCode::FORBIDDEN)
             .body(Body::from(
@@ -94,7 +97,7 @@ pub async fn subscribe(
             .unwrap());
     }
 
-    if account.stripe_id == None {
+    if data.account.stripe_id == None {
         return Ok(Response::builder()
             .status(StatusCode::BAD_REQUEST)
             .body(Body::from(
@@ -103,11 +106,42 @@ pub async fn subscribe(
             .unwrap());
     }
 
-    let customer_id = account.stripe_id.unwrap();
-    let customer = Customer::retrieve(&stripe, &CustomerId::from_str(&customer_id)?, &[]).await?;
+    let req = Request::builder()
+        .uri(format!("{}/accounts/{}/usage", CRUD_URI.as_str(), data.account.id))
+        .method(Method::GET)
+        .body(Body::empty())
+        .unwrap();
+
+    let res = client.request(req).await?;
+    // TODO define api for crud
+    #[derive(Deserialize)]
+    struct Usage {
+        pub users: u64,
+        pub instances: u64,
+    }
+    let usage = serde_json::from_slice::<Usage>(&body::to_bytes(res.into_body()).await.unwrap())?;
+
+    let parsed_payment_id = PaymentMethodId::from_str(&data.payment_method_id)?;
+    let customer_id = data.account.stripe_id.unwrap();
+    let parsed_customer_id = CustomerId::from_str(&customer_id)?;
+    let customer = Customer::retrieve(&stripe, &parsed_customer_id, &[]).await?;
+    let expansions = &["pending_setup_intent", "latest_invoice.payment_intent"];
+    PaymentMethod::attach(
+        &stripe,
+        &parsed_payment_id,
+        AttachPaymentMethod {
+            customer: parsed_customer_id.clone(),
+        },
+    ).await?;
+    Customer::update(&stripe, &parsed_customer_id, UpdateCustomer {
+        invoice_settings: Some(CustomerInvoiceSettings {
+            default_payment_method: Some(parsed_payment_id.to_string()),
+            ..Default::default()
+        }),
+        ..Default::default()
+    }).await?;
     // get or create subscription
-    let expansions = &["pending_setup_intent"];
-    let subscription = if account.sub_id == None && customer.subscriptions.data.len() < 1 {
+    let subscription = if data.account.sub_id == None && customer.subscriptions.data.len() < 1 {
         let mut params = CreateSubscription::new(CustomerId::from_str(&customer_id)?);
         params.items = Some(vec![
             CreateSubscriptionItems {
@@ -119,7 +153,6 @@ pub async fn subscribe(
                 ..Default::default()
             },
         ]);
-        params.payment_behavior = Some(stripe::SubscriptionPaymentBehavior::DefaultIncomplete);
         params.payment_settings = Some(CreateSubscriptionPaymentSettings {
             save_default_payment_method: Some(
                 CreateSubscriptionPaymentSettingsSaveDefaultPaymentMethod::OnSubscription,
@@ -127,13 +160,13 @@ pub async fn subscribe(
             ..Default::default()
         });
         params.expand = expansions;
-        //params.default_payment_method = Some(&payment_method.id);
+        params.default_payment_method = Some(&parsed_payment_id);
 
         Subscription::create(&stripe, params).await?
     } else {
         Subscription::retrieve(
             &stripe,
-            &SubscriptionId::from_str(&account.sub_id.clone().unwrap())?,
+            &SubscriptionId::from_str(&data.account.sub_id.clone().unwrap())?,
             expansions,
         )
         .await?
@@ -147,39 +180,43 @@ pub async fn subscribe(
         }
     });
 
-    let req = Request::builder()
-        .uri(format!(
-            "{}/accounts/{}/users",
-            CRUD_URI.as_str(),
-            account.id
-        ))
-        .method(Method::GET)
-        .body(Body::empty())
-        .unwrap();
+    let instance_sub_item = subscription.items.data.iter().find(|&item| {
+        if let Some(price) = item.price.as_ref() {
+            price.id == INSTANCE_PRICE_ID.as_str()
+        } else {
+            false
+        }
+    });
 
-    let res = client.request(req).await?;
-    // just need to count them not actually the data
-    #[derive(Deserialize)]
-    struct MinUser {
-        pub id: i32,
-    }
-    let acct_users =
-        serde_json::from_slice::<Vec<MinUser>>(&body::to_bytes(res.into_body()).await.unwrap())?;
-
-    // new subs always have at least one user
     UsageRecord::create(
         &stripe,
         &user_sub_item.unwrap().id,
         CreateUsageRecord {
             action: Some(UsageRecordAction::Set),
-            quantity: acct_users.len().try_into().unwrap(),
+            quantity: usage.users,
             ..Default::default()
         },
-    ).await?;
+    )
+    .await?;
 
-    if account.sub_id == None {
+    UsageRecord::create(
+        &stripe,
+        &instance_sub_item.unwrap().id,
+        CreateUsageRecord {
+            action: Some(UsageRecordAction::Set),
+            quantity: usage.instances,
+            ..Default::default()
+        },
+    )
+    .await?;
+
+    if data.account.sub_id == None {
         let req = Request::builder()
-            .uri(format!("{}/accounts/{}", CRUD_URI.as_str(), account.id))
+            .uri(format!(
+                "{}/accounts/{}",
+                CRUD_URI.as_str(),
+                data.account.id
+            ))
             .method(Method::PUT)
             .header("Content-Type", "application/json")
             .body(Body::from(serde_json::to_string(&models::UpdateAccount {
@@ -202,33 +239,12 @@ pub async fn subscribe(
 
     tracing::debug!("{:?}", subscription);
 
-    tracing::info!("Created subscription for {}", account.business_name);
+    tracing::info!("Created subscription for {}", data.account.business_name);
 
-    let client_secret = {
-        subscription
-            .pending_setup_intent
-            .unwrap()
-            .into_object()
-            .unwrap()
-            .client_secret
-    };
-
-    if let Some(client_secret) = client_secret {
         Ok(Response::builder()
             .status(StatusCode::OK)
-            .body(Body::from(serde_json::to_string(&SubscribeResponse {
-                sub_id: subscription.id.to_string(),
-                client_secret,
-            })?))
+            .body(Body::from(serde_json::to_string(&subscription)?))
             .unwrap())
-    } else {
-        Ok(Response::builder()
-            .status(StatusCode::INTERNAL_SERVER_ERROR)
-            .body(Body::from(
-                r#"{"message":"Failed to expand client secret."}"#,
-            ))
-            .unwrap())
-    }
 }
 
 pub async fn create_usage_record(
@@ -247,7 +263,7 @@ pub async fn create_usage_record(
     let subscription =
         Subscription::retrieve(&stripe, &SubscriptionId::from_str(&data.sub_id)?, &[]).await?;
 
-    let user_sub_item = subscription.items.data.iter().find(|&item| {
+    let sub_item = subscription.items.data.iter().find(|&item| {
         if let Some(price) = item.price.as_ref() {
             price.id
                 == (if data.resource == "users" {
@@ -263,13 +279,33 @@ pub async fn create_usage_record(
     // new subs always have at least one user
     UsageRecord::create(
         &stripe,
-        &user_sub_item.unwrap().id,
+        &sub_item.unwrap().id,
         CreateUsageRecord {
             action: Some(UsageRecordAction::Set),
             quantity: data.number,
             ..Default::default()
         },
     );
+
+    Ok(Response::builder()
+        .status(StatusCode::OK)
+        .body(Body::empty())
+        .unwrap())
+}
+
+pub async fn is_subbed(
+    stripe: Extension<stripe::Client>,
+    query: Query<IsSubbedQuery>,
+) -> Result<Response<Body>, ApiError> {
+    let sub_id = SubscriptionId::from_str(&query.sub_id)?;
+    let sub = Subscription::retrieve(&stripe, &sub_id, &[]).await?;
+
+    if sub.status != SubscriptionStatus::Active {
+        return Ok(Response::builder()
+            .status(StatusCode::BAD_REQUEST)
+            .body(Body::empty())
+            .unwrap());
+    };
 
     Ok(Response::builder()
         .status(StatusCode::OK)

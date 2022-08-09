@@ -9,8 +9,8 @@ import {
 	Transition,
 	UnstyledButton,
 } from '@mantine/core';
+import { IconBolt, IconDatabase, IconUser } from '@tabler/icons';
 import Link from 'next/link';
-import { CgBolt, CgDatabase, CgUser } from 'react-icons/cg';
 import GradientCard from '../components/GradientCard';
 import { useIsSubbed } from '../utils/useIsSubbed';
 
@@ -74,7 +74,7 @@ const Home = () => {
 						<Link href='/instances' passHref>
 							<UnstyledButton component='a' className={classes.control}>
 								<ThemeIcon radius='xl' size={64} variant='light'>
-									<CgDatabase size={32} />
+									<IconDatabase size={32} />
 								</ThemeIcon>
 								<Stack spacing={0} ml='md'>
 									<Text className={classes.controlTitle}>Instances</Text>
@@ -87,7 +87,7 @@ const Home = () => {
 						<Link href='/users' passHref>
 							<UnstyledButton component='a' className={classes.control}>
 								<ThemeIcon radius='xl' size={64} variant='light'>
-									<CgUser size={32} />
+									<IconUser size={32} />
 								</ThemeIcon>
 								<Stack spacing={0} ml='md'>
 									<Text className={classes.controlTitle}>Users</Text>
@@ -108,7 +108,7 @@ const Home = () => {
 									component='a'
 								>
 									<ThemeIcon radius='xl' size={64} color='white'>
-										<CgBolt
+										<IconBolt
 											color={
 												theme.colors[theme.primaryColor][
 													theme.fn.primaryShade()

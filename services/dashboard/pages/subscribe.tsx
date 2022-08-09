@@ -1,9 +1,8 @@
 import { loadStripe, StripeElementsOptions } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
-import { useEffect, useState } from 'react';
-import { Loader, Text, useMantineTheme } from '@mantine/core';
+import { Container, Loader, Text, useMantineTheme } from '@mantine/core';
 import { useUser } from '../components/UserProvider';
-import { api, callApi, ssrFetch } from '../utils/apiHelpers';
+import { api, ssrFetch } from '../utils/apiHelpers';
 import useSWR from 'swr';
 import fetcher from '../utils/swrFetcher';
 import { GetServerSideProps } from 'next';
@@ -21,30 +20,14 @@ interface Props {
 	account?: Account;
 }
 
-let calledSubscribe = false;
-
 const Subscribe = ({ error, account: fallback }: Props) => {
-	const [clientSecret, setClientSecret] = useState('');
 	const { user } = useUser();
-	const { data: account, mutate } = useSWR<Account>(
+	const { data: account } = useSWR<Account>(
 		user?.accountId ? api(`accounts/${user.accountId}`) : null,
 		fetcher,
 		{ fallbackData: fallback },
 	);
 	const theme = useMantineTheme();
-
-	useEffect(() => {
-		if (!account) return;
-		// Create PaymentIntent as soon as the page loads
-		!calledSubscribe &&
-			callApi({ route: 'payments/subscribe', body: account })
-				.then((res) => res.json())
-				.then((data) => {
-					mutate();
-					setClientSecret(data.clientSecret);
-				});
-		calledSubscribe = true;
-	}, []);
 
 	if (!user || !account) return <Loader />;
 	if (error || !account?.stripeId) return <Text>An error ocurred, please try again.</Text>;
@@ -69,6 +52,7 @@ const Subscribe = ({ error, account: fallback }: Props) => {
 			},
 			'.Input:focus': {
 				outlineOffset: '2px',
+				borderColor: theme.colors[theme.primaryColor][theme.fn.primaryShade()],
 				outline:
 					theme.focusRing === 'always' || theme.focusRing === 'auto'
 						? `2px solid ${
@@ -78,28 +62,15 @@ const Subscribe = ({ error, account: fallback }: Props) => {
 						  }`
 						: 'none',
 			},
-			'.Input:focus:not(:focus-visible)': {
-				outline: theme.focusRing === 'auto' || theme.focusRing === 'never' ? 'none' : '',
-			},
-			'.Input:focus, .Input:focus-within': {
-				outline: 'none',
-				borderColor: theme.colors[theme.primaryColor][theme.fn.primaryShade()],
-			},
 		},
-	};
-	const options: StripeElementsOptions = {
-		clientSecret,
-		appearance,
 	};
 
 	return (
-		<div className='App'>
-			{clientSecret && (
-				<Elements options={options} stripe={stripePromise}>
-					<SubscribeForm />
-				</Elements>
-			)}
-		</div>
+		<Container>
+			<Elements stripe={stripePromise}>
+				<SubscribeForm />
+			</Elements>
+		</Container>
 	);
 };
 

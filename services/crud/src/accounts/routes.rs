@@ -82,6 +82,39 @@ async fn find_instances(
     Ok(HttpResponse::Ok().json(account))
 }
 
+#[get("/accounts/{id}/usage")]
+async fn usage(
+    target: web::Path<String>,
+    req_user: Option<ReqUser>,
+) -> Result<HttpResponse, ApiError> {
+    let target = target.into_inner();
+    if !belongs_to_account(&req_user, &target) {
+        return Err(ApiError::forbidden());
+    }
+
+    let users_acct_id = target.clone();
+    let num_users = web::block::<_, Result<i64, ApiError>>(move || {
+        use models::users::dsl::*;
+        Ok(users
+            .count()
+            .filter(account_id.eq(users_acct_id))
+            .get_result::<i64>(&db::connection()?)?)
+    })
+    .await??;
+
+    let instances_acct_id = target.clone();
+    let num_instances = web::block::<_, Result<i64, ApiError>>(move || {
+        use models::instances::dsl::*;
+        Ok(instances
+            .count()
+            .filter(account_id.eq(instances_acct_id))
+            .get_result::<i64>(&db::connection()?)?)
+    })
+    .await??;
+
+    Ok(HttpResponse::Ok().json(serde_json::json!({ "users": num_users, "instances": num_instances })))
+}
+
 #[get("/accounts/{id}/is-subbed")]
 async fn is_subbed(
     id: web::Path<String>,
@@ -122,7 +155,7 @@ async fn create(
     account: web::Json<NewAccount>,
     req_user: Option<ReqUser>,
 ) -> Result<HttpResponse, ApiError> {
-    if !belongs_to_account(&req_user, &account.id) {
+    if !belongs_to_account(&req_user, &account.id) || req_user.is_some() {
         return Err(ApiError::forbidden());
     }
 
@@ -183,6 +216,7 @@ pub fn init_routes(config: &mut web::ServiceConfig) {
     config.service(find);
     config.service(find_users);
     config.service(find_instances);
+    config.service(usage);
     config.service(create);
     config.service(update);
     config.service(delete);

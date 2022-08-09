@@ -20,7 +20,12 @@ pub mod create_usage_record {
 pub mod subscribe {
     use serde::{Deserialize, Serialize};
 
-    pub type SubscribeParams = models::Account;
+    #[derive(Debug, Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    pub struct SubscribeParams {
+        pub account: models::Account,
+        pub payment_method_id: String,
+    }
 
     #[derive(Debug, Deserialize, Serialize)]
     #[serde(rename_all = "camelCase")]
@@ -38,4 +43,17 @@ pub mod customer {
 	pub type CustomerResponse = String;
 
     pub const ROUTE: &str = "/customer";
+}
+
+pub mod is_subbed {
+    use serde::Deserialize;
+
+    #[derive(Debug, Deserialize)]
+    pub struct IsSubbedQuery {
+        pub sub_id: String,
+    }
+
+    pub type IsSubbedResponse = String;
+
+    pub const ROUTE: &str = "/is-subbed";
 }

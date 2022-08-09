@@ -25,5 +25,5 @@ export interface User {
 	updatePerms: Resource[];
 	deletePerms: Resource[];
 	role: Role;
-	notes?: string;
+	notes: string | null;
 }

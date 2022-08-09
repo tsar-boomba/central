@@ -1,20 +1,25 @@
-import { CgDatabase, CgHome, CgUser } from 'react-icons/cg';
+import { IconDatabase, IconHome, IconSettings, IconUser } from '@tabler/icons';
 import { LinksGroupProps } from './NavbarLinksGroup';
 
 export const linkGroups: LinksGroupProps[] = [
 	{
-		icon: CgHome,
+		icon: IconHome,
 		label: 'Home',
 		link: '/',
 	},
 	{
-		icon: CgDatabase,
+		icon: IconDatabase,
 		label: 'Instances',
 		link: '/instances',
 	},
 	{
-		icon: CgUser,
+		icon: IconUser,
 		label: 'Users',
 		link: '/users',
+	},
+	{
+		icon: IconSettings,
+		label: 'Account',
+		link: '/account',
 	},
 ];

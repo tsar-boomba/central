@@ -5,7 +5,7 @@ mod webhooks;
 #[macro_use]
 extern crate lazy_static;
 
-use axum::{routing::post, Extension, Router};
+use axum::{routing::{post, get}, Extension, Router};
 use hyper::{client::HttpConnector, Body};
 use std::net::SocketAddr;
 use tower_http::trace::TraceLayer;
@@ -28,6 +28,7 @@ async fn main() {
             "/create-usage-record",
             post(subscriptions::routes::create_usage_record),
         )
+        .route("/is-subbed", get(subscriptions::routes::is_subbed))
         .route("/webhooks", post(webhooks::handler))
         .layer(Extension(http_client))
         .layer(Extension(stripe))

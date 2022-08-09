@@ -1,6 +1,6 @@
 import React from 'react';
 import { createStyles, Switch, useMantineColorScheme, Stack } from '@mantine/core';
-import { CgSun, CgMoon } from 'react-icons/cg';
+import { IconSun, IconMoonStars } from '@tabler/icons';
 
 const useStyles = createStyles((theme) => ({
 	root: {
@@ -35,8 +35,8 @@ const ThemeToggle = () => {
 	return (
 		<Stack align='center' spacing={0} mx={0}>
 			<div className={classes.root}>
-				<CgSun className={cx(classes.icon, classes.iconLight)} size={18} />
-				<CgMoon className={cx(classes.icon, classes.iconDark)} size={18} />
+				<IconSun className={cx(classes.icon, classes.iconLight)} size={18} />
+				<IconMoonStars className={cx(classes.icon, classes.iconDark)} size={18} />
 				<Switch
 					checked={colorScheme === 'dark'}
 					onChange={() => toggleColorScheme()}

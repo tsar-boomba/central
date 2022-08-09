@@ -1,4 +1,4 @@
-import { User } from '@/types/User';
+import { Role, User } from '@/types/User';
 import { GetServerSideProps, GetServerSidePropsResult } from 'next';
 import { api } from './apiHelpers';
 
@@ -24,7 +24,7 @@ export const isAuthed = async ({
 	);
 };
 
-export const redirect = (from = '', path = '/login'): Awaited<ReturnType<GetServerSideProps>> => ({
+export const redirect = <P>(from = '', path = '/login'): GetServerSidePropsResult<P> => ({
 	redirect: {
 		destination: `${path}${from !== '' ? `?from=${from}` : ''}`,
 		permanent: false,
@@ -42,3 +42,25 @@ export const DEFAULT_SSR =
 			return redirect(from);
 		}
 	};
+
+const roleToNum = (role: Role) => {
+	switch (role) {
+		case Role.Owner:
+			return 3;
+		case Role.User:
+			return 0;
+		case Role.Admin:
+			return 2;
+		case Role.Moderator:
+			return 1;
+		default:
+			return 0;
+	}
+};
+
+export const requireRole = (curr: Role | undefined, required: Role): boolean => {
+	if (curr) {
+		return roleToNum(curr) >= roleToNum(required);
+	}
+	return false;
+};

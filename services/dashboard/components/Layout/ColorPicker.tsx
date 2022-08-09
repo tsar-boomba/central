@@ -11,7 +11,7 @@ import {
 } from '@mantine/core';
 import { useDisclosure, useClickOutside } from '@mantine/hooks';
 import { usePrimaryColor } from '../ColorProvider';
-import { CgDrop, CgCheck } from 'react-icons/cg';
+import { IconDroplet, IconCheck } from '@tabler/icons';
 
 const useStyles = createStyles((theme) => {
 	const colors = theme.fn.variant({ color: theme.primaryColor, variant: 'filled' });
@@ -56,7 +56,7 @@ const ColorPicker = () => {
 				}}
 				onClick={() => setPrimaryColor(color)}
 			>
-				{isSelected ? <CgCheck /> : <></>}
+				{isSelected ? <IconCheck /> : <></>}
 			</ThemeIcon>
 		);
 	});
@@ -66,7 +66,7 @@ const ColorPicker = () => {
 			<Popover opened={opened} withArrow withinPortal={false}>
 				<Popover.Target>
 					<ActionIcon className={classes.menuButton} onClick={handlers.toggle}>
-						<CgDrop color='white' />
+						<IconDroplet color='white' />
 					</ActionIcon>
 				</Popover.Target>
 				<Popover.Dropdown>

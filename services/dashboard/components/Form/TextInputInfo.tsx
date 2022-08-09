@@ -1,7 +1,7 @@
 import { Box, Group, Popover, TextInput, TextInputProps } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import { IconInfoCircle } from '@tabler/icons';
 import { forwardRef, ReactNode } from 'react';
-import { CgInfo } from 'react-icons/cg';
 
 type Props = React.ComponentPropsWithoutRef<'input'> & TextInputProps & { info?: ReactNode };
 
@@ -21,7 +21,7 @@ const Label = ({ label, info }: { label?: ReactNode; info: ReactNode }) => {
 						onMouseLeave={close}
 					>
 						{label}
-						<CgInfo size={16} />
+						<IconInfoCircle size={16} />
 					</Group>
 				</Popover.Target>
 				<Popover.Dropdown sx={{ maxWidth: 200 }}>

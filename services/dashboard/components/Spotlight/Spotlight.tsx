@@ -2,7 +2,7 @@ import { Badge, Center, createStyles, Group, UnstyledButton, Text } from '@manti
 import { SpotlightAction, SpotlightActionProps, SpotlightProvider } from '@mantine/spotlight';
 import { useRouter } from 'next/router';
 import { PropsWithChildren, useMemo } from 'react';
-import { CgDatabase, CgHome, CgUser } from 'react-icons/cg';
+import { IconDatabase, IconHome, IconUser } from '@tabler/icons';
 
 const useStyles = createStyles((theme) => ({
 	action: {
@@ -71,19 +71,19 @@ const Spotlight: React.FC<PropsWithChildren<unknown>> = ({ children }) => {
 		() => [
 			{
 				title: 'Home',
-				icon: <CgHome size={24} />,
+				icon: <IconHome size={24} />,
 				onTrigger: () => router.push('/'),
 				href: '/',
 			},
 			{
 				title: 'Instances',
-				icon: <CgDatabase size={24} />,
+				icon: <IconDatabase size={24} />,
 				onTrigger: () => router.push('/instances'),
-				href: 'instances',
+				href: '/instances',
 			},
 			{
 				title: 'Users',
-				icon: <CgUser size={24} />,
+				icon: <IconUser size={24} />,
 				onTrigger: () => {
 					console.log('spotlight trigered');
 					router.push('/users');

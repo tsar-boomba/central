@@ -10,6 +10,6 @@ export interface Account {
 	zipCode: string;
 	phoneNumber: string;
 	/** Never will be sent by or to frontend */
-	stripeId?: string;
+	stripeId: string | null;
 	state: string;
 }

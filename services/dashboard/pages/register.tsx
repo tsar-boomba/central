@@ -17,7 +17,7 @@ import { showNotification } from '@mantine/notifications';
 import { setCookie } from 'ez-cookies';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
-import { CgCheck, CgClose } from 'react-icons/cg';
+import { CgCheck, CgClose } from '@tabler/icons';
 import StateInput from '../components/Form/StateInput';
 import TextInputInfo from '../components/Form/TextInputInfo';
 import { Account } from '../types/Account';
@@ -162,10 +162,14 @@ const Register = () => {
 						username: user.username,
 						password: values.user.password,
 					},
-				}).then(() => {
-					setCookie('account', json.account.id);
-					showNotification({ message: 'Welcome to NAME HERE 😁!' });
-					router.push('/');
+				}).then((res) => {
+					if (res.ok) {
+						setCookie('account', json.account.id);
+						showNotification({ message: 'Welcome to Milky Web 😁!' });
+						router.push('/');
+					} else {
+						router.push(`/login?account=${json.account.id}`);
+					}
 				});
 			}
 			// error ocurred
@@ -302,7 +306,7 @@ const Register = () => {
 						</Stack>
 					) : (
 						<Box>
-							<Text>Account successfully created.</Text>
+							<Text>{error}</Text>
 						</Box>
 					)}
 				</Stepper.Completed>
