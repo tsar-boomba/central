@@ -85,7 +85,7 @@ const SubscribeForm = () => {
 
 		if (paymentMethod) {
 			callApi({
-				route: 'payments/subscribe',
+				route: 'payments/subscription',
 				body: { account, paymentMethodId: paymentMethod.id },
 			});
 		}

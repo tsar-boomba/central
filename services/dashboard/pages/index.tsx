@@ -65,7 +65,7 @@ const Home = () => {
 						[theme.fn.smallerThan('md')]: { fontSize: 36 },
 					})}
 				>
-					Welcome to the *name here* Dashboard
+					Welcome to the Milky Web Dashboard
 				</Text>
 			</Container>
 			<Container size='sm' mt={64}>

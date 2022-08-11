@@ -78,7 +78,7 @@ const Header: React.VFC<HeaderProps> = ({ navState }) => {
 							}}
 							sx={{ fontSize: 18, fontWeight: 900 }}
 						>
-							PUDO
+							Milky Web
 						</Text>
 					</Link>
 				</Group>
