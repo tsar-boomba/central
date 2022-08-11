@@ -40,6 +40,7 @@ CREATE TABLE public.instances (
     address			TEXT			NOT NULL,
     city			TEXT			NOT NULL,
     zip_code		TEXT			NOT NULL,
+	state			TEXT			NOT NULL,
     phone_number	TEXT			NOT NULL,
 	rate_conf_email	TEXT			NOT	NULL,
 	env_id			TEXT,

@@ -21,7 +21,7 @@ mod users;
 use actix_web::{middleware, post, web::Json, App, HttpResponse, HttpServer};
 use api_error::ApiError;
 use dotenv::dotenv;
-use models::Account;
+use models::{Account, Validate};
 use payments_lib::routes::create_usage_record;
 use serde::{Deserialize, Serialize};
 
@@ -88,6 +88,7 @@ async fn register(data: Json<RegisterBody>) -> Result<HttpResponse, ApiError> {
             id: nanoid!(ID_SIZE),
             ..data.account
         };
+        with_id.validate()?;
         let account: models::Account = diesel::insert_into(models::accounts::table)
             .values(&with_id)
             .get_result::<models::Account>(&conn)?;
@@ -98,6 +99,7 @@ async fn register(data: Json<RegisterBody>) -> Result<HttpResponse, ApiError> {
             account_id: account.id.clone(),
             ..data.user
         };
+        with_hash.validate()?;
         let user: models::User = diesel::insert_into(models::users::table)
             .values(&with_hash)
             .get_result::<models::User>(&conn)?;

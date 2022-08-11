@@ -9,7 +9,7 @@ export interface Account {
 	city: string;
 	zipCode: string;
 	phoneNumber: string;
-	/** Never will be sent by or to frontend */
 	stripeId: string | null;
+	subId: string | null;
 	state: string;
 }

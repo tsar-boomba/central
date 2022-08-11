@@ -15,7 +15,7 @@ macro_rules! model {
 			),*$(,)+
 		}
 	) => {
-		#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+		#[derive(Validate, Debug, Clone, Serialize, Deserialize, PartialEq)]
 		#[cfg_attr(feature = "diesel", derive(Insertable, Queryable, Identifiable))]
 		#[serde(rename_all = "camelCase")]
 		$(#[$meta])*
@@ -29,7 +29,7 @@ macro_rules! model {
 			)*
 		}
 
-		#[derive(Debug, Clone, Serialize, Deserialize, Insertable)]
+		#[derive(Validate, Debug, Clone, Serialize, Deserialize, Insertable)]
 		#[cfg_attr(feature = "diesel", derive(Insertable))]
 		#[serde(rename_all = "camelCase")]
 		#[cfg_attr(feature = "diesel", table_name=$table_name)]
@@ -40,9 +40,10 @@ macro_rules! model {
 			)*
 		}
 
-		#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+		#[derive(Validate, Debug, Default, Clone, Serialize, Deserialize)]
 		#[cfg_attr(feature = "diesel", derive(AsChangeset))]
 		#[cfg_attr(feature = "diesel", table_name=$table_name)]
+		#[serde(rename_all = "camelCase")]
 		pub struct $up_name {
 			$(
 				$(#[$field_meta])*
@@ -61,7 +62,7 @@ macro_rules! model {
 			),*$(,)+
 		}
 	) => {
-		#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+		#[derive(Validate, Debug, Clone, Serialize, Deserialize, PartialEq)]
 		#[cfg_attr(feature = "diesel", derive(Insertable, Queryable, Identifiable))]
 		#[serde(rename_all = "camelCase")]
 		$(#[$meta])*
@@ -75,7 +76,7 @@ macro_rules! model {
 			)*
 		}
 
-		#[derive(Debug, Clone, Serialize, Deserialize)]
+		#[derive(Validate, Debug, Clone, Serialize, Deserialize)]
 		#[cfg_attr(feature = "diesel", derive(Insertable))]
 		#[cfg_attr(feature = "diesel", table_name=$table_name)]
 		#[serde(rename_all = "camelCase")]
@@ -88,9 +89,10 @@ macro_rules! model {
 			)*
 		}
 
-		#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+		#[derive(Validate, Debug, Default, Clone, Serialize, Deserialize)]
 		#[cfg_attr(feature = "diesel", derive(AsChangeset))]
 		#[cfg_attr(feature = "diesel", table_name=$table_name)]
+		#[serde(rename_all = "camelCase")]
 		pub struct $up_name {
 			$(
 				$(#[$field_meta])*
@@ -112,7 +114,7 @@ macro_rules! child_model {
 			),*$(,)+
 		}
 	) => {
-		#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+		#[derive(Validate, Debug, Clone, Serialize, Deserialize, PartialEq)]
 		#[cfg_attr(feature = "diesel", derive(Identifiable, Associations, Queryable, Insertable))]
 		#[cfg_attr(feature = "diesel", belongs_to($parent))]
 		#[cfg_attr(feature = "diesel", table_name=$table_name)]
@@ -128,7 +130,7 @@ macro_rules! child_model {
 			)*
 		}
 
-		#[derive(Debug, Clone, Serialize, Deserialize)]
+		#[derive(Validate, Debug, Clone, Serialize, Deserialize)]
 		#[cfg_attr(feature = "diesel", derive(Insertable))]
 		#[serde(rename_all = "camelCase")]
 		#[cfg_attr(feature = "diesel", table_name=$table_name)]
@@ -139,9 +141,10 @@ macro_rules! child_model {
 			)*
 		}
 
-		#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+		#[derive(Validate, Debug, Default, Clone, Serialize, Deserialize)]
 		#[cfg_attr(feature = "diesel", derive(AsChangeset))]
 		#[cfg_attr(feature = "diesel", table_name=$table_name)]
+		#[serde(rename_all = "camelCase")]
 		pub struct $up_name {
 			$(
 				$(#[$field_meta])*
@@ -160,7 +163,7 @@ macro_rules! child_model {
 			),*$(,)+
 		}
 	) => {
-		#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+		#[derive(Validate, Debug, Clone, Serialize, Deserialize, PartialEq)]
 		#[cfg_attr(feature = "diesel", derive(Identifiable, Associations, Queryable, Insertable))]
 		#[cfg_attr(feature = "diesel", belongs_to($parent))]
 		#[serde(rename_all = "camelCase")]
@@ -175,7 +178,7 @@ macro_rules! child_model {
 			)*
 		}
 
-		#[derive(Debug, Clone, Serialize, Deserialize)]
+		#[derive(Validate, Debug, Clone, Serialize, Deserialize)]
 		#[cfg_attr(feature = "diesel", derive(Identifiable, Insertable))]
 		#[cfg_attr(feature = "diesel", table_name=$table_name)]
 		#[serde(rename_all = "camelCase")]
@@ -188,9 +191,10 @@ macro_rules! child_model {
 			)*
 		}
 
-		#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+		#[derive(Validate, Debug, Default, Clone, Serialize, Deserialize)]
 		#[cfg_attr(feature = "diesel", derive(AsChangeset))]
 		#[cfg_attr(feature = "diesel", table_name=$table_name)]
+		#[serde(rename_all = "camelCase")]
 		pub struct $up_name {
 			$(
 				$(#[$field_meta])*

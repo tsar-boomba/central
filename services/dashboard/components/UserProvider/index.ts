@@ -1,1 +1,1 @@
-export { default as UserProvider, useUser, useSetFallbackUser } from './UserProvider';
+export { default as UserProvider, useUser, useAccount } from './UserProvider';

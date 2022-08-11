@@ -12,7 +12,7 @@ pub const PATH_BASE: &str = "/";
 lazy_static! {
     pub static ref URI: String =
         std::env::var("CRUD_URI").unwrap_or("http://127.0.0.1:8080".into());
-    pub static ref PATH_RE: RegexSet = RegexSet::new(&[
+    pub static ref PUBLIC_PATH_RE: RegexSet = RegexSet::new(&[
         "^/verify$",
         "^/login$",
         "^/authenticate$",
@@ -35,7 +35,7 @@ pub async fn proxy(
     mut req: Request<Body>,
     path: String,
 ) -> Result<Response<Body>, Infallible> {
-    if PATH_RE.is_match(&path) {
+    if PUBLIC_PATH_RE.is_match(&path) {
         // do not authorize request
         return Ok(proxy_call(client_ip, URI.as_str(), req).await);
     } else {

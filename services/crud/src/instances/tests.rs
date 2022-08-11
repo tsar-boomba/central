@@ -13,6 +13,7 @@ fn compare(got: &Instance, exp: &NewInstance) {
     assert_eq!(got.phone_number, exp.phone_number);
     assert_eq!(got.rate_conf_email, exp.rate_conf_email);
     assert_eq!(got.name, exp.name);
+    assert_eq!(got.state, exp.state);
 }
 
 fn defaults(test_name: String) -> (NewInstance, NewInstance) {
@@ -27,6 +28,7 @@ fn defaults(test_name: String) -> (NewInstance, NewInstance) {
             city: "charlotte".into(),
             status: InstanceStatus::Ok,
             zip_code: "28254".into(),
+            state: "NC".into(),
             phone_number: "704-805-1261".into(),
             rate_conf_email: "igamble@gmail.com".into(),
             name: test_name.clone() + "our deployment".into(),
@@ -45,6 +47,7 @@ fn defaults(test_name: String) -> (NewInstance, NewInstance) {
             city: "charlotte".into(),
             status: InstanceStatus::Deploying,
             zip_code: "28254".into(),
+            state: "NC".into(),
             phone_number: "980-335-6090".into(),
             rate_conf_email: "ugamble@gmail.com".into(),
             name: test_name + "load mgner".into(),

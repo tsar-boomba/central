@@ -29,7 +29,7 @@ pub mod subscribe {
 
     #[derive(Debug, Deserialize, Serialize)]
     #[serde(rename_all = "camelCase")]
-	pub struct SubscribeResponse {
+    pub struct SubscribeResponse {
         pub sub_id: String,
         pub client_secret: String,
     }
@@ -39,8 +39,16 @@ pub mod subscribe {
 
 pub mod customer {
     pub type CustomerParams = models::Account;
+    pub type CustomerResponse = String;
 
-	pub type CustomerResponse = String;
+    pub mod update {
+        pub type UpdateCustomerParams = models::UpdateAccount;
+        pub type UpdateCustomerResponse = ();
+
+        pub fn route(id: &str) -> String {
+            "/customer/".to_string() + id
+        }
+    }
 
     pub const ROUTE: &str = "/customer";
 }

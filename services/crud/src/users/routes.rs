@@ -3,7 +3,7 @@ use auth::{belongs_to_account, ReqUser};
 use bcrypt::hash;
 use diesel::prelude::*;
 use models::types::Role;
-use models::{Account, Model, NewUser, UpdateUser, User};
+use models::{Account, Model, NewUser, UpdateUser, User, Validate};
 
 use crate::update_usage;
 use crate::{api_error::ApiError, db, json::DeleteBody};
@@ -48,6 +48,7 @@ async fn create(
     use models::users::dsl::*;
 
     let new_user = new_user.into_inner();
+    new_user.validate()?;
     let hashed_pass =
         web::block(move || hash(new_user.password.clone(), bcrypt::DEFAULT_COST)).await??;
     // If req came from user, use their account id instead of whatever they set
@@ -150,6 +151,7 @@ async fn update(
         account_id: None,
         ..user.into_inner()
     };
+    update_set.validate()?;
 
     let user = web::block(move || User::update(id, update_set)).await??;
 

@@ -4,20 +4,29 @@ macro_rules! instance_models {
             String, NaiveDateTime, "instances", NewInstance, UpdateInstance, "sever gen", $parent,
             Instance {
                 account_id: String,
+                #[validate(length(min = 1))]
                 business_name: String,
+                #[validate(length(min = 1))]
                 short_name: String,
+                #[validate(length(min = 1))]
                 address: String,
+                #[validate(length(min = 1))]
                 city: String,
+                #[validate(regex = "crate::ZIP_RE")]
                 zip_code: String,
+                #[validate(custom = "crate::validate_state")]
+                state: String,
+                #[validate(regex = "crate::PHONE_RE")]
                 phone_number: String,
+                #[validate(regex = "crate::EMAIL_RE")]
                 rate_conf_email: String,
+                #[validate(length(min = 1))]
                 name: String,
                 status: InstanceStatus,
                 #[serde(skip)]
                 key: Option<String>,
                 #[serde(skip)]
                 env_id: Option<String>,
-                #[serde(skip)]
                 url: Option<String>,
                 top_terms: Option<String>,
                 bottom_terms: Option<Vec<String>>,
@@ -44,6 +53,7 @@ pub mod schema {
             address -> Text,
             city -> Text,
             zip_code -> Text,
+            state -> Text,
             phone_number -> Text,
             rate_conf_email -> Text,
             name -> Text,
@@ -60,11 +70,12 @@ pub mod schema {
 pub mod model {
     #[cfg(feature = "diesel")]
     use super::schema::instances;
+    use crate::types::InstanceStatus;
     #[cfg(feature = "diesel")]
     use crate::Account;
-    use crate::types::InstanceStatus;
     use chrono::NaiveDateTime;
     use serde::{Deserialize, Serialize};
+    use validator::Validate;
 
     instance_models!(Account);
 }

@@ -3,7 +3,7 @@ use auth::{belongs_to_account, require_role, ReqUser};
 use diesel::prelude::*;
 use models::{
     types::{InstanceStatus, Role},
-    Account, Instance, Model, NewInstance, UpdateInstance,
+    Account, Instance, Model, NewInstance, UpdateInstance, Validate,
 };
 use serde::Deserialize;
 
@@ -62,6 +62,8 @@ async fn create(
         ..instance.into_inner()
     };
 
+    created.validate()?;
+
     let instance = web::block(move || Instance::insert(created)).await??;
 
     // just start deployment with aws, lambda will call back later with url and env_id
@@ -114,6 +116,8 @@ async fn update(
         name: None,
         ..instance.into_inner()
     };
+
+    update_set.validate()?;
 
     let instance = web::block(move || Instance::update(id, update_set)).await??;
 

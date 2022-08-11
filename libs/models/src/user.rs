@@ -7,8 +7,11 @@ macro_rules! user_models {
             User {
                 #[serde(default)]
                 account_id: String,
+                #[validate(length(min = 1))]
                 username: String,
+                #[validate(length(min = 1))]
                 first_name: String,
+                #[validate(length(min = 1))]
                 last_name: String,
                 #[serde(skip_serializing_if = "skip_serialize_pass")]
                 password: String,
@@ -63,6 +66,7 @@ pub mod model {
     use crate::Account;
     use chrono::NaiveDateTime;
     use serde::{Deserialize, Serialize};
+    use validator::Validate;
 
     static SKIP_SERIALIZE_PASS: AtomicUsize = AtomicUsize::new(1);
 

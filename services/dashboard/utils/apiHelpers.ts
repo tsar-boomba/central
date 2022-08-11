@@ -15,14 +15,14 @@ export const ssrFetch = (
  * @description Meant for all NON-GET requests, which will be handled by swr
  * @returns Promise with Response object
  */
-export const callApi = ({
+export const callApi = <Body extends unknown>({
 	route,
 	body,
 	method = 'POST',
 }: {
 	route: string;
-	body?: unknown;
-	method?: 'POST' | 'DELETE' | 'PATCH';
+	body?: Body;
+	method?: 'POST' | 'DELETE' | 'PATCH' | 'PUT';
 }) => {
 	if (!method) method = 'POST';
 	const response = fetch(api(route), {
@@ -36,3 +36,9 @@ export const callApi = ({
 	});
 	return response;
 };
+
+export const resError = (
+	jsonPromise: Promise<any>,
+	defaultErr = 'An error ocurred.',
+): Promise<string> =>
+	jsonPromise.then((json) => json?.message || defaultErr).catch(() => defaultErr);

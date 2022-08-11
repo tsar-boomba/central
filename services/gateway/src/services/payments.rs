@@ -2,16 +2,19 @@ use std::{convert::Infallible, net::IpAddr};
 
 use axum::http::{HeaderValue, Request, Response};
 use hyper::{Body, StatusCode};
+use regex::RegexSet;
 
 use crate::{authorize_req, error_body, proxy_call, Client};
 
 pub const PATH_BASE: &str = "/payments";
 
-/// Paths which can only be accessed by other services
-const PRIVATE_PATHS: [&str; 1] = ["/create-usage-record"];
-
-/// Paths which don't need to be authenticated
-const PUBLIC_PATHS: [&str; 1] = ["/webhooks"];
+lazy_static! {
+    /// Paths which don't need to be authenticated
+    static ref PUBLIC_PATH_RE: RegexSet = RegexSet::new(&["^/webhooks$"]).unwrap();
+    /// Paths which can only be accessed by other services
+    static ref PRIVATE_PATH_RE: RegexSet =
+        RegexSet::new(&["^/create-usage-record$", r"^/customer/.*$"]).unwrap();
+}
 
 lazy_static! {
     pub static ref URI: String =
@@ -24,9 +27,9 @@ pub async fn proxy(
     mut req: Request<Body>,
     path: String,
 ) -> Result<Response<Body>, Infallible> {
-    if PUBLIC_PATHS.contains(&path.as_str()) {
+    if PUBLIC_PATH_RE.is_match(path.as_str()) {
         Ok(proxy_call(client_ip, URI.as_str(), req).await)
-    } else if !PRIVATE_PATHS.contains(&path.as_str()) {
+    } else if !PRIVATE_PATH_RE.is_match(path.as_str()) {
         return match authorize_req(&client, &req).await {
             // request was authed
             Some(user) => {

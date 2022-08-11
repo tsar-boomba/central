@@ -1,9 +1,11 @@
 use actix_web::{delete, get, post, put, web, HttpResponse};
 use auth::{belongs_to_account, ReqUser};
 use diesel::prelude::*;
-use models::{Account, Instance, Model, NewAccount, UpdateAccount, User};
+use models::{Account, Instance, Model, NewAccount, UpdateAccount, User, Validate};
+use payments_lib::routes::customer;
+use reqwest::Client;
 
-use crate::{api_error::ApiError, db, json::DeleteBody};
+use crate::{api_error::ApiError, db, json::DeleteBody, PAYMENTS_URI};
 
 #[get("/accounts")]
 async fn find_all(req_user: Option<ReqUser>) -> Result<HttpResponse, ApiError> {
@@ -112,7 +114,8 @@ async fn usage(
     })
     .await??;
 
-    Ok(HttpResponse::Ok().json(serde_json::json!({ "users": num_users, "instances": num_instances })))
+    Ok(HttpResponse::Ok()
+        .json(serde_json::json!({ "users": num_users, "instances": num_instances })))
 }
 
 #[get("/accounts/{id}/is-subbed")]
@@ -159,7 +162,10 @@ async fn create(
         return Err(ApiError::forbidden());
     }
 
-    let account = web::block(move || Account::insert(account.into_inner())).await??;
+    let account = account.into_inner();
+    account.validate()?;
+
+    let account = web::block(move || Account::insert(account)).await??;
 
     Ok(HttpResponse::Ok().json(account))
 }
@@ -185,6 +191,22 @@ async fn update(
             stripe_id: None,
             sub_id: None,
             ..account.into_inner()
+        }
+    };
+
+    update_set.validate()?;
+
+    if let Some(stripe_id) = to_be_updated.stripe_id {
+        let res = Client::new()
+            .put(PAYMENTS_URI.to_string() + &customer::update::route(stripe_id.as_str()))
+            .json(&update_set)
+            .send()
+            .await?;
+        if res.error_for_status().is_err() {
+            return Err(ApiError::new(
+                500,
+                "Failed to update account with stripe.".into(),
+            ));
         }
     };
 

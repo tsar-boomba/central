@@ -8,7 +8,7 @@ const fetcher = async <JSON = any>(
 	url: string,
 	init: RequestInit = { credentials: 'include' },
 ): Promise<JSON> => {
-	const res = await fetch(url, init);
+	const res = await fetch(url, { ...init, credentials: 'include', mode: 'cors' });
 
 	if (!res.ok) {
 		const err = new ApiError(

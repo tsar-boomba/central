@@ -3,9 +3,11 @@ use actix_web::http::StatusCode;
 use actix_web::{HttpResponse, ResponseError};
 use bcrypt::BcryptError;
 use diesel::result::{DatabaseErrorKind, Error as DieselError};
+use models::ValidationErrors;
 use serde::Deserialize;
 use serde_json::json;
 use std::fmt;
+use std::str::FromStr;
 
 #[derive(Debug, Deserialize)]
 pub struct ApiError {
@@ -29,7 +31,6 @@ impl ApiError {
     pub fn forbidden() -> ApiError {
         ApiError::new(403, "You do not have access to this resource".into())
     }
-
 
     pub fn not_subbed() -> ApiError {
         ApiError::new(403, "You cannot do this while not subscribed.".into())
@@ -61,6 +62,24 @@ impl From<DieselError> for ApiError {
             DieselError::NotFound => ApiError::new(404, "Record not found".into()),
             _ => ApiError::new(500, "A database error occurred.".into()),
         }
+    }
+}
+
+impl From<ValidationErrors> for ApiError {
+    fn from(err: ValidationErrors) -> Self {
+        let mut message = String::from_str("Validation failed for fields: ").unwrap();
+        message.push_str(&err.into_errors().into_iter().fold(
+            String::new(),
+            |mut err_fields, (curr_field, _)| {
+                err_fields.reserve(curr_field.len() + 1);
+                err_fields.push_str(curr_field);
+                err_fields.push_str(",");
+                err_fields
+            },
+        ));
+        error!("Validation failed: {}", message);
+
+        ApiError::new(400, message)
     }
 }
 

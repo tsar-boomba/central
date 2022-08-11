@@ -1,6 +1,6 @@
 mod error;
-mod subscriptions;
 mod webhooks;
+mod routes;
 
 #[macro_use]
 extern crate lazy_static;
@@ -22,13 +22,13 @@ async fn main() {
     let stripe = stripe::Client::new(STRIPE_KEY.to_string());
 
     let app = Router::new()
-        .route("/subscribe", post(subscriptions::routes::subscribe))
-        .route("/customer", post(subscriptions::routes::customer))
+        .nest("/", routes::subscription::init())
+        .nest("/", routes::customer::init())
         .route(
             "/create-usage-record",
-            post(subscriptions::routes::create_usage_record),
+            post(routes::create_usage_record),
         )
-        .route("/is-subbed", get(subscriptions::routes::is_subbed))
+        .route("/is-subbed", get(routes::is_subbed))
         .route("/webhooks", post(webhooks::handler))
         .layer(Extension(http_client))
         .layer(Extension(stripe))

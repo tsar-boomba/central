@@ -17,14 +17,14 @@ import { showNotification } from '@mantine/notifications';
 import { setCookie } from 'ez-cookies';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
-import { CgCheck, CgClose } from '@tabler/icons';
+import { IconCheck, IconX } from '@tabler/icons';
 import StateInput from '../components/Form/StateInput';
 import TextInputInfo from '../components/Form/TextInputInfo';
 import { Account } from '../types/Account';
 import { Resource, Role, User } from '../types/User';
 import { NewAccount, NewUser, RegisterAccount, RegisterUser } from '../types/utils';
 import { callApi } from '../utils/apiHelpers';
-import { statesAbbr } from '../utils/states';
+import { accountValidation } from '@/components/Form/AccountForm';
 
 const NUM_STEPS = 2;
 
@@ -38,7 +38,7 @@ const PasswordRequirement = ({ meets, label }: { meets: boolean; label: string }
 			mt={7}
 			size='sm'
 		>
-			{meets ? <CgCheck size={14} /> : <CgClose size={14} />}{' '}
+			{meets ? <IconCheck size={14} /> : <IconX size={14} />}{' '}
 			<Box ml={10} sx={{ fontWeight: 500 }}>
 				{label}
 			</Box>
@@ -65,23 +65,9 @@ const getStrength = (password: string) => {
 	return Math.max(100 - (100 / (requirements.length + 1)) * multiplier, 10);
 };
 
-const accountValidation: FormRulesRecord<RegisterAccount> = {
-	businessName: (v) => (v.length > 0 ? null : 'Business Name cannot be empty.'),
-	shortName: (v) => (v.length > 0 ? null : 'Short Name cannot be empty.'),
-	email: (v) => (/^[^\s@]+@([^\s@.,]+\.)+[^\s@.,]{2,}$/.test(v) ? null : 'Invalid email.'),
-	phoneNumber: (v) =>
-		/^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/.test(v)
-			? null
-			: 'Invalid US phone number.',
-	address: (v) => (v.length > 0 ? null : 'Address cannot be empty.'),
-	city: (v) => (v.length > 0 ? null : 'City cannot be empty.'),
-	state: (v) => (statesAbbr.includes(v) ? null : 'Must be a valid state name.'),
-	zipCode: (v) => (/[\d]{5}(-[\d]{4})?/.test(v) ? null : 'Zip Code cannot be empty.'),
-};
-
 const userValidation: FormRulesRecord<RegisterUser> = {
 	username: (v) => (v.length > 0 ? null : 'Username cannot be empty.'),
-	firstName: (v) => (v.length > 1 ? null : 'First Name cannot be empty.'),
+	firstName: (v) => (v.length > 0 ? null : 'First Name cannot be empty.'),
 	lastName: (v) => (v.length > 0 ? null : 'Last Name cannot be empty.'),
 	password: (v) => (getStrength(v) >= 100 ? null : 'Password must meet requirements.'),
 	confirmPass: (v, values: any) => (v === values.user.password ? null : 'Passwords must match.'),

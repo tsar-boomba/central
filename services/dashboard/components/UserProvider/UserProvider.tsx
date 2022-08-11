@@ -4,6 +4,7 @@ import { User } from '@/types/User';
 import { useRouter } from 'next/router';
 import { createContext, ReactNode, useContext } from 'react';
 import useSWR, { KeyedMutator } from 'swr';
+import { Account } from '@/types/Account';
 
 interface UserContextValue {
 	user: User | undefined;
@@ -54,5 +55,14 @@ const UserProvider = ({ children, fallback }: Props) => {
 };
 
 export const useUser = () => useContext(UserContext);
+
+export const useAccount = () => {
+	const { user } = useUser();
+	const { data: account, ...rest } = useSWR<Account>(
+		user ? api(`accounts/${user.accountId}`) : null,
+		fetcher,
+	);
+	return { account, ...rest };
+};
 
 export default UserProvider;
