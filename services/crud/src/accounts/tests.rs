@@ -25,7 +25,7 @@ fn defaults(test_name: String /*fk: String*/) -> (NewAccount, NewAccount) {
             zip_code: "28254".into(),
             phone_number: "704-805-1261".into(),
             stripe_id: Some("cust_baklakgjaslk".into()),
-            state: "nc".into(),
+            state: "NC".into(),
             sub_id: None,
         },
         NewAccount {
@@ -39,7 +39,7 @@ fn defaults(test_name: String /*fk: String*/) -> (NewAccount, NewAccount) {
             phone_number: "980-335-6090".into(),
             stripe_id: Some("cust_blizgonbop".into()),
             sub_id: None,
-            state: "south carolina".into(),
+            state: "SC".into(),
         },
     )
 }

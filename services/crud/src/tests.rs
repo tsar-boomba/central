@@ -1,16 +1,13 @@
-use diesel::prelude::*;
-use payments_lib::routes::create_usage_record;
-use std::sync::{Arc, Mutex};
-use models::{Account, NewAccount};
 use actix_web::{
     dev::{Service, ServiceResponse},
     test, web, App, HttpResponse, HttpServer,
 };
+use diesel::prelude::*;
+use models::{Account, NewAccount};
+use payments_lib::routes::create_usage_record;
+use std::sync::{Arc, Mutex};
 
-use crate::{
-    api_error::ApiError,
-    auth, db,
-};
+use crate::{api_error::ApiError, auth, db};
 
 lazy_static! {
     static ref INITIATED: Arc<Mutex<bool>> = Arc::new(Mutex::new(false));
@@ -27,7 +24,6 @@ pub async fn init(
         test_account();
         *initiated = true;
     }
-
 
     // serialize password when doing tests
     models::dont_skip_pass();
@@ -47,11 +43,20 @@ pub async fn mock_payments() -> std::io::Result<()> {
         Ok(HttpResponse::Ok().finish())
     }
 
+    async fn update_customer() -> Result<HttpResponse, ApiError> {
+        Ok(HttpResponse::Ok().finish())
+    }
+
     HttpServer::new(|| {
-        App::new().route(
-            create_usage_record::ROUTE,
-            web::post().to(create_usage_record_handler),
-        )
+        App::new()
+            .route(
+                create_usage_record::ROUTE,
+                web::post().to(create_usage_record_handler),
+            )
+            .route(
+                "/customer/{id}",
+                web::put().to(update_customer),
+            )
     })
     .bind(("127.0.0.1", 6666))?
     .run()
@@ -65,15 +70,10 @@ pub async fn mock_instance_deploy() -> std::io::Result<()> {
         Ok(HttpResponse::Ok().finish())
     }
 
-    HttpServer::new(|| {
-        App::new().route(
-            "/",
-            web::post().to(deploy),
-        )
-    })
-    .bind(("127.0.0.1", 7777))?
-    .run()
-    .await
+    HttpServer::new(|| App::new().route("/", web::post().to(deploy)))
+        .bind(("127.0.0.1", 7777))?
+        .run()
+        .await
 }
 
 /// Creates an account to ensure foreign keys are satisfied during testing
@@ -91,7 +91,7 @@ pub fn test_account() {
             zip_code: "28282".into(),
             stripe_id: Some("something".into()),
             sub_id: Some("totally_subbed".into()),
-            state: "nc".into(),
+            state: "NC".into(),
         })
         .on_conflict_do_nothing()
         .get_result::<Account>(&db::connection().unwrap())
