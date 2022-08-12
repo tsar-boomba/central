@@ -34,7 +34,7 @@ pub mod subscribe {
         pub client_secret: String,
     }
 
-    pub const ROUTE: &str = "/subscribe";
+    pub const ROUTE: &str = "/subscription";
 }
 
 pub mod customer {

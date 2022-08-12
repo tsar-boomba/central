@@ -1,5 +1,5 @@
 use models::{Account, NewAccount, accounts::dsl::*, UpdateAccount};
-use crate::{db, json::DeleteBody, tests, ID_SIZE};
+use crate::{db, json::DeleteBody, tests::{self, mock_payments}, ID_SIZE};
 use actix_web::test;
 use diesel::prelude::*;
 
@@ -119,6 +119,7 @@ async fn post() {
 
 #[actix_web::test]
 async fn put() {
+    actix_web::rt::spawn(mock_payments());
     let (default1, _default2) = defaults("accounts-put".into());
 
     let app = tests::init(super::routes::init_routes).await;

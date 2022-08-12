@@ -39,7 +39,6 @@ pub async fn mock_payments() -> std::io::Result<()> {
     std::env::set_var("PAYMENTS_URI", "http://127.0.0.1:6666");
 
     async fn create_usage_record_handler() -> Result<HttpResponse, ApiError> {
-        println!("Payments received request.");
         Ok(HttpResponse::Ok().finish())
     }
 

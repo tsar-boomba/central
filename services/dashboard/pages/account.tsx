@@ -1,4 +1,5 @@
 import AccountForm from '@/components/Form/AccountForm';
+import { ManageSubscription } from '@/components/ManageSubscription';
 import { useAccount, useUser } from '@/components/UserProvider';
 import { Role } from '@/types/User';
 import { requireRole } from '@/utils/authUtils';
@@ -33,8 +34,13 @@ const Account = () => {
 			</Tabs.Panel>
 
 			{isOwner && (
-				<Tabs.Panel value='subscription' pt='xs'>
-					Manage subscription
+				<Tabs.Panel value='subscription' pt='xs' pb='xl'>
+					<Stack align='center'>
+						<Text sx={{ fontSize: 36 }} align='center' component='h1'>
+							Manage your subscription
+						</Text>
+						<ManageSubscription />
+					</Stack>
 				</Tabs.Panel>
 			)}
 		</Tabs>
