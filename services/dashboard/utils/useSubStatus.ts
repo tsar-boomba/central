@@ -29,6 +29,6 @@ export const useSubStatus = () => {
 			revalidateOnMount: true,
 		},
 	);
-	console.log(rest.error);
+
 	return { status: rest.error ? undefined : status, ...rest };
 };

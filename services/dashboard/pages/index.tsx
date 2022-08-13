@@ -53,7 +53,6 @@ const useStyles = createStyles((theme) => {
 const Home = () => {
 	const { classes, theme } = useStyles();
 	const { status } = useSubStatus();
-	console.log(status);
 
 	return (
 		<>
