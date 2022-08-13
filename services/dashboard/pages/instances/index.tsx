@@ -3,26 +3,60 @@ import { Instance } from '@/types/Instance';
 import { api, ssrFetch } from '@/utils/apiHelpers';
 import { isAuthed, redirect } from '@/utils/authUtils';
 import fetcher from '@/utils/swrFetcher';
-import { Loader, Text } from '@mantine/core';
+import { ActionIcon, Card, Container, Group, Loader, Menu, Text } from '@mantine/core';
+import { IconDots } from '@tabler/icons';
 import { GetServerSideProps } from 'next';
 import useSWR from 'swr';
 
 interface Props {
-	instances: Instance[];
+	initialInstances: Instance[];
 }
 
-const Instances = ({ instances }: Props) => {
+const InstanceDisplay = ({ instance }: { instance: Instance }) => {
+	return (
+		<Card withBorder shadow='sm'>
+			<Card.Section withBorder inheritPadding py='xs'>
+				<Group position='apart'>
+					<Text weight={500}>{instance.name}</Text>
+					<Menu position='bottom-end' shadow='sm'>
+						<Menu.Target>
+							<ActionIcon>
+								<IconDots size={16} />
+							</ActionIcon>
+						</Menu.Target>
+
+						<Menu.Dropdown>
+							<Menu.Item>Download zip</Menu.Item>
+							<Menu.Item>Preview all</Menu.Item>
+							<Menu.Item color='red'>Delete</Menu.Item>
+						</Menu.Dropdown>
+					</Menu>
+				</Group>
+			</Card.Section>
+		</Card>
+	);
+};
+
+const Instances = ({ initialInstances }: Props) => {
 	const { user } = useUser();
-	const { data, error } = useSWR(
+	const { data: instances, error } = useSWR<Instance[]>(
 		user ? api(`accounts/${user.accountId}/instances`) : null,
 		fetcher,
-		{ fallbackData: instances },
+		{ fallbackData: initialInstances },
 	);
 
-	if (!data) return <Loader />;
+	if (!instances) return <Loader />;
 	if (error) return <Text component='h1'>{error.message || 'An error ocurred.'}</Text>;
 
-	return <div></div>;
+	return (
+		<Container>
+			<Group>
+				{instances.map((instance) => (
+					<InstanceDisplay instance={instance} key={instance.id} />
+				))}
+			</Group>
+		</Container>
+	);
 };
 
 export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
@@ -31,11 +65,11 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
 	if (user) {
 		const instancesRes = await ssrFetch(api(`accounts/${user.accountId}/instances`), ctx);
 		if (instancesRes.ok) {
-			const instances: Instance[] = await instancesRes.json();
+			const initialInstances: Instance[] = await instancesRes.json();
 
 			return {
 				props: {
-					instances,
+					initialInstances,
 				},
 			};
 		} else {

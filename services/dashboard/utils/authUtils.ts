@@ -34,9 +34,13 @@ export const redirect = <P>(from = '', path = '/login'): GetServerSidePropsResul
 export const DEFAULT_SSR_RETURN: GetServerSidePropsResult<Record<string, unknown>> = { props: {} };
 
 export const DEFAULT_SSR =
-	(from?: string): GetServerSideProps =>
+	(from?: string, requiredRole: Role = Role.User): GetServerSideProps =>
 	async (ctx) => {
-		if (await isAuthed(ctx)) {
+		const user = await isAuthed(ctx);
+		if (user) {
+			if (!requireRole(user.role, requiredRole)) {
+				return redirect('', '/'); // cant just go back to current page 😔
+			}
 			return DEFAULT_SSR_RETURN;
 		} else {
 			return redirect(from);

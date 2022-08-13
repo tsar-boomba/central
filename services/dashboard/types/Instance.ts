@@ -18,15 +18,15 @@ export interface Instance {
 	city: string;
 	zipCode: string;
 	phoneNumber: string;
-	rateConfEmail: string;
 	name: string;
 	status: InstanceStatus;
 	//#[serde(skip)]
 	key: string | null;
 	//#[serde(skip)]
 	envId: string | null;
-	//#[serde(skip)]
 	url: string | null;
+	// rate conf stuff
+	rateConfEmail: string;
 	topTerms: string | null;
 	bottomTerms: string[] | null;
 }

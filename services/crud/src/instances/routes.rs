@@ -114,6 +114,7 @@ async fn update(
     let update_set: UpdateInstance = UpdateInstance {
         account_id: None,
         name: None,
+        url: None,
         ..instance.into_inner()
     };
 

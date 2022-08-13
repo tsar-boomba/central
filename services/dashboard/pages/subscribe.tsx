@@ -6,10 +6,11 @@ import { api, ssrFetch } from '../utils/apiHelpers';
 import useSWR from 'swr';
 import fetcher from '../utils/swrFetcher';
 import { GetServerSideProps } from 'next';
-import { isAuthed, redirect } from '../utils/authUtils';
+import { isAuthed, redirect, requireRole } from '../utils/authUtils';
 import { Account } from '../types/Account';
 import SubscribeForm from '../components/Form/SubscribeForm';
 import { useSubStatus } from '@/utils/useSubStatus';
+import { Role } from '@/types/User';
 
 // Make sure to call loadStripe outside of a component’s render to avoid
 // recreating the Stripe object on every render.
@@ -53,6 +54,10 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
 
 	if (!user) {
 		return redirect('/subscribe');
+	}
+
+	if (!requireRole(user.role, Role.Owner)) {
+		return redirect('/');
 	}
 
 	// When they visit this page, get their account and see if it has customer & subscription
