@@ -20,7 +20,12 @@ interface FormValues {
 const Login: NextPage<Props> = ({ accountId }) => {
 	const { mutate } = useUser();
 	const router = useRouter();
-	const form = useForm<FormValues>();
+	const form = useForm<FormValues>({
+		initialValues: {
+			username: '',
+			password: '',
+		},
+	});
 
 	const onSubmit = (values: FormValues) => {
 		const [success, fail] = fetchNotification('login');
