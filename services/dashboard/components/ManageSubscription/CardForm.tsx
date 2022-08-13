@@ -38,7 +38,7 @@ const useStyles = createStyles((theme) => ({
 		resize: 'none',
 		boxSizing: 'border-box',
 		fontSize: theme.fn.size({ size, sizes: theme.fontSizes }),
-		minWidth: '300px',
+		minWidth: '250px',
 		color: theme.colorScheme === 'dark' ? theme.colors.dark[0] : theme.black,
 		display: 'flex',
 		flexDirection: 'column',
@@ -170,6 +170,8 @@ const CardForm = () => {
 		} else if (error) {
 			setMessage('An unexpected error occurred.');
 		}
+
+		setIsLoading(false);
 	};
 
 	const cardOptions: CardElementProps['options'] = {
@@ -191,7 +193,12 @@ const CardForm = () => {
 			}}
 			onSubmit={handleSubmit}
 		>
-			<Input.Wrapper label='New Card Info' error={error}>
+			<Input.Wrapper
+				label='New Card Info'
+				error={error}
+				size='md'
+				styles={{ label: { color: 'white' }, error: { fontWeight: 500 } }}
+			>
 				<CardElement
 					className={classes.card}
 					onChange={onChange}
@@ -201,6 +208,7 @@ const CardForm = () => {
 			</Input.Wrapper>
 			<Button
 				mt='md'
+				variant='white'
 				loading={isLoading}
 				disabled={isLoading || !account || !stripe || !elements}
 				type='submit'
@@ -210,7 +218,12 @@ const CardForm = () => {
 			</Button>
 			{/* Show any error or success messages */}
 			{message && (
-				<Alert icon={<IconAlertCircle size={16} />} mt='md' id='payment-message'>
+				<Alert
+					icon={<IconAlertCircle size={16} />}
+					variant='filled'
+					mt='md'
+					id='payment-message'
+				>
 					{message}
 				</Alert>
 			)}

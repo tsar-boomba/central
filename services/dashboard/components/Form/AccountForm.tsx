@@ -41,7 +41,6 @@ const AccountForm = ({ account }: Props) => {
 		validate: accountValidation,
 	});
 	const isOwner = requireRole(user?.role, Role.Owner);
-	console.log(submitting);
 
 	const onSubmit = (values: FormValues) => {
 		setSubmitting(true); // disable submit and show loader

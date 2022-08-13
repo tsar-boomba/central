@@ -15,10 +15,12 @@ const textFetcher = async <Text>(url: string, init: RequestInit = {}): Promise<T
 	return res.text() as Text;
 };
 
+export type SubscriptionStatus = 'active' | 'unpaid' | 'past_due';
+
 /** Checks current account's subscription, assumes they are active, if undefined, they dont have a sub  */
 export const useSubStatus = () => {
 	const { account } = useAccount();
-	const { data: status, ...rest } = useSWR<'active' | 'unpaid' | 'past_due'>(
+	const { data: status, ...rest } = useSWR<SubscriptionStatus>(
 		account ? api(`payments/sub-status?subId=${account.subId}`) : null,
 		textFetcher,
 		{
@@ -31,4 +33,17 @@ export const useSubStatus = () => {
 	);
 
 	return { status: rest.error ? undefined : status, ...rest };
+};
+
+export const statusToText = (status: SubscriptionStatus) => {
+	switch (status) {
+		case 'active':
+			return 'Active';
+		case 'past_due':
+			return 'Past Due';
+		case 'unpaid':
+			return 'Unpaid';
+		default:
+			return 'Unknown Status';
+	}
 };

@@ -1,7 +1,8 @@
 import { api } from '@/utils/apiHelpers';
 import fetcher from '@/utils/swrFetcher';
-import { useSubStatus } from '@/utils/useSubStatus';
+import { statusToText, useSubStatus } from '@/utils/useSubStatus';
 import {
+	Alert,
 	Button,
 	Group,
 	Loader,
@@ -14,6 +15,7 @@ import {
 import { openConfirmModal } from '@mantine/modals';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
+import { IconAlertCircle, IconTrash } from '@tabler/icons';
 import useSWR from 'swr';
 import GradientCard from '../GradientCard';
 import { useUser } from '../UserProvider';
@@ -42,9 +44,9 @@ const ManageSubscription = () => {
 				</Text>
 			),
 			labels: { confirm: "I'm Sure", cancel: 'Go Back' },
+			confirmProps: { color: 'red' },
 			onConfirm: () => console.error('Implement this'), // TODO cancel subscriptions
 		});
-	console.log(status);
 
 	return (
 		<Group position='center'>
@@ -115,6 +117,32 @@ const ManageSubscription = () => {
 						<Text m='0' sx={{ fontSize: 24 }} align='center' component='h2'>
 							Manage Your Subscription
 						</Text>
+						<GradientCard component='div' p='md' sx={{ maxWidth: 500 }}>
+							<Text
+								m='0'
+								color='white'
+								align='center'
+								sx={{ fontSize: 28 }}
+								component='h3'
+							>
+								Status: {statusToText(status)}
+							</Text>
+							{(status === 'past_due' || status === 'unpaid') && (
+								<Alert
+									icon={<IconAlertCircle size={16} />}
+									variant='filled'
+									mt='md'
+									color='red'
+								>
+									This status means that you have missed a payment. If it is
+									unpaid, all instances have been changed to inactive & you have
+									lost access to Milky Web services. Please update your payment
+									method to a valid one below to continue using Milky Web. Please
+									note that when adding the new payment method, you will be
+									charged immediately for your missed invoice.
+								</Alert>
+							)}
+						</GradientCard>
 						<GradientCard component='div' p='md'>
 							<Text m='0' color='white' component='h3' align='center'>
 								Change Payment Method
@@ -123,8 +151,8 @@ const ManageSubscription = () => {
 								<CardForm />
 							</Elements>
 						</GradientCard>
-						<Button color='red' onClick={openCancelSubModal}>
-							Cancel
+						<Button leftIcon={<IconTrash />} color='red' onClick={openCancelSubModal}>
+							Cancel Subscription
 						</Button>
 					</Stack>
 				</Paper>
