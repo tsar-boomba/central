@@ -1,12 +1,13 @@
 use std::str::FromStr;
 
-use auth::{belongs_to_account, ExtractReqUser};
+use auth::{belongs_to_account, require_role, ExtractReqUser};
 use axum::{
     extract::Path,
     routing::{post, put},
     Extension, Json, Router,
 };
-use hyper::{Body, Method, Request, Response, StatusCode};
+use hyper::{Body, Method, Request, Response, StatusCode, Uri, body};
+use models::{types::Role, Account};
 use payments_lib::routes::customer;
 use stripe::{Address, CreateCustomer, Customer, CustomerId, UpdateCustomer};
 
@@ -18,7 +19,7 @@ async fn create_customer(
     Extension(client): Extension<Client>,
     ExtractReqUser(req_user): ExtractReqUser,
 ) -> Result<Response<Body>, ApiError> {
-    if !belongs_to_account(&req_user, &account.id) {
+    if !belongs_to_account(&req_user, &account.id) || !require_role(&req_user, Role::Owner)  {
         return Ok(Response::builder()
             .status(StatusCode::FORBIDDEN)
             .body(Body::from(
@@ -81,10 +82,29 @@ async fn create_customer(
 }
 
 async fn update_customer(
-    Json(account): Json<customer::update::UpdateCustomerParams>,
+    Json(account): Json<customer::UpdateCustomerParams>,
     Path(id): Path<String>,
     Extension(stripe): Extension<stripe::Client>,
+    Extension(client): Extension<Client>,
+    ExtractReqUser(req_user): ExtractReqUser,
 ) -> Result<Response<Body>, ApiError> {
+    let res = client
+        .get(Uri::try_from(CRUD_URI.to_string() + "/accounts/by-customer/" + id.as_str()).unwrap())
+        .await?;
+    if !res.status().is_success() {
+        return Err(ApiError::new(StatusCode::INTERNAL_SERVER_ERROR, "Failed to retrieve account information."))
+    }
+    let to_be_updated = serde_json::from_slice::<Account>(&body::to_bytes(res.into_body()).await.unwrap())?;
+
+    if !belongs_to_account(&req_user, &to_be_updated.id) || !require_role(&req_user, Role::Owner) {
+        return Ok(Response::builder()
+            .status(StatusCode::FORBIDDEN)
+            .body(Body::from(
+                r#"{"message":"You cannot access this resource."}"#,
+            ))
+            .unwrap());
+    }
+
     let parsed_id = CustomerId::from_str(id.as_str())?;
     Customer::update(
         &stripe,
@@ -105,11 +125,14 @@ async fn update_customer(
     )
     .await?;
 
-    Ok(Response::builder().status(StatusCode::OK).body(Body::empty()).unwrap())
+    Ok(Response::builder()
+        .status(StatusCode::OK)
+        .body(Body::empty())
+        .unwrap())
 }
 
 pub fn init() -> Router {
     Router::new()
-        .route("/customer", post(create_customer))
-        .route("/customer/:id", put(update_customer))
+        .route("/", post(create_customer))
+        .route("/:id", put(update_customer))
 }

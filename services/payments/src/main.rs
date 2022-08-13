@@ -22,13 +22,13 @@ async fn main() {
     let stripe = stripe::Client::new(STRIPE_KEY.to_string());
 
     let app = Router::new()
-        .nest("/", routes::subscription::init())
-        .nest("/", routes::customer::init())
+        .nest("/subscription", routes::subscription::init())
+        .nest("/customer", routes::customer::init())
         .route(
             "/create-usage-record",
             post(routes::create_usage_record),
         )
-        .route("/is-subbed", get(routes::is_subbed))
+        .route("/sub-status", get(routes::sub_status))
         .route("/webhooks", post(webhooks::handler))
         .layer(Extension(http_client))
         .layer(Extension(stripe))

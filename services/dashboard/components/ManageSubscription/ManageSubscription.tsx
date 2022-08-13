@@ -1,5 +1,6 @@
 import { api } from '@/utils/apiHelpers';
 import fetcher from '@/utils/swrFetcher';
+import { useSubStatus } from '@/utils/useSubStatus';
 import {
 	Button,
 	Group,
@@ -11,13 +12,19 @@ import {
 	useMantineTheme,
 } from '@mantine/core';
 import { openConfirmModal } from '@mantine/modals';
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 import useSWR from 'swr';
 import GradientCard from '../GradientCard';
 import { useUser } from '../UserProvider';
+import CardForm from './CardForm';
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
 
 const ManageSubscription = () => {
 	const theme = useMantineTheme();
 	const { user } = useUser();
+	const { status } = useSubStatus();
 	const { data: usage } = useSWR<{ users: number; instances: number }>(
 		user ? api(`accounts/${user.accountId}/usage`) : null,
 		fetcher,
@@ -37,6 +44,7 @@ const ManageSubscription = () => {
 			labels: { confirm: "I'm Sure", cancel: 'Go Back' },
 			onConfirm: () => console.error('Implement this'), // TODO cancel subscriptions
 		});
+	console.log(status);
 
 	return (
 		<Group position='center'>
@@ -101,19 +109,26 @@ const ManageSubscription = () => {
 					</Text>
 				</Stack>
 			</Paper>
-			<Paper shadow='md' withBorder p='md'>
-				<Stack align='center'>
-					<Text m='0' sx={{ fontSize: 24 }} align='center' component='h2'>
-						Manage Your Subscription
-					</Text>
-					<Text m='0' component='h3'>
-						Change Payment Method
-					</Text>
-					<Button color='red' onClick={openCancelSubModal}>
-						Cancel
-					</Button>
-				</Stack>
-			</Paper>
+			{status !== undefined && (
+				<Paper shadow='md' withBorder p='md'>
+					<Stack align='center'>
+						<Text m='0' sx={{ fontSize: 24 }} align='center' component='h2'>
+							Manage Your Subscription
+						</Text>
+						<GradientCard component='div' p='md'>
+							<Text m='0' color='white' component='h3' align='center'>
+								Change Payment Method
+							</Text>
+							<Elements stripe={stripePromise}>
+								<CardForm />
+							</Elements>
+						</GradientCard>
+						<Button color='red' onClick={openCancelSubModal}>
+							Cancel
+						</Button>
+					</Stack>
+				</Paper>
+			)}
 		</Group>
 	);
 };

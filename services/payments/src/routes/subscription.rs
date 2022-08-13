@@ -1,26 +1,28 @@
 use std::str::FromStr;
 
-use auth::{belongs_to_account, ExtractReqUser};
-use axum::{Extension, Json, Router, routing::post};
+use auth::{belongs_to_account, require_role, ExtractReqUser};
+use axum::{routing::post, Extension, Json, Router};
 use hyper::{body, Body, Method, Request, Response, StatusCode};
-use payments_lib::routes::subscribe::SubscribeParams;
+use models::types::Role;
+use payments_lib::routes::subscription::{CreateSubscriptionParams, UpdateSubscriptionParams};
 use serde::Deserialize;
 use stripe::{
     AttachPaymentMethod, CreateSubscription, CreateSubscriptionItems,
     CreateSubscriptionPaymentSettings, CreateSubscriptionPaymentSettingsSaveDefaultPaymentMethod,
     CreateUsageRecord, Customer, CustomerId, CustomerInvoiceSettings, PaymentMethod,
-    PaymentMethodId, Subscription, SubscriptionId, UpdateCustomer, UsageRecord, UsageRecordAction,
+    PaymentMethodId, Subscription, SubscriptionId, SubscriptionStatus, UpdateCustomer, UsageRecord,
+    UsageRecordAction,
 };
 
 use crate::{error::ApiError, Client, CRUD_URI, INSTANCE_PRICE_ID, USER_PRICE_ID};
 
 async fn subscribe(
-    Json(data): Json<SubscribeParams>,
+    Json(data): Json<CreateSubscriptionParams>,
     Extension(stripe): Extension<stripe::Client>,
     Extension(client): Extension<Client>,
     ExtractReqUser(req_user): ExtractReqUser,
 ) -> Result<Response<Body>, ApiError> {
-    if !belongs_to_account(&req_user, &data.account.id) {
+    if !belongs_to_account(&req_user, &data.account.id) || !require_role(&req_user, Role::Owner) {
         return Ok(Response::builder()
             .status(StatusCode::FORBIDDEN)
             .body(Body::from(
@@ -102,7 +104,6 @@ async fn subscribe(
             ..Default::default()
         });
         params.expand = expansions;
-        params.default_payment_method = Some(&parsed_payment_id);
 
         Subscription::create(&stripe, params).await?
     } else {
@@ -189,6 +190,79 @@ async fn subscribe(
         .unwrap())
 }
 
+async fn update_subscription(
+    Json(data): Json<UpdateSubscriptionParams>,
+    Extension(stripe): Extension<stripe::Client>,
+    ExtractReqUser(req_user): ExtractReqUser,
+) -> Result<Response<Body>, ApiError> {
+    if !belongs_to_account(&req_user, &data.account.id) || !require_role(&req_user, Role::Owner) {
+        return Ok(Response::builder()
+            .status(StatusCode::FORBIDDEN)
+            .body(Body::from(
+                r#"{"message":"You cannot access this resource."}"#,
+            ))
+            .unwrap());
+    }
+
+    if data.account.stripe_id == None || data.account.sub_id == None {
+        return Ok(Response::builder()
+            .status(StatusCode::BAD_REQUEST)
+            .body(Body::from(
+                r#"{"message":"Account does not have a customer or subscription id."}"#,
+            ))
+            .unwrap());
+    }
+
+    let parsed_payment_id = PaymentMethodId::from_str(&data.payment_method_id)?;
+    let customer_id = data.account.stripe_id.unwrap();
+    let parsed_customer_id = CustomerId::from_str(&customer_id)?;
+
+    // update payment method
+    PaymentMethod::attach(
+        &stripe,
+        &parsed_payment_id,
+        AttachPaymentMethod {
+            customer: parsed_customer_id.clone(),
+        },
+    )
+    .await?;
+    Customer::update(
+        &stripe,
+        &parsed_customer_id,
+        UpdateCustomer {
+            invoice_settings: Some(CustomerInvoiceSettings {
+                default_payment_method: Some(parsed_payment_id.to_string()),
+                ..Default::default()
+            }),
+            ..Default::default()
+        },
+    )
+    .await?;
+
+    let sub_id = data.account.sub_id.unwrap();
+    let parsed_sub_id = SubscriptionId::from_str(&sub_id)?;
+    let expansions = &["pending_setup_intent", "latest_invoice.payment_intent"];
+    let sub = Subscription::retrieve(&stripe, &parsed_sub_id, expansions).await?;
+
+    if sub.status == SubscriptionStatus::PastDue || sub.status == SubscriptionStatus::Unpaid {
+        // get missed invoice
+        let invoice = sub.latest_invoice.unwrap().into_object().unwrap();
+
+        Ok(Response::builder()
+            .status(StatusCode::OK)
+            .body(Body::from(
+                serde_json::to_string(&serde_json::json!({ "invoice": invoice })).unwrap(),
+            ))
+            .unwrap())
+    } else {
+        // just return success!!
+        Ok(Response::builder()
+            .status(StatusCode::OK)
+            .body(Body::from("{}"))
+            .unwrap())
+    }
+}
+
 pub fn init() -> Router {
-	Router::new().route("/subscription", post(subscribe))
+    Router::new().route("/", post(subscribe).put(update_subscription))
 }

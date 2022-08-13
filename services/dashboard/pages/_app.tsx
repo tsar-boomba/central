@@ -83,7 +83,7 @@ const MyApp: _App<{
 					name='viewport'
 					content='minimum-scale=1, initial-scale=1, width=device-width'
 				/>
-				<title>Pudo</title>
+				<title>Dashboard | Milky Web</title>
 			</Head>
 			<ColorSchemeProvider colorScheme={colorScheme} toggleColorScheme={toggleColorScheme}>
 				<MantineProvider withGlobalStyles withNormalizeCSS theme={theme}>

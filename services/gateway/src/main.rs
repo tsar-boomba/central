@@ -105,7 +105,7 @@ fn service_path_query(service_path: &str, req: &mut Request<Body>, path: String)
     let path_query = req
         .uri()
         .query()
-        .map(|query| format!("{}{}", truncated_path, query))
+        .map(|query| format!("{}?{}", truncated_path, query))
         .unwrap_or(truncated_path);
 
     path_query.into()

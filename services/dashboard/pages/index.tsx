@@ -12,7 +12,7 @@ import {
 import { IconBolt, IconDatabase, IconUser } from '@tabler/icons';
 import Link from 'next/link';
 import GradientCard from '../components/GradientCard';
-import { useIsSubbed } from '../utils/useIsSubbed';
+import { useSubStatus } from '../utils/useSubStatus';
 
 const useStyles = createStyles((theme) => {
 	const colors = theme.fn.variant({ variant: 'outline' });
@@ -52,7 +52,8 @@ const useStyles = createStyles((theme) => {
 
 const Home = () => {
 	const { classes, theme } = useStyles();
-	const isSubbed = useIsSubbed();
+	const { status } = useSubStatus();
+	console.log(status);
 
 	return (
 		<>
@@ -98,7 +99,7 @@ const Home = () => {
 							</UnstyledButton>
 						</Link>
 					</Group>
-					<Transition mounted={!isSubbed} transition='fade' duration={500}>
+					<Transition mounted={status === undefined} transition='fade' duration={500}>
 						{(styles) => (
 							<Link href='/subscribe' passHref>
 								<GradientCard

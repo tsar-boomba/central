@@ -5,9 +5,9 @@ use std::str::FromStr;
 
 use axum::{extract::Query, Extension, Json};
 use hyper::{Body, Response, StatusCode};
-use payments_lib::routes::{create_usage_record, is_subbed::IsSubbedQuery};
+use payments_lib::routes::{create_usage_record, sub_status::IsSubbedQuery};
 use stripe::{
-    CreateUsageRecord, Subscription, SubscriptionId, SubscriptionStatus, UsageRecord,
+    CreateUsageRecord, Subscription, SubscriptionId, UsageRecord,
     UsageRecordAction,
 };
 
@@ -59,22 +59,15 @@ pub async fn create_usage_record(
         .unwrap())
 }
 
-pub async fn is_subbed(
+pub async fn sub_status(
     stripe: Extension<stripe::Client>,
     query: Query<IsSubbedQuery>,
 ) -> Result<Response<Body>, ApiError> {
     let sub_id = SubscriptionId::from_str(&query.sub_id)?;
     let sub = Subscription::retrieve(&stripe, &sub_id, &[]).await?;
 
-    if sub.status != SubscriptionStatus::Active {
-        return Ok(Response::builder()
-            .status(StatusCode::BAD_REQUEST)
-            .body(Body::empty())
-            .unwrap());
-    };
-
     Ok(Response::builder()
         .status(StatusCode::OK)
-        .body(Body::empty())
+        .body(Body::from(sub.status.as_str()))
         .unwrap())
 }

@@ -118,20 +118,6 @@ async fn usage(
         .json(serde_json::json!({ "users": num_users, "instances": num_instances })))
 }
 
-#[get("/accounts/{id}/is-subbed")]
-async fn is_subbed(
-    id: web::Path<String>,
-    req_user: Option<ReqUser>,
-) -> Result<HttpResponse, ApiError> {
-    let account = web::block(move || Account::find_by_id(id.into_inner())).await??;
-
-    if !belongs_to_account(&req_user, &account.id) {
-        return Err(ApiError::forbidden());
-    }
-
-    Ok(HttpResponse::Ok().body(account.sub_id.is_some().to_string()))
-}
-
 #[get("/accounts/by-sub/{id}")]
 async fn find_by_sub(
     target: web::Path<String>,
@@ -142,6 +128,27 @@ async fn find_by_sub(
     let account = web::block(move || {
         models::accounts::table
             .filter(sub_id.eq(target.into_inner()))
+            .first::<Account>(&conn)
+    })
+    .await??;
+
+    if !belongs_to_account(&req_user, &account.id) {
+        return Err(ApiError::forbidden());
+    }
+
+    Ok(HttpResponse::Ok().json(account))
+}
+
+#[get("/accounts/by-customer/{id}")]
+async fn find_by_customer(
+    target: web::Path<String>,
+    req_user: Option<ReqUser>,
+) -> Result<HttpResponse, ApiError> {
+    use models::accounts::dsl::*;
+    let conn = db::connection()?;
+    let account = web::block(move || {
+        models::accounts::table
+            .filter(stripe_id.eq(target.into_inner()))
             .first::<Account>(&conn)
     })
     .await??;
@@ -198,7 +205,7 @@ async fn update(
 
     if let Some(stripe_id) = to_be_updated.stripe_id {
         let res = Client::new()
-            .put(PAYMENTS_URI.to_string() + &customer::update::route(stripe_id.as_str()))
+            .put(PAYMENTS_URI.to_string() + &customer::id_route(stripe_id.as_str()))
             .json(&update_set)
             .send()
             .await?;
@@ -242,6 +249,6 @@ pub fn init_routes(config: &mut web::ServiceConfig) {
     config.service(create);
     config.service(update);
     config.service(delete);
-    config.service(is_subbed);
     config.service(find_by_sub);
+    config.service(find_by_customer);
 }

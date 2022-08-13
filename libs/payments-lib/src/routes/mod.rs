@@ -17,22 +17,20 @@ pub mod create_usage_record {
     pub const ROUTE: &str = "/create-usage-record";
 }
 
-pub mod subscribe {
-    use serde::{Deserialize, Serialize};
+pub mod subscription {
+    use serde::Deserialize;
 
     #[derive(Debug, Deserialize)]
     #[serde(rename_all = "camelCase")]
-    pub struct SubscribeParams {
+    pub struct CreateSubscriptionParams {
         pub account: models::Account,
         pub payment_method_id: String,
     }
+    pub type CreateSubscriptionResponse = ();
 
-    #[derive(Debug, Deserialize, Serialize)]
-    #[serde(rename_all = "camelCase")]
-    pub struct SubscribeResponse {
-        pub sub_id: String,
-        pub client_secret: String,
-    }
+    pub type UpdateSubscriptionParams = CreateSubscriptionParams;
+    // not used in backend at all
+    pub type UpdateSubscriptionResponse = ();
 
     pub const ROUTE: &str = "/subscription";
 }
@@ -41,27 +39,26 @@ pub mod customer {
     pub type CustomerParams = models::Account;
     pub type CustomerResponse = String;
 
-    pub mod update {
-        pub type UpdateCustomerParams = models::UpdateAccount;
-        pub type UpdateCustomerResponse = ();
+    pub type UpdateCustomerParams = models::UpdateAccount;
+    pub type UpdateCustomerResponse = ();
 
-        pub fn route(id: &str) -> String {
-            "/customer/".to_string() + id
-        }
+    pub fn id_route(id: &str) -> String {
+        "/customer/".to_string() + id
     }
 
     pub const ROUTE: &str = "/customer";
 }
 
-pub mod is_subbed {
+pub mod sub_status {
     use serde::Deserialize;
 
     #[derive(Debug, Deserialize)]
+    #[serde(rename_all = "camelCase")]
     pub struct IsSubbedQuery {
         pub sub_id: String,
     }
 
     pub type IsSubbedResponse = String;
 
-    pub const ROUTE: &str = "/is-subbed";
+    pub const ROUTE: &str = "/sub-status";
 }

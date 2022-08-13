@@ -1,8 +1,11 @@
 import { Account } from '@/types/Account';
 import { api, callApi } from '@/utils/apiHelpers';
 import fetcher from '@/utils/swrFetcher';
-import { Button, createStyles } from '@mantine/core';
+import { Alert, Button, createStyles, Input } from '@mantine/core';
+import { showNotification } from '@mantine/notifications';
 import { CardElement, useStripe, useElements, CardElementProps } from '@stripe/react-stripe-js';
+import { IconAlertCircle } from '@tabler/icons';
+import { useRouter } from 'next/router';
 import { FormEventHandler, useState } from 'react';
 import useSWR from 'swr';
 import { useUser } from '../../UserProvider';
@@ -57,11 +60,22 @@ const SubscribeForm = () => {
 		user?.accountId ? api(`accounts/${user.accountId}`) : null,
 		fetcher,
 	);
+	const router = useRouter();
 	const stripe = useStripe();
 	const elements = useElements();
 
 	const [message, setMessage] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+
+	const successful = () => {
+		showNotification({ message: 'Successfully subscribed. Enjoy Milky Web 😁' });
+		router.push('/');
+	};
+
+	const onChange: CardElementProps['onChange'] = (e) => {
+		setError(e.error ? e.error.message : null);
+	};
 
 	const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
 		e.preventDefault();
@@ -84,9 +98,48 @@ const SubscribeForm = () => {
 		});
 
 		if (paymentMethod) {
-			callApi({
+			return callApi({
 				route: 'payments/subscription',
 				body: { account, paymentMethodId: paymentMethod.id },
+			}).then(async (res) => {
+				if (!res.ok) {
+					const message = await res
+						.json()
+						.then((json) => json?.message || 'An api error ocurred.')
+						.catch(() => 'An api error ocurred.');
+					setMessage(message);
+				} else {
+					// check for setup
+					const sub = await res.json();
+					const setupIntent = sub.pending_setup_intent;
+
+					if (setupIntent && setupIntent.status === 'requires_action') {
+						return stripe
+							.confirmCardSetup(setupIntent.client_secret, {
+								payment_method: paymentMethod.id,
+							})
+							.then((result) => {
+								if (result.error) {
+									// start code flow to handle updating the payment details
+									// Display error message in your UI.
+									// The card was declined (i.e. insufficient funds, card has expired, etc)
+									setMessage(result.error.message || 'An unknown error ocurred.');
+								} else {
+									if (result.setupIntent.status === 'succeeded') {
+										// There's a risk of the customer closing the window before callback
+										// execution. To handle this case, set up a webhook endpoint and
+										// listen to setup_intent.succeeded.
+										successful();
+									}
+								}
+								setIsLoading(false);
+							});
+					} else {
+						// No customer action needed
+						successful();
+					}
+				}
+				setIsLoading(false);
 			});
 		}
 
@@ -97,7 +150,7 @@ const SubscribeForm = () => {
 		// redirected to the `return_url`.
 		if (error?.type === 'card_error' || error?.type === 'validation_error') {
 			setMessage(error.message || 'A card/validation error ocurred.');
-		} else {
+		} else if (error) {
 			setMessage('An unexpected error occurred.');
 		}
 
@@ -123,18 +176,29 @@ const SubscribeForm = () => {
 			}}
 			onSubmit={handleSubmit}
 		>
-			<CardElement className={classes.card} options={cardOptions} id='card-element' />
+			<Input.Wrapper label='Card Info' error={error}>
+				<CardElement
+					className={classes.card}
+					onChange={onChange}
+					options={cardOptions}
+					id='card-element'
+				/>
+			</Input.Wrapper>
 			<Button
 				mt='md'
 				loading={isLoading}
-				disabled={isLoading || !account || !stripe || !elements}
+				disabled={isLoading || !!error || !account || !stripe || !elements}
 				type='submit'
 				id='submit'
 			>
 				Subscribe
 			</Button>
 			{/* Show any error or success messages */}
-			{message && <div id='payment-message'>{message}</div>}
+			{message && (
+				<Alert icon={<IconAlertCircle size={16} />} mt='md' id='payment-message'>
+					{message}
+				</Alert>
+			)}
 		</form>
 	);
 };

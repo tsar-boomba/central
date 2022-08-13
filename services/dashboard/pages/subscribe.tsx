@@ -1,6 +1,6 @@
-import { loadStripe, StripeElementsOptions } from '@stripe/stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
-import { Container, Loader, Text, useMantineTheme } from '@mantine/core';
+import { Container, Loader, Text } from '@mantine/core';
 import { useUser } from '../components/UserProvider';
 import { api, ssrFetch } from '../utils/apiHelpers';
 import useSWR from 'swr';
@@ -9,6 +9,7 @@ import { GetServerSideProps } from 'next';
 import { isAuthed, redirect } from '../utils/authUtils';
 import { Account } from '../types/Account';
 import SubscribeForm from '../components/Form/SubscribeForm';
+import { useSubStatus } from '@/utils/useSubStatus';
 
 // Make sure to call loadStripe outside of a component’s render to avoid
 // recreating the Stripe object on every render.
@@ -27,43 +28,16 @@ const Subscribe = ({ error, account: fallback }: Props) => {
 		fetcher,
 		{ fallbackData: fallback },
 	);
-	const theme = useMantineTheme();
+	const { status } = useSubStatus();
 
+	if (status !== undefined)
+		return (
+			<Text sx={{ fontSize: 42 }} component='h1'>
+				You are already subscribed.
+			</Text>
+		);
 	if (!user || !account) return <Loader />;
 	if (error || !account?.stripeId) return <Text>An error ocurred, please try again.</Text>;
-
-	const appearance: StripeElementsOptions['appearance'] = {
-		theme: 'none',
-		variables: {
-			colorPrimary: theme.colors[theme.primaryColor][theme.fn.primaryShade()],
-			colorBackground: theme.colorScheme === 'dark' ? theme.colors.dark[6] : theme.white,
-			colorText: theme.colorScheme === 'dark' ? 'white' : 'black',
-			borderRadius:
-				typeof theme.fn.radius('sm') === 'string'
-					? (theme.fn.radius('sm') as string)
-					: `${theme.fn.radius('sm')}px`,
-			focusOutline: theme.colors[theme.primaryColor][theme.fn.primaryShade()],
-		},
-		rules: {
-			'.Input': {
-				border: `1px solid ${
-					theme.colorScheme === 'dark' ? theme.colors.dark[4] : theme.colors.gray[4]
-				}`,
-			},
-			'.Input:focus': {
-				outlineOffset: '2px',
-				borderColor: theme.colors[theme.primaryColor][theme.fn.primaryShade()],
-				outline:
-					theme.focusRing === 'always' || theme.focusRing === 'auto'
-						? `2px solid ${
-								theme.colors[theme.primaryColor][
-									theme.colorScheme === 'dark' ? 7 : 5
-								]
-						  }`
-						: 'none',
-			},
-		},
-	};
 
 	return (
 		<Container>
