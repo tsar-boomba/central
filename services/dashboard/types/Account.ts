@@ -2,7 +2,8 @@ export interface Account {
 	id: string;
 	createdAt: string;
 	updatedAt: string;
-	address: string;
+	address1: string;
+	address2: string | null;
 	email: string;
 	businessName: string;
 	shortName: string;

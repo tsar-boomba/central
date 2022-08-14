@@ -147,6 +147,7 @@ async fn delete(
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct CallbackParams {
     env_id: String,
     url: String,
@@ -192,12 +193,12 @@ async fn callback(
     use models::instances::dsl::*;
 
     let conn = db::connection()?;
-    let num_user = instances
+    let num_instances = instances
         .count()
         .filter(account_id.eq(owner.id.clone()))
         .get_result::<i64>(&conn)?;
 
-    let res = web::block(move || update_usage(&owner, "instances".into(), num_user)).await??;
+    let res = web::block(move || update_usage(&owner, "instances".into(), num_instances)).await??;
 
     if let Err(_) = res.error_for_status() {
         // TODO notify me

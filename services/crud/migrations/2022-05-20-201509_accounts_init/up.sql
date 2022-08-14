@@ -37,17 +37,18 @@ CREATE TABLE public.instances (
 	status			InstanceStatus	NOT NULL,
 	business_name	TEXT			NOT NULL,
 	short_name		TEXT			NOT	NULL,
-    address			TEXT			NOT NULL,
+    address1		TEXT			NOT NULL,
+	address2		TEXT,
     city			TEXT			NOT NULL,
     zip_code		TEXT			NOT NULL,
 	state			TEXT			NOT NULL,
     phone_number	TEXT			NOT NULL,
-	rate_conf_email	TEXT			NOT	NULL,
+	email			TEXT			NOT	NULL,
 	env_id			TEXT,
 	key				TEXT,
 	instance_name	TEXT,
-	top_terms		TEXT,
-	bottom_terms	TEXT[]
+	top_text		TEXT,
+	bottom_text		TEXT
 );
 
 SELECT diesel_manage_updated_at ('instances');
@@ -60,7 +61,8 @@ CREATE TABLE public.accounts (
 	id				TEXT		NOT NULL PRIMARY KEY,
 	created_at		TIMESTAMP	NOT NULL DEFAULT NOW(),
 	updated_at		TIMESTAMP	NOT NULL DEFAULT NOW(),
-	address			TEXT		NOT	NULL,
+	address1		TEXT		NOT NULL,
+	address2		TEXT,
 	email			TEXT		NOT	NULL,
 	business_name	TEXT		NOT NULL,
 	short_name		TEXT		NOT	NULL,

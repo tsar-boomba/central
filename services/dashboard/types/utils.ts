@@ -14,7 +14,7 @@ export type NewAccount = Omit<Account, 'id' | 'createdAt' | 'updatedAt' | 'strip
 export type NewUser = Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'accountId' | 'notes'>;
 export type NewInstance = Omit<
 	Instance,
-	'id' | 'createdAt' | 'updatedAt' | 'accountId' | 'key' | 'envId' | 'url'
+	'id' | 'createdAt' | 'updatedAt' | 'key' | 'envId' | 'url'
 >;
 
 export type UpdateAccount = Omit<Account, 'id' | 'createdAt' | 'updatedAt' | 'stripeId' | 'subId'>;

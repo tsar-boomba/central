@@ -151,7 +151,11 @@ const ManageSubscription = () => {
 								<CardForm />
 							</Elements>
 						</GradientCard>
-						<Button leftIcon={<IconTrash />} color='red' onClick={openCancelSubModal}>
+						<Button
+							leftIcon={<IconTrash size={16} />}
+							color='red'
+							onClick={openCancelSubModal}
+						>
 							Cancel Subscription
 						</Button>
 					</Stack>

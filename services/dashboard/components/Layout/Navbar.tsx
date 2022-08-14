@@ -93,7 +93,9 @@ const Navbar: React.VFC<NavbarProps> = ({ linkGroups, navState }) => {
 			</MantineNavbar.Section>
 
 			<MantineNavbar.Section className={classes.footer} pb='sm'>
-				© {new Date().getFullYear()} Isaiah Gamble
+				<Text size={18} align='center'>
+					© {new Date().getFullYear()} Milky Web
+				</Text>
 			</MantineNavbar.Section>
 		</MantineNavbar>
 	);

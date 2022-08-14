@@ -4,7 +4,9 @@ macro_rules! account_models {
             String, NaiveDateTime, "accounts", NewAccount, UpdateAccount, "server gen",
             Account {
                 #[validate(length(min = 1))]
-                address: String,
+                address1: String,
+                #[validate(length(min = 1))]
+                address2: Option<String>,
                 #[validate(regex = "crate::EMAIL_RE")]
                 email: String,
                 #[validate(length(min = 1))]
@@ -35,7 +37,8 @@ pub mod schema {
             id -> Text,
             created_at -> Timestamp,
             updated_at -> Timestamp,
-            address -> Text,
+            address1 -> Text,
+            address2 -> Nullable<Text>,
             email -> Text,
             business_name -> Text,
             short_name -> Text,

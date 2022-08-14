@@ -43,7 +43,8 @@ async fn create_customer(
             address: Some(Address {
                 city: Some(account.city.clone()),
                 country: Some("US".to_string()),
-                line1: Some(account.address.clone()),
+                line1: Some(account.address1.clone()),
+                line2: account.address2,
                 postal_code: Some(account.zip_code.clone()),
                 state: Some(account.state.clone()),
                 ..Default::default()
@@ -114,7 +115,8 @@ async fn update_customer(
             email: account.email.as_deref(),
             address: Some(Address {
                 city: account.city,
-                line1: account.address,
+                line1: account.address1,
+                line2: account.address2.unwrap_or_default(),
                 postal_code: account.zip_code,
                 state: account.state,
                 ..Default::default()

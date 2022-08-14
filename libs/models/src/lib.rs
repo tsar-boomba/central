@@ -29,6 +29,7 @@ lazy_static! {
     static ref EMAIL_RE: Regex = Regex::new(r"^[^\s@]+@([^\s@.,]+\.)+[^\s@.,]{2,}$").unwrap();
     static ref PHONE_RE: Regex =
         Regex::new(r"^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$").unwrap();
+    static ref INSTANCE_NAME_RE: Regex = Regex::new("^[a-zA-Z0-9_-]+$").unwrap();
 }
 
 pub trait Model<Id, New, Up, Err> {

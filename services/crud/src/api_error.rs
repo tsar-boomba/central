@@ -17,7 +17,6 @@ pub struct ApiError {
 
 impl ApiError {
     pub fn new(status_code: u16, message: String) -> ApiError {
-        error!("{}", message);
         ApiError {
             status_code,
             message,
@@ -45,6 +44,7 @@ impl fmt::Display for ApiError {
 
 impl From<DieselError> for ApiError {
     fn from(error: DieselError) -> ApiError {
+        error!("[Diesel] error: {:?}", error);
         match error {
             DieselError::DatabaseError(kind, _err) => match kind {
                 DatabaseErrorKind::UniqueViolation => ApiError::new(
@@ -85,13 +85,14 @@ impl From<ValidationErrors> for ApiError {
 
 impl From<reqwest::Error> for ApiError {
     fn from(err: reqwest::Error) -> Self {
-        error!("Reqwest failed: {:?}", err);
+        error!("[Reqwest] error: {:?}", err);
         ApiError::server_err()
     }
 }
 
 impl From<BcryptError> for ApiError {
-    fn from(_err: BcryptError) -> Self {
+    fn from(err: BcryptError) -> Self {
+        error!("[Bcrypt] error: {:?}", err);
         ApiError::new(500, "Error hashing password.".into())
     }
 }

@@ -38,6 +38,7 @@ pub fn ensure_deployment(id: String) {
             if instance.status == InstanceStatus::Deploying {
                 // timeout while deploying
                 // TODO notify user
+                info!("Instance {} timed out while deploying.", instance.id);
 
                 match Instance::update(
                     id,

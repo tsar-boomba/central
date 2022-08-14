@@ -12,12 +12,6 @@ export interface Instance {
 	createdAt: string;
 	updatedAt: string;
 	accountId: string;
-	businessName: string;
-	shortName: string;
-	address: string;
-	city: string;
-	zipCode: string;
-	phoneNumber: string;
 	name: string;
 	status: InstanceStatus;
 	//#[serde(skip)]
@@ -25,8 +19,19 @@ export interface Instance {
 	//#[serde(skip)]
 	envId: string | null;
 	url: string | null;
+
 	// rate conf stuff
-	rateConfEmail: string;
-	topTerms: string | null;
-	bottomTerms: string[] | null;
+	businessName: string;
+	shortName: string;
+	address1: string;
+	address2: string | null;
+	state: string;
+	city: string;
+	zipCode: string;
+	phoneNumber: string;
+	email: string;
+	/** html which will be added to invoice */
+	topText: string | null;
+	// same as above
+	bottomText: string | null;
 }

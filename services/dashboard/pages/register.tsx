@@ -10,6 +10,7 @@ import {
 	Stack,
 	Stepper,
 	Text,
+	TextInput,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { FormRulesRecord } from '@mantine/form/lib/types';
@@ -80,7 +81,8 @@ const Register = () => {
 	const form = useForm<FormData>({
 		initialValues: {
 			account: {
-				address: '',
+				address1: '',
+				address2: null,
 				businessName: '',
 				city: '',
 				email: '',
@@ -137,7 +139,16 @@ const Register = () => {
 			role: Role.Owner,
 			...values.user,
 		};
-		callApi({ route: 'register', body: { account, user } }).then(async (res) => {
+		callApi({
+			route: 'register',
+			body: {
+				account: {
+					...account,
+					address2: account.address2 === '' ? null : account.address2,
+				},
+				user,
+			},
+		}).then(async (res) => {
 			if (res.ok) {
 				// If successful, log them in
 				const json: { account: Account; user: User } = await res.json();
@@ -172,6 +183,7 @@ const Register = () => {
 		<Box
 			component='form'
 			sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+			mt='md'
 			onSubmit={form.onSubmit(onSubmit)}
 		>
 			<Text mt={0} component='h1' sx={{ fontSize: 36 }}>
@@ -210,16 +222,24 @@ const Register = () => {
 							label='Phone Number'
 							{...form.getInputProps('account.phoneNumber')}
 						/>
-						<Divider my='md' mx={-8} />
+						<Divider my='md' />
 						<Text align='center'>
 							This information is used for billing, if you decide to subscribe
 						</Text>
-						<TextInputInfo
+						<TextInput
 							required
 							placeholder='123 Abc ln'
-							label='Address'
-							info='Business street address'
-							{...form.getInputProps('account.address')}
+							label='Address Line 1'
+							{...form.getInputProps('account.address1')}
+						/>
+						<TextInput
+							placeholder='ste 512'
+							label='Address Line 2'
+							{...form.getInputProps('account.address2')}
+							onChange={(e) => {
+								// if empty string, it will be set to null
+								form.setFieldValue('address2', e.target.value || null);
+							}}
 						/>
 						<Group align='center' grow>
 							<TextInputInfo

@@ -7,11 +7,12 @@ fn compare(got: &Instance, exp: &NewInstance) {
     assert_eq!(got.account_id, exp.account_id);
     assert_eq!(got.business_name, exp.business_name);
     assert_eq!(got.short_name, exp.short_name);
-    assert_eq!(got.address, exp.address);
+    assert_eq!(got.address1, exp.address1);
+    assert_eq!(got.address2, exp.address2);
     assert_eq!(got.city, exp.city);
     assert_eq!(got.zip_code, exp.zip_code);
     assert_eq!(got.phone_number, exp.phone_number);
-    assert_eq!(got.rate_conf_email, exp.rate_conf_email);
+    assert_eq!(got.email, exp.email);
     assert_eq!(got.name, exp.name);
     assert_eq!(got.state, exp.state);
 }
@@ -24,18 +25,19 @@ fn defaults(test_name: String) -> (NewInstance, NewInstance) {
             url: Some("yumyum.milkyweb.app".into()),
             business_name: "hatfield llc".into(),
             short_name: "hatfield".into(),
-            address: "123 alphabet street".into(),
+            address1: "123 alphabet street".into(),
+            address2: None,
             city: "charlotte".into(),
             status: InstanceStatus::Ok,
             zip_code: "28254".into(),
             state: "NC".into(),
             phone_number: "704-805-1261".into(),
-            rate_conf_email: "igamble@gmail.com".into(),
-            name: test_name.clone() + "our deployment".into(),
-            top_terms: Some("you must not be sus!".into()),
+            email: "igamble@gmail.com".into(),
+            name: test_name.clone() + "our-deployment".into(),
+            top_text: Some("you must not be sus!".into()),
             env_id: Some("augagjaijg".into()),
             key: Some("agouajpigjaipsjg".into()),
-            bottom_terms: None,
+            bottom_text: None,
         },
         NewInstance {
             id: nanoid!(ID_SIZE),
@@ -43,18 +45,19 @@ fn defaults(test_name: String) -> (NewInstance, NewInstance) {
             url: None,
             business_name: "logh llc".into(),
             short_name: "hatfield".into(),
-            address: "456 beta lane".into(),
+            address1: "456 beta lane".into(),
+            address2: Some("Suite 512".into()),
             city: "charlotte".into(),
             status: InstanceStatus::Deploying,
             zip_code: "28254".into(),
             state: "NC".into(),
             phone_number: "980-335-6090".into(),
-            rate_conf_email: "ugamble@gmail.com".into(),
-            name: test_name + "load mgner".into(),
+            email: "ugamble@gmail.com".into(),
+            name: test_name + "load-mgner".into(),
             env_id: None,
             key: None,
-            top_terms: None,
-            bottom_terms: Some(vec!["You will pay us $1000".into()]),
+            top_text: None,
+            bottom_text: Some("You will pay us $1000".into()),
         },
     )
 }

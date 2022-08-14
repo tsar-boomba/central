@@ -5,7 +5,7 @@ import { callApi, resError } from '@/utils/apiHelpers';
 import { requireRole } from '@/utils/authUtils';
 import { fetchNotification } from '@/utils/fetchNotification';
 import { statesAbbr } from '@/utils/states';
-import { Box, Button, Divider, Group, Paper, Text } from '@mantine/core';
+import { Box, Button, Divider, Group, Paper, Text, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { FormRulesRecord } from '@mantine/form/lib/types';
 import { useState } from 'react';
@@ -27,7 +27,9 @@ export const accountValidation: FormRulesRecord<RegisterAccount> = {
 		/^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/.test(v)
 			? null
 			: 'Invalid US phone number.',
-	address: (v) => (v.length > 0 ? null : 'Address cannot be empty.'),
+	address1: (v) => (v.length > 0 ? null : 'Address cannot be empty.'),
+	address2: (v: string | null) =>
+		v !== null ? (v.length > 0 ? null : 'Address cannot be empty.') : null,
 	city: (v) => (v.length > 0 ? null : 'City cannot be empty.'),
 	state: (v) => (statesAbbr.includes(v) ? null : 'Must be a valid state name.'),
 	zipCode: (v) => (/[\d]{5}(-[\d]{4})?/.test(v) ? null : 'Zip Code cannot be empty.'),
@@ -50,7 +52,11 @@ const AccountForm = ({ account }: Props) => {
 		callApi({
 			route: `accounts/${account.id}`,
 			method: 'PUT',
-			body: { ...account, ...values },
+			body: {
+				...account,
+				...values,
+				address2: account.address2 === '' ? null : account.address2,
+			},
 		})
 			.then(async (res) => {
 				if (res.ok) {
@@ -97,17 +103,24 @@ const AccountForm = ({ account }: Props) => {
 					label='Phone Number'
 					{...form.getInputProps('phoneNumber')}
 				/>
-				<Divider my='md' mx={-8} />
+				<Divider my='md' />
 				<Text align='center'>
 					This information is used for billing, if you decide to subscribe
 				</Text>
-				<TextInputInfo
+				<TextInput
 					required
-					disabled={!isOwner}
 					placeholder='123 Abc ln'
-					label='Address'
-					info='Business street address'
-					{...form.getInputProps('address')}
+					label='Address Line 1'
+					{...form.getInputProps('address1')}
+				/>
+				<TextInput
+					placeholder='ste 512'
+					label='Address Line 2'
+					{...form.getInputProps('address2')}
+					onChange={(e) => {
+						// if empty string, it will be set to null
+						form.setFieldValue('address2', e.target.value || null);
+					}}
 				/>
 				<Group align='center' grow>
 					<TextInputInfo

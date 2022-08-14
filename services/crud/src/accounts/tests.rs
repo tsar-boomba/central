@@ -4,7 +4,8 @@ use actix_web::test;
 use diesel::prelude::*;
 
 fn compare(got: &Account, exp: &NewAccount) {
-    assert_eq!(got.address, exp.address);
+    assert_eq!(got.address1, exp.address1);
+    assert_eq!(got.address2, exp.address2);
     assert_eq!(got.email, exp.email);
     assert_eq!(got.business_name, exp.business_name);
     assert_eq!(got.short_name, exp.short_name);
@@ -17,7 +18,8 @@ fn defaults(test_name: String /*fk: String*/) -> (NewAccount, NewAccount) {
     (
         NewAccount {
             id: nanoid!(ID_SIZE),
-            address: "123 alphabet street".into(),
+            address1: "123 alphabet street".into(),
+            address2: None,
             email: format!("{}@mail.com", test_name.clone()).into(),
             business_name: "hatfield llc".into(),
             short_name: "hatfield".into(),
@@ -30,7 +32,8 @@ fn defaults(test_name: String /*fk: String*/) -> (NewAccount, NewAccount) {
         },
         NewAccount {
             id: nanoid!(ID_SIZE),
-            address: "456 beta lane".into(),
+            address1: "456 beta lane".into(),
+            address2: Some("ste".into()),
             email: format!("{}2@mail.com", test_name).into(),
             business_name: "logh llc".into(),
             short_name: "lggh".into(),

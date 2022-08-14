@@ -48,7 +48,8 @@ pub fn init() {
     diesel::insert_into(models::accounts::table)
         .values(NewAccount {
             id: "admin".into(),
-            address: "admin".into(),
+            address1: "admin".into(),
+            address2: None,
             business_name: "admin".into(),
             city: "admin".into(),
             email: "admin@admin.com".into(),

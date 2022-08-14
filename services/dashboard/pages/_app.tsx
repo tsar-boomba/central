@@ -39,7 +39,7 @@ const getTheme = (
 	},
 });
 
-const noLayoutPaths: string[] = [];
+const noLayoutPaths: string[] = ['/register'];
 
 const MyApp: _App<{
 	colorScheme: ColorScheme;

@@ -31,14 +31,14 @@ app.post('/', async (req, res) => {
 
 	// call back to main server with info about instance
 	await fetch(`${API_URI}/instances/${instanceId}/callback`, {
-		headers: { jwt: String(jwt) },
+		headers: { jwt: String(jwt), 'Content-Type': 'application/json' },
 		method: 'POST',
 		body: JSON.stringify({
-			env_id: instanceData.EnvironmentId,
+			envId: instanceData.EnvironmentId,
 			url: domainInfo.name,
 			accountId,
 		}),
-	});
+	}).then(async (res) => console.log(await res.text()));
 
 	console.log('Configuration done!');
 	console.log('Will be available at:', `https://${domainInfo.name}`);

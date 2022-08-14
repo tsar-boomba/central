@@ -81,7 +81,8 @@ pub fn test_account() {
     diesel::insert_into(accounts)
         .values(NewAccount {
             id: "test".into(),
-            address: "testys".into(),
+            address1: "testys".into(),
+            address2: None,
             business_name: "tests".into(),
             city: "testcity".into(),
             email: "test@testys.test".into(),

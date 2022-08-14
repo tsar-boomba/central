@@ -31,8 +31,13 @@ export const useSubStatus = () => {
 			revalidateOnMount: true,
 		},
 	);
+	const realStatus = rest.error ? undefined : status;
 
-	return { status: rest.error ? undefined : status, ...rest };
+	return {
+		status: realStatus,
+		isSubbed: realStatus !== undefined && realStatus !== 'unpaid',
+		...rest,
+	};
 };
 
 export const statusToText = (status: SubscriptionStatus) => {

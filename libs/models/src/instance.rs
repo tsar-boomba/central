@@ -9,7 +9,9 @@ macro_rules! instance_models {
                 #[validate(length(min = 1))]
                 short_name: String,
                 #[validate(length(min = 1))]
-                address: String,
+                address1: String,
+                #[validate(length(min = 1))]
+                address2: Option<String>,
                 #[validate(length(min = 1))]
                 city: String,
                 #[validate(regex = "crate::ZIP_RE")]
@@ -19,8 +21,8 @@ macro_rules! instance_models {
                 #[validate(regex = "crate::PHONE_RE")]
                 phone_number: String,
                 #[validate(regex = "crate::EMAIL_RE")]
-                rate_conf_email: String,
-                #[validate(length(min = 1))]
+                email: String,
+                #[validate(regex = "crate::INSTANCE_NAME_RE")]
                 name: String,
                 status: InstanceStatus,
                 #[serde(skip)]
@@ -28,8 +30,10 @@ macro_rules! instance_models {
                 #[serde(skip)]
                 env_id: Option<String>,
                 url: Option<String>,
-                top_terms: Option<String>,
-                bottom_terms: Option<Vec<String>>,
+                #[validate(length(min = 1))]
+                top_text: Option<String>,
+                #[validate(length(min = 1))]
+                bottom_text: Option<String>,
             }
         }
     };
@@ -50,19 +54,20 @@ pub mod schema {
             account_id -> Text,
             business_name -> Text,
             short_name -> Text,
-            address -> Text,
+            address1 -> Text,
+            address2 -> Nullable<Text>,
             city -> Text,
             zip_code -> Text,
             state -> Text,
             phone_number -> Text,
-            rate_conf_email -> Text,
+            email -> Text,
             name -> Text,
             status -> InstanceStatus,
             key -> Nullable<Text>,
             env_id -> Nullable<Text>,
             url -> Nullable<Text>,
-            top_terms -> Nullable<Text>,
-            bottom_terms -> Nullable<Array<Text>>,
+            top_text -> Nullable<Text>,
+            bottom_text -> Nullable<Text>,
         }
     }
 }
