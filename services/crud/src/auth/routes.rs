@@ -109,14 +109,14 @@ async fn verify(req: HttpRequest) -> Result<HttpResponse, ApiError> {
                     }
                 } else {
                     // handle db error
-                    Ok(HttpResponse::InternalServerError().json(ErrorBody::server_err(None)))
+                    Ok(HttpResponse::InternalServerError().json(ErrorBody::new("Database error.")))
                 }
             }
             // invalid token, fail
-            _ => Ok(HttpResponse::Unauthorized().json(ErrorBody::unauthorized(None))),
+            _ => Ok(HttpResponse::Unauthorized().json(ErrorBody::new("Invalid authentication"))),
         },
         // doesn't exists, automatic fail
-        _ => Ok(HttpResponse::Unauthorized().json(ErrorBody::unauthorized(None))),
+        _ => Ok(HttpResponse::Unauthorized().json(ErrorBody::new("No authentication."))),
     }
 }
 

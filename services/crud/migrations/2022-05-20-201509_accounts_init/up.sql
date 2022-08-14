@@ -33,7 +33,7 @@ CREATE TABLE public.instances (
 	updated_at		TIMESTAMP		NOT NULL DEFAULT NOW(),
 	account_id		TEXT			NOT NULL,
 	url				TEXT,
-	name			TEXT,
+	name			TEXT			NOT NULL,
 	status			InstanceStatus	NOT NULL,
 	business_name	TEXT			NOT NULL,
 	short_name		TEXT			NOT	NULL,

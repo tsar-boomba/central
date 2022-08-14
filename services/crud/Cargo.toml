@@ -28,6 +28,9 @@ thiserror = "1.0"
 bcrypt = "0.13"
 lazy_static = "1.4"
 log = "0.4"
+aws-config = "0.47"
+aws-sdk-elasticbeanstalk = "0.17"
+aws-sdk-route53 = "0.17"
 models = { path = "../../libs/models", features = ["diesel"] }
 auth = { path = "../../libs/auth", features = ["actix", "diesel"] }
 payments-lib = { path = "../../libs/payments-lib" }

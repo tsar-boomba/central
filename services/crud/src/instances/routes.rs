@@ -1,13 +1,21 @@
+use std::time::Duration;
+
 use actix_web::{delete, get, post, put, web, HttpRequest, HttpResponse};
 use auth::{belongs_to_account, require_role, ReqUser};
-use diesel::prelude::*;
+use aws_sdk_route53::model::{
+    AliasTarget, Change, ChangeAction, ChangeBatch, ResourceRecordSet, RrType,
+};
 use models::{
     types::{InstanceStatus, Role},
     Account, Instance, Model, NewInstance, UpdateInstance, Validate,
 };
+use reqwest::{redirect::Policy, Client};
 use serde::Deserialize;
 
-use crate::{api_error::ApiError, auth::verify_instance, db, json::DeleteBody, update_usage};
+use crate::{
+    accounts, api_error::ApiError, auth::verify_instance, json::DeleteBody, update_usage,
+    AppData,
+};
 
 #[get("/instances")]
 async fn find_all(req_user: Option<ReqUser>) -> Result<HttpResponse, ApiError> {
@@ -129,19 +137,99 @@ async fn update(
 async fn delete(
     id: web::Path<String>,
     req_user: Option<ReqUser>,
+    app_data: web::Data<AppData>,
 ) -> Result<HttpResponse, ApiError> {
     let find_id = id.clone();
-    if !belongs_to_account(
-        &req_user,
-        &web::block(move || Instance::find_by_id(find_id))
-            .await??
-            .account_id,
-    ) || !require_role(&req_user, Role::Admin)
+    let instance = web::block(move || Instance::find_by_id(find_id)).await??;
+    if !belongs_to_account(&req_user, &instance.account_id) || !require_role(&req_user, Role::Admin)
     {
         return Err(ApiError::forbidden());
     }
 
+    if instance.status == InstanceStatus::Deploying || instance.status == InstanceStatus::Configured
+    {
+        // cannot delete while these are happening
+        return Err(ApiError::new(
+            400,
+            "Cannot delete an instance that has status 'Deploying' or 'Configured'.".into(),
+        ));
+    }
+
+    if let Some(env_id) = instance.env_id {
+        if instance.status == InstanceStatus::Ok || instance.status == InstanceStatus::Unhealthy {
+            // only these two statuses require aws termination
+            let eb_client = &app_data.eb_client;
+            let res = eb_client
+                .terminate_environment()
+                .environment_id(env_id)
+                .force_terminate(true)
+                .send()
+                .await;
+
+            if let Err(err) = res {
+                error!("{:?}", err);
+                return Err(ApiError::new(
+                    500,
+                    "An error ocurred while terminating the instance.".into(),
+                ));
+            }
+
+            if let Some(url) = instance.url {
+                let r53_client = &app_data.r53_client;
+                let env = res.unwrap();
+                let res = r53_client
+                    .change_resource_record_sets()
+                    .hosted_zone_id("Z0898550109O7ZB98C1FF")
+                    .change_batch(
+                        ChangeBatch::builder()
+                            .changes(
+                                Change::builder()
+                                    .action(ChangeAction::Delete)
+                                    .resource_record_set(
+                                        ResourceRecordSet::builder()
+                                            .name(url)
+                                            .r#type(RrType::A)
+                                            .alias_target(
+                                                AliasTarget::builder()
+                                                    .dns_name(env.cname().unwrap())
+                                                    .evaluate_target_health(false)
+                                                    .hosted_zone_id("Z117KPS5GTRQ2G")
+                                                    .build(),
+                                            )
+                                            .build(),
+                                    )
+                                    .build(),
+                            )
+                            .build(),
+                    )
+                    .send()
+                    .await;
+
+                if let Err(err) = res {
+                    error!("{:?}", err);
+                    return Err(ApiError::new(
+                        500,
+                        "An error ocurred while deleting the dns. Your instance has terminated and is no longer available. Please try again.".into(),
+                    ));
+                }
+            }
+        }
+    }
+
     let affected = web::block(move || Instance::delete(id.into_inner())).await??;
+
+    let owner_id = instance.account_id.clone();
+    let owner = web::block(move || Account::find_by_id(owner_id)).await??;
+
+    let num_instances = accounts::utils::usage(owner.id.clone()).await?.instances;
+
+    let res = web::block(move || update_usage(&owner, "instances".into(), num_instances)).await??;
+
+    if let Err(_) = res.error_for_status() {
+        // TODO notify me
+        error!("Failed to update instance usage with Stripe. Your instance is still deleted.");
+        return Ok(HttpResponse::InternalServerError().finish());
+    };
 
     Ok(HttpResponse::Ok().json(DeleteBody::new(affected.try_into().unwrap())))
 }
@@ -190,13 +278,7 @@ async fn callback(
     })
     .await??;
 
-    use models::instances::dsl::*;
-
-    let conn = db::connection()?;
-    let num_instances = instances
-        .count()
-        .filter(account_id.eq(owner.id.clone()))
-        .get_result::<i64>(&conn)?;
+    let num_instances = accounts::utils::usage(owner.id.clone()).await?.instances;
 
     let res = web::block(move || update_usage(&owner, "instances".into(), num_instances)).await??;
 
@@ -209,6 +291,114 @@ async fn callback(
     Ok(HttpResponse::Ok().finish())
 }
 
+// Checks instance health
+#[get("/instances/{id}/health")]
+async fn health(
+    id: web::Path<String>,
+    req_user: Option<ReqUser>,
+) -> Result<HttpResponse, ApiError> {
+    let id = id.into_inner();
+    let for_find_to_be_updated = id.clone();
+    let instance = web::block(move || Instance::find_by_id(for_find_to_be_updated)).await??;
+    if !belongs_to_account(&req_user, &instance.account_id) {
+        return Err(ApiError::forbidden());
+    }
+
+    if instance.status != InstanceStatus::Ok
+        && instance.status != InstanceStatus::Unhealthy
+        && instance.status != InstanceStatus::Configured
+    {
+        // must be one of the above to be valid for refreshing status
+        return Err(ApiError::new(
+            400,
+            "Instance must be 'Ok', 'Unhealthy', or 'Configured' to have it's status checked."
+                .into(),
+        ));
+    }
+
+    if let Some(url) = instance.url {
+        let client = Client::builder()
+            .redirect(Policy::none())
+            .connect_timeout(Duration::from_secs(5))
+            .timeout(Duration::from_secs(10))
+            .build()
+            .unwrap();
+        let res = client.get(format!("https://{url}/health")).send().await;
+
+        match res {
+            Ok(res) => {
+                if res.status().is_redirection() {
+                    // redirect is desireable response for health check
+                    web::block(move || {
+                        Instance::update(
+                            id,
+                            UpdateInstance {
+                                status: Some(InstanceStatus::Ok),
+                                ..Default::default()
+                            },
+                        )
+                    })
+                    .await??;
+                    Ok(HttpResponse::Ok().finish())
+                } else {
+                    web::block(move || {
+                        Instance::update(
+                            id,
+                            UpdateInstance {
+                                status: Some(InstanceStatus::Unhealthy),
+                                ..Default::default()
+                            },
+                        )
+                    })
+                    .await??;
+                    Err(ApiError::new(
+                        500,
+                        "Instance returned a bad response, setting to unhealthy.".into(),
+                    ))
+                }
+            }
+            Err(err) => {
+                match instance.status {
+                    InstanceStatus::Configured => {
+                        // if its configured and couldn't connect its okay, otherwise there is an error
+                        if err.is_connect() {
+                            Ok(HttpResponse::Ok().finish())
+                        } else {
+                            web::block(move || {
+                                Instance::update(
+                                    id,
+                                    UpdateInstance {
+                                        status: Some(InstanceStatus::Unhealthy),
+                                        ..Default::default()
+                                    },
+                                )
+                            })
+                            .await??;
+                            Ok(HttpResponse::Ok().finish())
+                        }
+                    }
+                    _ => {
+                        // any other status must be updated to unhealthy
+                        web::block(move || {
+                            Instance::update(
+                                id,
+                                UpdateInstance {
+                                    status: Some(InstanceStatus::Unhealthy),
+                                    ..Default::default()
+                                },
+                            )
+                        })
+                        .await??;
+                        Ok(HttpResponse::Ok().finish())
+                    }
+                }
+            }
+        }
+    } else {
+        Err(ApiError::new(400, "Instance does not have a url.".into()))
+    }
+}
+
 pub fn init_routes(config: &mut web::ServiceConfig) {
     config.service(find_all);
     config.service(find);
@@ -216,4 +406,5 @@ pub fn init_routes(config: &mut web::ServiceConfig) {
     config.service(update);
     config.service(delete);
     config.service(callback);
+    config.service(health);
 }

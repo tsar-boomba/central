@@ -20,6 +20,7 @@ import {
 import { useForm } from '@mantine/form';
 import { FormRulesRecord } from '@mantine/form/lib/types';
 import { useDisclosure } from '@mantine/hooks';
+import { openConfirmModal } from '@mantine/modals';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { accountValidation } from '../AccountForm';
@@ -83,40 +84,49 @@ const InstanceForm = ({ create, defaultInstance = createDefaultInstance }: Props
 	});
 	const isAdmin = requireRole(user?.role, Role.Admin);
 
-	const onSubmit = (data: FormValues) => {
-		if (!account) return console.log('No account, cannot submit form.');
-		setSubmitting(true);
-		console.log('submitted:', data);
-		callApi<NewInstance>({
-			route: 'instances',
-			body: {
-				...data,
-				accountId: account.id,
-				address2: data.address2 === '' ? null : data.address2,
-				topText: data.topText === '' ? null : data.topText,
-				bottomText: data.bottomText === '' ? null : data.bottomText,
-			},
-		})
-			.then(async (res) => {
+	const onSubmit = (data: FormValues) =>
+		openConfirmModal({
+			title: 'Create Instance?',
+			children: (
+				<Text>
+					Are you sure you want to create an instance. This will increase your usage for
+					the month and cause your next bill to be higher.
+				</Text>
+			),
+			labels: { confirm: "I'm Sure", cancel: 'Go Back' },
+			confirmProps: { color: 'green' },
+			onConfirm: () => {
+				if (!account) return console.log('No account, cannot submit form.');
+				setSubmitting(true);
 				const [ok, err] = fetchNotification('create-instance', {
 					message: 'Creating instance...',
 					autoClose: 15000, // give it a good amount of time
 				});
-				if (res.ok) {
-					router.push('/instances');
-					return ok({
-						message:
-							'Successfully began instance deployment! 😁 It usually takes about 10 minutes to complete.',
-					});
-				}
-				return err({
-					message: 'Failed to start instance deployment. 😔 Please try again.',
-				});
-			})
-			.finally(() => setSubmitting(false));
-	};
-
-	console.log(form.values);
+				callApi<NewInstance>({
+					route: 'instances',
+					body: {
+						...data,
+						accountId: account.id,
+						address2: data.address2 === '' ? null : data.address2,
+						topText: data.topText === '' ? null : data.topText,
+						bottomText: data.bottomText === '' ? null : data.bottomText,
+					},
+				})
+					.then(async (res) => {
+						if (res.ok) {
+							router.push('/instances');
+							return ok({
+								message:
+									'Successfully began instance deployment! 😁 It usually takes about 10 minutes to complete.',
+							});
+						}
+						return err({
+							message: 'Failed to start instance deployment. 😔 Please try again.',
+						});
+					})
+					.finally(() => setSubmitting(false));
+			},
+		});
 
 	return (
 		<Box

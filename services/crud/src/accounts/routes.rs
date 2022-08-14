@@ -94,28 +94,9 @@ async fn usage(
         return Err(ApiError::forbidden());
     }
 
-    let users_acct_id = target.clone();
-    let num_users = web::block::<_, Result<i64, ApiError>>(move || {
-        use models::users::dsl::*;
-        Ok(users
-            .count()
-            .filter(account_id.eq(users_acct_id))
-            .get_result::<i64>(&db::connection()?)?)
-    })
-    .await??;
+    let usage = super::utils::usage(target).await?;
 
-    let instances_acct_id = target.clone();
-    let num_instances = web::block::<_, Result<i64, ApiError>>(move || {
-        use models::instances::dsl::*;
-        Ok(instances
-            .count()
-            .filter(account_id.eq(instances_acct_id))
-            .get_result::<i64>(&db::connection()?)?)
-    })
-    .await??;
-
-    Ok(HttpResponse::Ok()
-        .json(serde_json::json!({ "users": num_users, "instances": num_instances })))
+    Ok(HttpResponse::Ok().json(usage))
 }
 
 #[get("/accounts/by-sub/{id}")]

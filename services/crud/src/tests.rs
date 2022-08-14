@@ -25,10 +25,20 @@ pub async fn init(
         *initiated = true;
     }
 
+    let aws_creds = aws_config::load_from_env().await;
+    let eb_client = aws_sdk_elasticbeanstalk::Client::new(&aws_creds);
+    let r53_client = aws_sdk_route53::Client::new(&aws_creds);
+
+    let app_data = crate::AppData {
+        eb_client,
+        r53_client,
+    };
+
     // serialize password when doing tests
     models::dont_skip_pass();
     test::init_service(
         App::new()
+            .app_data(web::Data::new(app_data.clone()))
             .wrap(auth::middleware::Authorize)
             .configure(init_routes),
     )
@@ -52,10 +62,7 @@ pub async fn mock_payments() -> std::io::Result<()> {
                 create_usage_record::ROUTE,
                 web::post().to(create_usage_record_handler),
             )
-            .route(
-                "/customer/{id}",
-                web::put().to(update_customer),
-            )
+            .route("/customer/{id}", web::put().to(update_customer))
     })
     .bind(("127.0.0.1", 6666))?
     .run()

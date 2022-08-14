@@ -18,7 +18,7 @@ mod accounts;
 mod instances;
 mod users;
 
-use actix_web::{middleware, post, web::Json, App, HttpResponse, HttpServer};
+use actix_web::{middleware, post, web::{Json, self}, App, HttpResponse, HttpServer};
 use api_error::ApiError;
 use dotenv::dotenv;
 use models::{Account, Validate};
@@ -27,6 +27,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::json::ErrorBody;
 
+#[derive(Debug, Clone)]
+struct AppData {
+    pub eb_client: aws_sdk_elasticbeanstalk::Client,
+    pub r53_client: aws_sdk_route53::Client,
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
@@ -34,6 +40,12 @@ async fn main() -> std::io::Result<()> {
     dotenv::from_filename(".env.local").ok();
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
     db::init();
+
+    let aws_creds = aws_config::load_from_env().await;
+    let eb_client = aws_sdk_elasticbeanstalk::Client::new(&aws_creds);
+    let r53_client = aws_sdk_route53::Client::new(&aws_creds);
+
+    let app_data = AppData { eb_client, r53_client };
 
     info!("Starting HTTP server at http://localhost:8080");
 
@@ -46,6 +58,7 @@ async fn main() -> std::io::Result<()> {
             .configure(accounts::routes::init_routes)
             .configure(users::routes::init_routes)
             .configure(instances::routes::init_routes)
+            .app_data(web::Data::new(app_data.clone()))
     })
     .bind(("127.0.0.1", 8080))?
     .run()
@@ -117,6 +130,7 @@ fn update_usage(
 
     return client
         .post(PAYMENTS_URI.to_string() + create_usage_record::ROUTE)
+        .header("Content-Type", "application/json")
         .json(&create_usage_record::CreateUsageRecordParams {
             sub_id: owner.sub_id.clone().unwrap(),
             number: new_value.try_into().unwrap(),

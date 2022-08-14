@@ -6,8 +6,8 @@ import { config } from 'dotenv';
 config({ path: '.env.local' });
 
 const credentials = {
-	accessKeyId: process.env.ACCESS_ID || '',
-	secretAccessKey: process.env.SECRET_ACCESS_ID || '',
+	accessKeyId: process.env.AWS_ACCESS_ID || '',
+	secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
 };
 
 const defaultConfig = {

@@ -26,6 +26,8 @@ pub async fn create_usage_record(
             .unwrap());
     };
 
+    tracing::info!("{:?}", data);
+
     let subscription =
         Subscription::retrieve(&stripe, &SubscriptionId::from_str(&data.sub_id)?, &[]).await?;
 
@@ -43,7 +45,7 @@ pub async fn create_usage_record(
     });
 
     // new subs always have at least one user
-    UsageRecord::create(
+    let record = UsageRecord::create(
         &stripe,
         &sub_item.unwrap().id,
         CreateUsageRecord {
@@ -51,7 +53,9 @@ pub async fn create_usage_record(
             quantity: data.number,
             ..Default::default()
         },
-    );
+    ).await?;
+
+    tracing::info!("{:?}", record);
 
     Ok(Response::builder()
         .status(StatusCode::OK)
