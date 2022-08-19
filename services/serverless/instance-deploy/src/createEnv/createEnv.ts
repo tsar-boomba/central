@@ -5,7 +5,9 @@ import {
 	CreateEnvironmentCommandOutput,
 	ListAvailableSolutionStacksCommand,
 } from '@aws-sdk/client-elastic-beanstalk';
-import { randomBytes } from 'crypto';
+import { nanoid } from 'nanoid';
+import { Params } from 'src/app';
+import { createOptionSetter } from 'src/utils/createOptionSetter';
 import { ebClient } from '../clients';
 import { APPLICATION_NAME } from '../constants';
 import { getVersions } from '../utils/getVersions';
@@ -17,26 +19,24 @@ const baseParams: CreateEnvironmentCommandInput = {
 	Tier: { Name: 'WebServer', Type: 'Standard' },
 };
 
+const setEnvVar = createOptionSetter('aws:elasticbeanstalk:application:environment');
+
 const dbPassOption = (password: string): ConfigurationOptionSetting => ({
 	Namespace: 'aws:rds:dbinstance',
 	OptionName: 'DBPassword',
 	Value: password,
 });
 
-const jwtEnvOption = (secret: string): ConfigurationOptionSetting => ({
-	Namespace: 'aws:elasticbeanstalk:application:environment',
-	OptionName: 'JWT_SECRET',
-	Value: secret,
-});
-
 /**
  * Create Elastic Beanstalk Environment and return data that will be used later in the deployment process
  * @param accountName
  */
-export const createEnv = async (
-	name: string,
-	accountId: string,
-): Promise<
+export const createEnv = async ({
+	name,
+	accountId,
+	key,
+	instanceId,
+}: Params): Promise<
 	{ dbPass: string; jwtSecret: string; envName: string } & CreateEnvironmentCommandOutput
 > => {
 	const versions = await getVersions();
@@ -50,8 +50,8 @@ export const createEnv = async (
 	if (!versions.ApplicationVersions) throw new Error('No application versions found!');
 
 	const envName = `${name}-${accountId}`;
-	const dbPass = randomBytes(20).toString('hex');
-	const jwtSecret = randomBytes(24).toString('hex');
+	const dbPass = nanoid(36);
+	const jwtSecret = nanoid(36);
 
 	const params: CreateEnvironmentCommandInput = {
 		...baseParams,
@@ -63,7 +63,9 @@ export const createEnv = async (
 			...dbOptions,
 			dbPassOption(dbPass),
 			...envOptions,
-			jwtEnvOption(jwtSecret),
+			setEnvVar('JWT_SECRET', jwtSecret),
+			setEnvVar('KEY', key),
+			setEnvVar('ID', instanceId),
 		],
 	};
 

@@ -1,18 +1,19 @@
 use models::{types::InstanceStatus, Instance, Model, UpdateInstance};
 use reqwest::Client;
 
-use crate::{api_error::ApiError, auth::sign_instance, INSTANCES_URI};
+use crate::{api_error::ApiError, auth::{sign_instance_deploy, self}, INSTANCES_URI};
 
 pub async fn deploy(instance: &Instance) -> Result<(), ApiError> {
     let res = Client::builder()
         .build()
         .unwrap()
         .post(INSTANCES_URI.as_str())
-        .header("jwt", sign_instance().unwrap())
+        .header("jwt", sign_instance_deploy().unwrap())
         .json(&serde_json::json!({
             "instanceId": instance.id,
             "accountId": instance.account_id,
-            "name": instance.name
+            "name": instance.name,
+            "key": auth::sign_instance_key().unwrap(),
         }))
         .send()
         .await?;

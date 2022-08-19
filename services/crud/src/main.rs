@@ -133,7 +133,7 @@ fn update_usage(
         .header("Content-Type", "application/json")
         .json(&create_usage_record::CreateUsageRecordParams {
             sub_id: owner.sub_id.clone().unwrap(),
-            number: new_value.try_into().unwrap(),
+            number: new_value as u64,
             resource,
         })
         .send()

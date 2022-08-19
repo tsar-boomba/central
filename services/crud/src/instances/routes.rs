@@ -2,9 +2,6 @@ use std::time::Duration;
 
 use actix_web::{delete, get, post, put, web, HttpRequest, HttpResponse};
 use auth::{belongs_to_account, require_role, ReqUser};
-use aws_sdk_route53::model::{
-    AliasTarget, Change, ChangeAction, ChangeBatch, ResourceRecordSet, RrType,
-};
 use models::{
     types::{InstanceStatus, Role},
     Account, Instance, Model, NewInstance, UpdateInstance, Validate,
@@ -13,7 +10,7 @@ use reqwest::{redirect::Policy, Client};
 use serde::Deserialize;
 
 use crate::{
-    accounts, api_error::ApiError, auth::verify_instance, json::DeleteBody, update_usage,
+    accounts, api_error::ApiError, auth::verify_instance_deploy, json::DeleteBody, update_usage,
     AppData,
 };
 
@@ -146,6 +143,11 @@ async fn delete(
         return Err(ApiError::forbidden());
     }
 
+    let owner_id = instance.account_id.clone();
+    let owner = web::block(move || Account::find_by_id(owner_id)).await??;
+    let num_instances = accounts::utils::usage(owner.id.clone()).await?.instances;
+    println!("{num_instances}");
+
     if instance.status == InstanceStatus::Deploying || instance.status == InstanceStatus::Configured
     {
         // cannot delete while these are happening
@@ -156,74 +158,21 @@ async fn delete(
     }
 
     if let Some(env_id) = instance.env_id {
-        if instance.status == InstanceStatus::Ok || instance.status == InstanceStatus::Unhealthy {
-            // only these two statuses require aws termination
-            let eb_client = &app_data.eb_client;
-            let res = eb_client
-                .terminate_environment()
-                .environment_id(env_id)
-                .force_terminate(true)
-                .send()
-                .await;
+        if let Some(url) = instance.url {
+            if instance.status == InstanceStatus::Ok || instance.status == InstanceStatus::Unhealthy
+            {
+                // only these two statuses require aws termination
+                let env = super::aws::delete_instance(&app_data.eb_client, &env_id).await?;
 
-            if let Err(err) = res {
-                error!("{:?}", err);
-                return Err(ApiError::new(
-                    500,
-                    "An error ocurred while terminating the instance.".into(),
-                ));
-            }
-
-            if let Some(url) = instance.url {
-                let r53_client = &app_data.r53_client;
-                let env = res.unwrap();
-                let res = r53_client
-                    .change_resource_record_sets()
-                    .hosted_zone_id("Z0898550109O7ZB98C1FF")
-                    .change_batch(
-                        ChangeBatch::builder()
-                            .changes(
-                                Change::builder()
-                                    .action(ChangeAction::Delete)
-                                    .resource_record_set(
-                                        ResourceRecordSet::builder()
-                                            .name(url)
-                                            .r#type(RrType::A)
-                                            .alias_target(
-                                                AliasTarget::builder()
-                                                    .dns_name(env.cname().unwrap())
-                                                    .evaluate_target_health(false)
-                                                    .hosted_zone_id("Z117KPS5GTRQ2G")
-                                                    .build(),
-                                            )
-                                            .build(),
-                                    )
-                                    .build(),
-                            )
-                            .build(),
-                    )
-                    .send()
-                    .await;
-
-                if let Err(err) = res {
-                    error!("{:?}", err);
-                    return Err(ApiError::new(
-                        500,
-                        "An error ocurred while deleting the dns. Your instance has terminated and is no longer available. Please try again.".into(),
-                    ));
-                }
+                super::aws::delete_dns(&app_data.r53_client, &url, &env).await?;
             }
         }
     }
 
     let affected = web::block(move || Instance::delete(id.into_inner())).await??;
 
-    let owner_id = instance.account_id.clone();
-    let owner = web::block(move || Account::find_by_id(owner_id)).await??;
-
-    let num_instances = accounts::utils::usage(owner.id.clone()).await?.instances;
-
-    let res = web::block(move || update_usage(&owner, "instances".into(), num_instances)).await??;
+    // subtract 1 because it was successfully deleted
+    let res = web::block(move || update_usage(&owner, "instances".into(), num_instances - 1)).await??;
 
     if let Err(_) = res.error_for_status() {
         // TODO notify me
@@ -231,7 +180,135 @@ async fn delete(
         return Ok(HttpResponse::InternalServerError().finish());
     };
 
-    Ok(HttpResponse::Ok().json(DeleteBody::new(affected.try_into().unwrap())))
+    Ok(HttpResponse::Ok().json(DeleteBody::new(affected as i32)))
+}
+
+#[put("/instances/{id}/deactivate")]
+async fn deactivate(
+    id: web::Path<String>,
+    req_user: Option<ReqUser>,
+    app_data: web::Data<AppData>,
+) -> Result<HttpResponse, ApiError> {
+    let find_id = id.clone();
+    let instance = web::block(move || Instance::find_by_id(find_id)).await??;
+    let owner_id = instance.account_id.clone();
+    let owner = web::block(|| Account::find_by_id(owner_id)).await??;
+    if !belongs_to_account(&req_user, &instance.account_id) || !require_role(&req_user, Role::Admin)
+    {
+        return Err(ApiError::forbidden());
+    }
+
+    if instance.status != InstanceStatus::Ok && instance.status != InstanceStatus::Unhealthy {
+        // cannot deactivate while these are happening
+        return Err(ApiError::new(
+            400,
+            "Cannot deactivate an instance that has status 'Deploying' or 'Configured'.".into(),
+        ));
+    }
+
+    let usage = accounts::utils::usage(instance.account_id).await?;
+    if let Some(env_id) = instance.env_id {
+        if let Some(url) = instance.url {
+            // must ba one of these two to be deactivated
+            let env = super::aws::delete_instance(&app_data.eb_client, &env_id).await?;
+            super::aws::delete_dns(&app_data.r53_client, &url, &env).await?;
+
+            web::block(|| {
+                Instance::update(
+                    id.into_inner(),
+                    UpdateInstance {
+                        status: Some(InstanceStatus::Inactive),
+                        ..Default::default()
+                    },
+                )
+            })
+            .await??;
+
+            let num_instances = usage.instances - 1;
+            let res = web::block(move || update_usage(&owner, "instances".into(), num_instances))
+                .await??;
+
+            if let Err(_) = res.error_for_status() {
+                // TODO notify me
+                error!("Failed to update instance usage with Stripe. Your instance will still be deactivated.");
+                return Ok(HttpResponse::InternalServerError().finish());
+            };
+
+            Ok(HttpResponse::Ok().finish())
+        } else {
+            Err(ApiError::new(
+                400,
+                "Instance must have a url property to be deactivated.".into(),
+            ))
+        }
+    } else {
+        Err(ApiError::new(
+            400,
+            "Instance must have a environment id property to be deactivated.".into(),
+        ))
+    }
+}
+
+#[put("/instances/{id}/deploy")]
+async fn deploy(
+    id: web::Path<String>,
+    req_user: Option<ReqUser>,
+) -> Result<HttpResponse, ApiError> {
+    let find_id = id.clone();
+    let instance = web::block(move || Instance::find_by_id(find_id)).await??;
+    if !belongs_to_account(&req_user, &instance.account_id) || !require_role(&req_user, Role::Admin)
+    {
+        return Err(ApiError::forbidden());
+    }
+
+    if instance.status != InstanceStatus::Inactive && instance.status != InstanceStatus::Failed {
+        // cannot deploy while these are happening
+        return Err(ApiError::new(
+            400,
+            "Can only deactivate an instance that has status 'Inactive' or 'Failed'.".into(),
+        ));
+    }
+
+    let update_id = instance.id.clone();
+    web::block(|| {
+        Instance::update(
+            update_id,
+            UpdateInstance {
+                status: Some(InstanceStatus::Deploying),
+                ..Default::default()
+            },
+        )
+    })
+    .await??;
+
+    // just start deployment with aws, lambda will call back later with url and env_id
+    let deploy_result = super::utils::deploy(&instance).await;
+
+    if let Err(_) = deploy_result {
+        info!("failed to send req to deploy instance");
+        // initial deployment failed
+        let update_result = web::block(move || {
+            Instance::update(
+                instance.id,
+                UpdateInstance {
+                    status: Some(InstanceStatus::Failed),
+                    ..Default::default()
+                },
+            )
+        })
+        .await?;
+
+        match update_result {
+                    Ok(_) => Err(ApiError::new(
+                        500,
+                        "Initial deployment failed. Please try again later.".into(),
+                    )),
+                    Err(_) => Err(ApiError::new(500, "Initial deployment failed, current instance status is 'Failed', but couldn't be updated.".into()))
+                }
+    } else {
+        super::utils::ensure_deployment(instance.id.clone());
+        Ok(HttpResponse::Ok().json(instance))
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -249,7 +326,7 @@ async fn callback(
     req: HttpRequest,
 ) -> Result<HttpResponse, ApiError> {
     // make sure has token sent to instance deploy invocation
-    if verify_instance(
+    if verify_instance_deploy(
         &req.headers()
             .get("jwt")
             .map(|v| v.to_str().unwrap())
@@ -405,6 +482,8 @@ pub fn init_routes(config: &mut web::ServiceConfig) {
     config.service(create);
     config.service(update);
     config.service(delete);
+    config.service(deactivate);
+    config.service(deploy);
     config.service(callback);
     config.service(health);
 }

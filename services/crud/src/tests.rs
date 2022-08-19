@@ -58,6 +58,7 @@ pub async fn mock_payments() -> std::io::Result<()> {
 
     HttpServer::new(|| {
         App::new()
+            .wrap(actix_web::middleware::Logger::default())
             .route(
                 create_usage_record::ROUTE,
                 web::post().to(create_usage_record_handler),

@@ -24,7 +24,7 @@ pub mod sql_type {
 pub enum InstanceStatus {
     /// Deployment started, domain & load balancer not yet configured
     Deploying,
-    /// Deployment failed
+    /// Deployment failed, can try again with deploy route
 	Failed,
     /// Deployed and operating correctly
     Ok,

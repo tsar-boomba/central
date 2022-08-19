@@ -13,14 +13,26 @@ const app = fastify({
 	logger: true,
 });
 
+export interface Params {
+	instanceId: string;
+	accountId: string;
+	name: string;
+	key: string;
+}
+
 app.post('/', async (req, res) => {
 	const jwt = req.headers.jwt;
 	if (!jwt) {
 		res.statusCode = 400;
 		return res.send({ message: 'No key provided.' });
 	}
-	const { accountId, name, instanceId } = req.body as any;
-	const instanceData = await createEnv(name, accountId);
+	const params = req.body as Params;
+	if (!params.key || !params.accountId || !params.name || !params.instanceId) {
+		res.statusCode = 400;
+		console.log(req.body);
+		return res.send({ message: 'Failed to provide a required parameter.' });
+	}
+	const instanceData = await createEnv(params);
 
 	console.log(instanceData);
 
@@ -30,13 +42,13 @@ app.post('/', async (req, res) => {
 	const domainInfo = await configDomain(instanceData);
 
 	// call back to main server with info about instance
-	await fetch(`${API_URI}/instances/${instanceId}/callback`, {
+	await fetch(`${API_URI}/instances/${params.instanceId}/callback`, {
 		headers: { jwt: String(jwt), 'Content-Type': 'application/json' },
 		method: 'POST',
 		body: JSON.stringify({
 			envId: instanceData.EnvironmentId,
 			url: domainInfo.name,
-			accountId,
+			accountId: params.accountId,
 		}),
 	}).then(async (res) => console.log(await res.text()));
 

@@ -46,8 +46,12 @@ lazy_static! {
             .as_bytes(),
     )
     .expect("Failed to encode secret");
-    static ref INSTANCE_SECRET: Hmac<Sha256> = Hmac::new_from_slice(
-        std::env::var("INSTANCE_SECRET").unwrap().as_bytes()
+    static ref INSTANCE_DEPLOY_SECRET: Hmac<Sha256> = Hmac::new_from_slice(
+        std::env::var("INSTANCE_DEPLOY_SECRET").unwrap().as_bytes()
+    )
+    .unwrap();
+    static ref INSTANCE_KEY_SECRET: Hmac<Sha256> = Hmac::new_from_slice(
+        std::env::var("INSTANCE_DEPLOY_SECRET").unwrap().as_bytes()
     )
     .unwrap();
 }
@@ -70,28 +74,28 @@ fn verify(token: &String) -> Result<Claim, jwt::Error> {
     }
 }
 
-const INSTANCE_TOKEN_EXPIRY: i64 = 900_000;
+const INSTANCE_DEPLOY_TOKEN_EXPIRY: i64 = 900_000;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct InstanceClaim {
+pub struct InstanceDeployClaim {
     pub iat: i64,
     pub exp: i64,
 }
 
-impl InstanceClaim {
+impl InstanceDeployClaim {
     pub fn new() -> Self {
         let now = Utc::now().timestamp_millis();
-        InstanceClaim { iat: now, exp: now + INSTANCE_TOKEN_EXPIRY, }
+        Self { iat: now, exp: now + INSTANCE_DEPLOY_TOKEN_EXPIRY, }
     }
 }
 
-pub fn sign_instance() -> Result<String, jwt::Error> {
-    let claim = InstanceClaim::new();
-    claim.sign_with_key(&*INSTANCE_SECRET)
+pub fn sign_instance_deploy() -> Result<String, jwt::Error> {
+    let claim = InstanceDeployClaim::new();
+    claim.sign_with_key(&*INSTANCE_DEPLOY_SECRET)
 }
 
-pub fn verify_instance(token: &String) -> Result<InstanceClaim, jwt::Error> {
-    let result: Result<InstanceClaim, jwt::Error> = token.verify_with_key(&*INSTANCE_SECRET);
+pub fn verify_instance_deploy(token: &String) -> Result<InstanceDeployClaim, jwt::Error> {
+    let result: Result<InstanceDeployClaim, jwt::Error> = token.verify_with_key(&*INSTANCE_DEPLOY_SECRET);
     match result {
         Ok(claim) => {
             if Utc::now().timestamp_millis() > claim.exp {
@@ -101,6 +105,25 @@ pub fn verify_instance(token: &String) -> Result<InstanceClaim, jwt::Error> {
         }
         Err(err) => Err(err),
     }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct InstanceKeyClaim {}
+
+impl InstanceKeyClaim {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+pub fn sign_instance_key() -> Result<String, jwt::Error> {
+    let claim = InstanceKeyClaim::new();
+    claim.sign_with_key(&*INSTANCE_KEY_SECRET)
+}
+
+pub fn verify_instance_key(token: &String) -> Result<InstanceKeyClaim, jwt::Error> {
+    let result: Result<InstanceKeyClaim, jwt::Error> = token.verify_with_key(&*INSTANCE_KEY_SECRET);
+    result
 }
 
 #[cfg(test)]

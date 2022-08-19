@@ -114,15 +114,17 @@ const InstanceForm = ({ create, defaultInstance = createDefaultInstance }: Props
 				})
 					.then(async (res) => {
 						if (res.ok) {
-							router.push('/instances');
-							return ok({
+							ok({
 								message:
 									'Successfully began instance deployment! 😁 It usually takes about 10 minutes to complete.',
 							});
+						} else {
+							err({
+								message:
+									'Failed to start instance deployment. 😔 Please try again.',
+							});
 						}
-						return err({
-							message: 'Failed to start instance deployment. 😔 Please try again.',
-						});
+						router.push('/instances');
 					})
 					.finally(() => setSubmitting(false));
 			},
