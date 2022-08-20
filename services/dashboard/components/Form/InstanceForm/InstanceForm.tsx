@@ -31,6 +31,7 @@ interface Props {
 	create?: boolean;
 	// represent type difference between create and update
 	defaultInstance?: NewInstance;
+	id?: string;
 }
 
 type FormValues = NewInstance;
@@ -61,7 +62,7 @@ const createDefaultInstance: NewInstance = {
 // Values already entered when someone picks same as account
 let oldValues: NewInstance;
 
-const InstanceForm = ({ create, defaultInstance = createDefaultInstance }: Props) => {
+const InstanceForm = ({ create, defaultInstance = createDefaultInstance, id }: Props) => {
 	const { user } = useUser();
 	const { account } = useAccount();
 	const router = useRouter();
@@ -84,6 +85,42 @@ const InstanceForm = ({ create, defaultInstance = createDefaultInstance }: Props
 	});
 	const isAdmin = requireRole(user?.role, Role.Admin);
 
+	const submit = (data: FormValues) => {
+		if (!account) return console.log('No account, cannot submit form.');
+		setSubmitting(true);
+		const [ok, err] = fetchNotification('create-instance', {
+			message: 'Creating instance...',
+			autoClose: 15000, // give it a good amount of time
+		});
+		callApi<NewInstance>({
+			route: create ? 'instances' : `instances/${id}`,
+			body: {
+				...data,
+				accountId: account.id,
+				address2: data.address2 === '' ? null : data.address2,
+				topText: data.topText === '' ? null : data.topText,
+				bottomText: data.bottomText === '' ? null : data.bottomText,
+			},
+			method: create ? 'POST' : 'PUT',
+		})
+			.then((res) => {
+				if (res.ok) {
+					ok({
+						message: create
+							? 'Successfully began instance deployment! 😁 It usually takes about 10 minutes to complete.'
+							: 'Successfully updated instance. It will take about 5 minutes for the changes to be reflected.',
+					});
+				} else {
+					err({
+						message: create
+							? 'Failed to start instance deployment. 😔 Please try again.'
+							: 'Failed to update instance. 😔',
+					});
+				}
+				create && router.push('/instances');
+			})
+			.finally(() => setSubmitting(false));
+	};
 	const onSubmit = (data: FormValues) =>
 		openConfirmModal({
 			title: 'Create Instance?',
@@ -95,46 +132,14 @@ const InstanceForm = ({ create, defaultInstance = createDefaultInstance }: Props
 			),
 			labels: { confirm: "I'm Sure", cancel: 'Go Back' },
 			confirmProps: { color: 'green' },
-			onConfirm: () => {
-				if (!account) return console.log('No account, cannot submit form.');
-				setSubmitting(true);
-				const [ok, err] = fetchNotification('create-instance', {
-					message: 'Creating instance...',
-					autoClose: 15000, // give it a good amount of time
-				});
-				callApi<NewInstance>({
-					route: 'instances',
-					body: {
-						...data,
-						accountId: account.id,
-						address2: data.address2 === '' ? null : data.address2,
-						topText: data.topText === '' ? null : data.topText,
-						bottomText: data.bottomText === '' ? null : data.bottomText,
-					},
-				})
-					.then((res) => {
-						if (res.ok) {
-							ok({
-								message:
-									'Successfully began instance deployment! 😁 It usually takes about 10 minutes to complete.',
-							});
-						} else {
-							err({
-								message:
-									'Failed to start instance deployment. 😔 Please try again.',
-							});
-						}
-						router.push('/instances');
-					})
-					.finally(() => setSubmitting(false));
-			},
+			onConfirm: () => submit(data),
 		});
 
 	return (
 		<Box
 			component='form'
 			sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
-			onSubmit={form.onSubmit(onSubmit)}
+			onSubmit={form.onSubmit(create ? onSubmit : submit)}
 		>
 			<Paper>
 				<TextInputInfo
@@ -259,7 +264,7 @@ const InstanceForm = ({ create, defaultInstance = createDefaultInstance }: Props
 			</Paper>
 			{isAdmin && (
 				<Button disabled={submitting} loading={submitting} type='submit' mt='md'>
-					Create Instance
+					{create ? 'Create Instance' : 'Update Instance'}
 				</Button>
 			)}
 		</Box>

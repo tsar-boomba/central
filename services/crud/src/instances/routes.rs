@@ -120,6 +120,7 @@ async fn update(
         account_id: None,
         name: None,
         url: None,
+        env_id: None,
         ..instance.into_inner()
     };
 

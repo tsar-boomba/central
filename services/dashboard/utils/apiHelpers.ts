@@ -42,3 +42,7 @@ export const resError = (
 	defaultErr = 'An error ocurred.',
 ): Promise<string> =>
 	jsonPromise.then((json) => json?.message || defaultErr).catch(() => defaultErr);
+
+export const isNotFound = (res: Response) => res.status === 404;
+
+export const isServerError = (res: Response) => res.status >= 500;
