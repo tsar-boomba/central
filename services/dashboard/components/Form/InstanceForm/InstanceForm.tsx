@@ -112,7 +112,7 @@ const InstanceForm = ({ create, defaultInstance = createDefaultInstance }: Props
 						bottomText: data.bottomText === '' ? null : data.bottomText,
 					},
 				})
-					.then(async (res) => {
+					.then((res) => {
 						if (res.ok) {
 							ok({
 								message:

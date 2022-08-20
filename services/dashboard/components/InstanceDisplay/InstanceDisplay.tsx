@@ -187,7 +187,7 @@ const InstanceDisplay = ({ instance }: { instance: Instance }) => {
 							{statusText}
 						</Text>
 					</Stack>
-					<Group>
+					<Stack>
 						{(isOk || isUnhealthy) && (
 							<Button
 								component='a'
@@ -203,7 +203,7 @@ const InstanceDisplay = ({ instance }: { instance: Instance }) => {
 								<Button component='a'>Edit Instance</Button>
 							</Link>
 						)}
-					</Group>
+					</Stack>
 				</Stack>
 			</Card.Section>
 		</Card>
