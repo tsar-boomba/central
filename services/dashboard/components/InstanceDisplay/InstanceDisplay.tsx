@@ -111,7 +111,7 @@ const InstanceDisplay = ({ instance }: { instance: Instance }) => {
 					month.
 				</Text>
 			),
-			labels: { confirm: 'Deploy!', cancel: 'Go Back' },
+			labels: { confirm: 'Deploy', cancel: 'Go Back' },
 			confirmProps: { color: 'green' },
 			onConfirm: deployInstance,
 		});

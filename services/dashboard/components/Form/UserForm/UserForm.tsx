@@ -1,4 +1,4 @@
-import { useAccount, useUser } from '@/components/UserProvider';
+import { useAccount } from '@/components/UserProvider';
 import { Resource, Role } from '@/types/User';
 import { NewUser } from '@/types/utils';
 import { callApi } from '@/utils/apiHelpers';
@@ -21,6 +21,7 @@ import { FormRulesRecord } from '@mantine/form/lib/types';
 import { openConfirmModal } from '@mantine/modals';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
+import InstanceSelect from './InstanceSelect';
 import { getStrength, PasswordRequirement, requirements } from './Password';
 import RoleSelect from './RoleSelect';
 
@@ -81,11 +82,9 @@ const permissionsData = [
 ];
 
 const UserForm = ({ id, defaultUser = createDefaultUser, create }: Props) => {
-	const { user } = useUser();
 	const { account } = useAccount();
 	const router = useRouter();
 	const [submitting, setSubmitting] = useState(false);
-	console.log({ ...createDefaultUser, ...defaultUser });
 	const form = useForm<FormValues>({
 		// spread so that when updating, password fields will be empty
 		initialValues: { ...createDefaultUser, ...defaultUser },
@@ -170,9 +169,13 @@ const UserForm = ({ id, defaultUser = createDefaultUser, create }: Props) => {
 					<TextInput required label='Last Name' {...form.getInputProps('lastName')} />
 				</Group>
 				<Group grow>
-					<PasswordInput required label='Password' {...form.getInputProps('password')} />
 					<PasswordInput
-						required
+						required={create}
+						label='Password'
+						{...form.getInputProps('password')}
+					/>
+					<PasswordInput
+						required={create}
 						label='Confirm Pass'
 						{...form.getInputProps('confirmPass')}
 					/>
@@ -224,7 +227,15 @@ const UserForm = ({ id, defaultUser = createDefaultUser, create }: Props) => {
 					label='Role'
 					description='What permissions this user has on Milky Web'
 					create={create}
+					id={id}
 					{...form.getInputProps('role')}
+				/>
+				<InstanceSelect
+					required
+					label='Instances'
+					description='What instances this user has access to'
+					create={create}
+					{...form.getInputProps('instances')}
 				/>
 				<Textarea
 					label='Notes'

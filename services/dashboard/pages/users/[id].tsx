@@ -1,7 +1,7 @@
 import { UserForm } from '@/components/Form/UserForm';
 import { Role, User } from '@/types/User';
 import { api, isNotFound, isServerError, ssrFetch } from '@/utils/apiHelpers';
-import { isAuthed, requireRole } from '@/utils/authUtils';
+import { higherRole, isAuthed, requireRole } from '@/utils/authUtils';
 import fetcher from '@/utils/swrFetcher';
 import { Center, Loader, Text } from '@mantine/core';
 import { GetServerSideProps } from 'next';
@@ -47,7 +47,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
 		};
 	}
 
-	if (!requireRole(user.role, Role.Admin)) {
+	if (!requireRole(user.role, Role.Moderator)) {
 		return {
 			redirect: {
 				destination: '/users',
@@ -68,7 +68,17 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
 		throw new Error('A server error ocurred.');
 	}
 
-	const initialUser = await res.json();
+	const initialUser: User = await res.json();
+
+	if (user.role !== Role.Owner && !higherRole(user.role, initialUser.role)) {
+		return {
+			redirect: {
+				destination: `/users`,
+				permanent: false,
+			},
+		};
+	}
+
 	return {
 		props: {
 			initialUser,

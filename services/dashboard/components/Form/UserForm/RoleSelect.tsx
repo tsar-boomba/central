@@ -5,7 +5,8 @@ import { Group, Loader, Select, SelectProps, Text } from '@mantine/core';
 import { forwardRef } from 'react';
 
 type Props = Omit<
-	SelectProps & React.ComponentPropsWithoutRef<'select'> & { create?: boolean },
+	SelectProps &
+		React.ComponentPropsWithoutRef<'select'> & { create?: boolean; id: number | undefined },
 	'data'
 >;
 type Data = { value: Role; label: string; description: string };
@@ -46,7 +47,7 @@ const Item = forwardRef<HTMLDivElement, ItemProps>(({ label, description, ...pro
 	</div>
 ));
 
-const RoleSelect = forwardRef<HTMLInputElement, Props>(({ create, ...props }, ref) => {
+const RoleSelect = forwardRef<HTMLInputElement, Props>(({ create, id, ...props }, ref) => {
 	const { user } = useUser();
 	if (!user)
 		return (
@@ -68,7 +69,7 @@ const RoleSelect = forwardRef<HTMLInputElement, Props>(({ create, ...props }, re
 					  }))
 			}
 			itemComponent={Item}
-			disabled={props.value === Role.Owner}
+			disabled={props.value === Role.Owner || user.id === id}
 			{...props}
 		/>
 	);

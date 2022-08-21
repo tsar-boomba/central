@@ -1,8 +1,9 @@
 import { Role, User } from '@/types/User';
 import { api, callApi } from '@/utils/apiHelpers';
-import { requireRole } from '@/utils/authUtils';
+import { higherRole } from '@/utils/authUtils';
 import { fetchNotification } from '@/utils/fetchNotification';
 import { ActionIcon, Button, Card, Group, Menu, Stack, Text } from '@mantine/core';
+import { openConfirmModal } from '@mantine/modals';
 import { IconCircleCheck, IconCircleMinus, IconDots } from '@tabler/icons';
 import Link from 'next/link';
 import { mutate } from 'swr';
@@ -13,11 +14,11 @@ interface Props {
 }
 
 const UserDisplay = ({ userData }: Props) => {
-	const { user } = useUser();
+	const { user, mutate: mutateUser } = useUser();
 
 	const updateSwr = () => mutate(api(`accounts/${userData.accountId}/users`));
 
-	const isMod = requireRole(user?.role, Role.Moderator);
+	const isHigherRole = higherRole(user?.role, userData.role);
 	const isActive = userData.active;
 
 	const toggleStatus = () => {
@@ -39,6 +40,38 @@ const UserDisplay = ({ userData }: Props) => {
 		});
 	};
 
+	const transferOwner = () => {
+		const [ok, fail] = fetchNotification(`toggle-status-user-${userData.id}`, {
+			message: `Transferring ownership...`,
+		});
+		callApi({ route: `users/${userData.id}/transfer-owner`, method: 'PUT' }).then((res) => {
+			if (res.ok) {
+				ok({
+					message: `Successfully transferred ownership. 😁`,
+				});
+				mutateUser();
+				updateSwr();
+			} else {
+				fail({
+					message: `Failed to transferred ownership. 😔`,
+				});
+			}
+		});
+	};
+	const openTransferOwnerModal = () =>
+		openConfirmModal({
+			title: 'Are you sure you want to transfer ownership?',
+			children: (
+				<Text>
+					This is irreversible if you don't have access to the user you transfer to. Your
+					role will be set to admin if successful.
+				</Text>
+			),
+			labels: { confirm: 'Transfer', cancel: 'Go Back' },
+			confirmProps: { color: 'red' },
+			onConfirm: transferOwner,
+		});
+
 	return (
 		<Card withBorder shadow='sm'>
 			<Card.Section withBorder inheritPadding py='sm'>
@@ -49,7 +82,7 @@ const UserDisplay = ({ userData }: Props) => {
 						</Text>
 						<Text>{userData.username}</Text>
 					</Stack>
-					{isMod && (
+					{(isHigherRole || user?.role === Role.Owner) && (
 						<Menu withinPortal position='bottom' shadow='sm'>
 							<Menu.Target>
 								<ActionIcon>
@@ -71,12 +104,17 @@ const UserDisplay = ({ userData }: Props) => {
 								>
 									{isActive ? 'Set Inactive' : 'Set Active'}
 								</Menu.Item>
+								{user?.role === Role.Owner && isHigherRole && (
+									<Menu.Item color='red' onClick={openTransferOwnerModal}>
+										Transfer Ownership
+									</Menu.Item>
+								)}
 							</Menu.Dropdown>
 						</Menu>
 					)}
 				</Group>
 			</Card.Section>
-			{isMod && (
+			{(isHigherRole || user?.role === Role.Owner) && (
 				<Card.Section withBorder inheritPadding py='sm'>
 					<Stack>
 						<Link href={`/users/${userData.id}`} passHref>

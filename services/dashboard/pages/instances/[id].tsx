@@ -3,14 +3,30 @@ import { Instance } from '@/types/Instance';
 import { Role } from '@/types/User';
 import { api, isNotFound, isServerError, ssrFetch } from '@/utils/apiHelpers';
 import { isAuthed, requireRole } from '@/utils/authUtils';
-import { Text } from '@mantine/core';
+import fetcher from '@/utils/swrFetcher';
+import { Center, Loader, Text } from '@mantine/core';
 import { GetServerSideProps } from 'next';
+import { useRouter } from 'next/router';
+import useSWR from 'swr';
 
 interface Props {
-	instance: Instance;
+	initialInstance: Instance;
 }
 
-const Instance = ({ instance }: Props) => {
+const Instance = ({ initialInstance }: Props) => {
+	const router = useRouter();
+	const { data: instance } = useSWR<Instance>(
+		router.query ? api(`instances/${router.query.id}`) : null,
+		fetcher,
+		{ fallbackData: initialInstance },
+	);
+	if (!instance)
+		return (
+			<Center>
+				<Loader size='xl' />
+			</Center>
+		);
+
 	return (
 		<div>
 			<Text align='center' component='h1' size={36}>
@@ -54,10 +70,10 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
 		throw new Error('A server error ocurred.');
 	}
 
-	const instance = await res.json();
+	const initialInstance = await res.json();
 	return {
 		props: {
-			instance,
+			initialInstance,
 		},
 	};
 };

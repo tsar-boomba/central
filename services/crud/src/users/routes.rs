@@ -162,6 +162,7 @@ async fn update(
         hashing_pass.map(|password| hash(password, bcrypt::DEFAULT_COST).unwrap())
     })
     .await?;
+    // TODO log user out when updated
     let update_set: UpdateUser = UpdateUser {
         account_id: None,
         password: hashed_pass,
@@ -173,9 +174,12 @@ async fn update(
     if let Some(new_role) = update_set.role.clone() {
         if !require_role(&req_user, Role::Owner) && !higher_role(&req_user, new_role.clone()) {
             return Err(ApiError::forbidden());
-        } else if require_role(&req_user, Role::Owner) && new_role != Role::Owner {
-            // owner cannot downgrade their role through this route
-            return Err(ApiError::forbidden());
+        }
+        // user cannot change their own role
+        if let Some(req_user) = req_user {
+            if id == req_user.id {
+                return Err(ApiError::forbidden());
+            }
         }
     }
 
@@ -258,7 +262,9 @@ async fn toggle_status(
 ) -> Result<HttpResponse, ApiError> {
     let id = id.into_inner();
     let to_be_updated = web::block(move || User::find_by_id(id)).await??;
-    if !belongs_to_account(&req_user, &to_be_updated.account_id) {
+    if !belongs_to_account(&req_user, &to_be_updated.account_id)
+        || !higher_role(&req_user, to_be_updated.role)
+    {
         return Err(ApiError::forbidden());
     }
 
@@ -273,6 +279,49 @@ async fn toggle_status(
     Ok(HttpResponse::Ok().json(user))
 }
 
+#[put("/users/{id}/transfer-owner")]
+async fn transfer_owner(
+    target: web::Path<i32>,
+    req_user: Option<ReqUser>,
+) -> Result<HttpResponse, ApiError> {
+    let target = target.into_inner();
+    let to_be_updated = web::block(move || User::find_by_id(target)).await??;
+    if !belongs_to_account(&req_user, &to_be_updated.account_id)
+        || !require_role(&req_user, Role::Owner)
+    {
+        return Err(ApiError::forbidden());
+    }
+
+    web::block::<_, Result<(), ApiError>>(move || {
+        use models::users::dsl::*;
+        let conn = db::connection()?;
+        // update both users in transaction
+        conn.transaction::<(), ApiError, _>(|| {
+            // TODO log both users out
+            diesel::update(users.filter(id.eq(target)))
+                .set(UpdateUser {
+                    role: Some(Role::Owner),
+                    ..Default::default()
+                })
+                .execute(&conn)?;
+
+            if let Some(req_user) = req_user {
+                diesel::update(users.filter(id.eq(req_user.id)))
+                .set(UpdateUser {
+                    role: Some(Role::Admin),
+                    ..Default::default()
+                })
+                .execute(&conn)?;
+            }
+
+            Ok(())
+        })
+    })
+    .await??;
+
+    Ok(HttpResponse::Ok().finish())
+}
+
 pub fn init_routes(config: &mut web::ServiceConfig) {
     config.service(find_all);
     config.service(find);
@@ -280,4 +329,5 @@ pub fn init_routes(config: &mut web::ServiceConfig) {
     config.service(update);
     config.service(delete);
     config.service(toggle_status);
+    config.service(transfer_owner);
 }
