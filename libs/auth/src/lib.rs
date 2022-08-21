@@ -53,7 +53,7 @@ impl actix_web::FromRequest for ReqUser {
 /// 1 - at least moderator
 /// 2 - at least admin
 /// 3 - only owner
-fn role_to_number(role: &Role) -> i32 {
+pub fn role_to_number(role: &Role) -> i32 {
     match role {
         Role::Owner => 3,
         Role::Admin => 2,
@@ -63,9 +63,17 @@ fn role_to_number(role: &Role) -> i32 {
 }
 
 /// Checks if reqUser has a role of at least requirement
-pub fn require_role(user: &Option<ReqUser>, requirement: Role) -> bool {
-    match user {
+pub fn require_role(req_user: &Option<ReqUser>, requirement: Role) -> bool {
+    match req_user {
         Some(user) => role_to_number(&user.role) >= role_to_number(&requirement),
+        None => true,
+    }
+}
+
+/// Checks if reqUser has a role higher than requirement, impossible if requirement is Owner
+pub fn higher_role(req_user: &Option<ReqUser>, requirement: Role) -> bool {
+    match req_user {
+        Some(user) => role_to_number(&user.role) > role_to_number(&requirement),
         None => true,
     }
 }

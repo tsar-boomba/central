@@ -36,7 +36,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
 	if (!requireRole(user.role, Role.Admin)) {
 		return {
 			redirect: {
-				destination: 'instances',
+				destination: '/instances',
 				permanent: false,
 			},
 		};

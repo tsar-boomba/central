@@ -1,5 +1,5 @@
 use actix_web::{delete, get, post, put, web, HttpResponse};
-use auth::{belongs_to_account, ReqUser};
+use auth::{belongs_to_account, higher_role, require_role, ReqUser};
 use bcrypt::hash;
 use diesel::prelude::*;
 use models::types::Role;
@@ -42,15 +42,22 @@ async fn create(
     new_user: web::Json<NewUser>,
     req_user: Option<ReqUser>,
 ) -> Result<HttpResponse, ApiError> {
-    if !belongs_to_account(&req_user, &new_user.account_id) {
+    if !belongs_to_account(&req_user, &new_user.account_id)
+        || !require_role(&req_user, Role::Moderator)
+    {
         return Err(ApiError::forbidden());
     }
     use models::users::dsl::*;
 
     let new_user = new_user.into_inner();
+
+    // must have higher role than user you are trying to create
+    if !higher_role(&req_user, new_user.role.clone()) {
+        return Err(ApiError::forbidden());
+    }
+
     new_user.validate()?;
-    let hashed_pass =
-        web::block(move || hash(new_user.password.clone(), bcrypt::DEFAULT_COST)).await??;
+    let hashed_pass = web::block(move || hash(new_user.password, bcrypt::DEFAULT_COST)).await??;
     // If req came from user, use their account id instead of whatever they set
     let with_hash = if let Some(req_account_id) = req_user.map(|req_user| req_user.account_id) {
         NewUser {
@@ -143,14 +150,35 @@ async fn update(
 ) -> Result<HttpResponse, ApiError> {
     let id = id.into_inner();
     let to_be_updated = web::block(move || User::find_by_id(id)).await??;
-    if !belongs_to_account(&req_user, &to_be_updated.account_id) {
+    if !belongs_to_account(&req_user, &to_be_updated.account_id)
+        || !require_role(&req_user, Role::Moderator)
+    {
         return Err(ApiError::forbidden());
     }
 
+    let hashing_pass = user.password.clone();
+    // if password is being updated, hash it
+    let hashed_pass = web::block(move || {
+        hashing_pass.map(|password| hash(password, bcrypt::DEFAULT_COST).unwrap())
+    })
+    .await?;
     let update_set: UpdateUser = UpdateUser {
         account_id: None,
+        password: hashed_pass,
         ..user.into_inner()
     };
+
+    // must have higher role than what you want to update to
+    // except owner can change anyone, including themselves
+    if let Some(new_role) = update_set.role.clone() {
+        if !require_role(&req_user, Role::Owner) && !higher_role(&req_user, new_role.clone()) {
+            return Err(ApiError::forbidden());
+        } else if require_role(&req_user, Role::Owner) && new_role != Role::Owner {
+            // owner cannot downgrade their role through this route
+            return Err(ApiError::forbidden());
+        }
+    }
+
     update_set.validate()?;
 
     let user = web::block(move || User::update(id, update_set)).await??;
@@ -223,10 +251,33 @@ async fn delete(
     }
 }
 
+#[put("/users/{id}/toggle-status")]
+async fn toggle_status(
+    id: web::Path<i32>,
+    req_user: Option<ReqUser>,
+) -> Result<HttpResponse, ApiError> {
+    let id = id.into_inner();
+    let to_be_updated = web::block(move || User::find_by_id(id)).await??;
+    if !belongs_to_account(&req_user, &to_be_updated.account_id) {
+        return Err(ApiError::forbidden());
+    }
+
+    let update_set: UpdateUser = UpdateUser {
+        active: Some(!to_be_updated.active),
+        ..Default::default()
+    };
+    update_set.validate()?;
+
+    let user = web::block(move || User::update(id, update_set)).await??;
+
+    Ok(HttpResponse::Ok().json(user))
+}
+
 pub fn init_routes(config: &mut web::ServiceConfig) {
     config.service(find_all);
     config.service(find);
     config.service(create);
     config.service(update);
     config.service(delete);
+    config.service(toggle_status);
 }

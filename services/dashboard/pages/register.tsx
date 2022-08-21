@@ -18,7 +18,6 @@ import { showNotification } from '@mantine/notifications';
 import { setCookie } from 'ez-cookies';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
-import { IconCheck, IconX } from '@tabler/icons';
 import StateInput from '../components/Form/StateInput';
 import TextInputInfo from '../components/Form/TextInputInfo';
 import { Account } from '../types/Account';
@@ -26,45 +25,15 @@ import { Resource, Role, User } from '../types/User';
 import { NewAccount, NewUser, RegisterAccount, RegisterUser } from '../types/utils';
 import { callApi } from '../utils/apiHelpers';
 import { accountValidation } from '@/components/Form/AccountForm';
+import {
+	getStrength,
+	PasswordRequirement,
+	requirements,
+} from '@/components/Form/UserForm/Password';
 
 const NUM_STEPS = 2;
 
 type FormData = { account: RegisterAccount; user: RegisterUser };
-
-const PasswordRequirement = ({ meets, label }: { meets: boolean; label: string }) => {
-	return (
-		<Text
-			color={meets ? 'green' : 'red'}
-			sx={{ display: 'flex', alignItems: 'center' }}
-			mt={7}
-			size='sm'
-		>
-			{meets ? <IconCheck size={14} /> : <IconX size={14} />}{' '}
-			<Box ml={10} sx={{ fontWeight: 500 }}>
-				{label}
-			</Box>
-		</Text>
-	);
-};
-
-const requirements = [
-	{ re: /[0-9]/, label: 'Includes number' },
-	{ re: /[a-z]/, label: 'Includes lowercase letter' },
-	{ re: /[A-Z]/, label: 'Includes uppercase letter' },
-	{ re: /[$&+,:;=?@#|'<>.^*()%!-]/, label: 'Includes special symbol' },
-];
-
-const getStrength = (password: string) => {
-	let multiplier = password.length > 5 ? 0 : 1;
-
-	requirements.forEach((requirement) => {
-		if (!requirement.re.test(password)) {
-			multiplier += 1;
-		}
-	});
-
-	return Math.max(100 - (100 / (requirements.length + 1)) * multiplier, 10);
-};
 
 const userValidation: FormRulesRecord<RegisterUser> = {
 	username: (v) => (v.length > 0 ? null : 'Username cannot be empty.'),
@@ -137,6 +106,8 @@ const Register = () => {
 			updatePerms: [Resource.Carrier, Resource.Shipper, Resource.Load],
 			instances: [],
 			role: Role.Owner,
+			accountId: '',
+			notes: null,
 			...values.user,
 		};
 		callApi({
@@ -291,7 +262,7 @@ const Register = () => {
 						/>
 						<PasswordInput
 							required
-							label='Confirm Password'
+							label='Confirm Pass'
 							{...form.getInputProps('user.confirmPass')}
 						/>
 					</Group>

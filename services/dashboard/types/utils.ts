@@ -11,7 +11,7 @@ export type RegisterUser = Pick<User, 'firstName' | 'lastName' | 'password' | 'u
 };
 
 export type NewAccount = Omit<Account, 'id' | 'createdAt' | 'updatedAt' | 'stripeId' | 'subId'>;
-export type NewUser = Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'accountId' | 'notes'>;
+export type NewUser = Omit<User, 'id' | 'createdAt' | 'updatedAt'>;
 export type NewInstance = Omit<
 	Instance,
 	'id' | 'createdAt' | 'updatedAt' | 'key' | 'envId' | 'url'

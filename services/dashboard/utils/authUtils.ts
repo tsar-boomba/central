@@ -68,3 +68,10 @@ export const requireRole = (curr: Role | undefined, required: Role): boolean => 
 	}
 	return false;
 };
+
+export const higherRole = (curr: Role | undefined, required: Role): boolean => {
+	if (curr) {
+		return roleToNum(curr) > roleToNum(required);
+	}
+	return false;
+};

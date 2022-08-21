@@ -2,24 +2,20 @@ import { api } from '@/utils/apiHelpers';
 import fetcher from '@/utils/swrFetcher';
 import { User } from '@/types/User';
 import { useRouter } from 'next/router';
-import { createContext, ReactNode, useContext } from 'react';
-import useSWR, { KeyedMutator } from 'swr';
+import { createContext, ReactNode, useCallback, useContext } from 'react';
+import useSWR, { KeyedMutator, mutate as SWRMutate } from 'swr';
 import { Account } from '@/types/Account';
 
 interface UserContextValue {
 	user: User | undefined;
 	mutate: KeyedMutator<User>;
 	error: any;
-	isLoading: boolean;
-	isValidating: boolean;
 }
 
 const UserContext = createContext<UserContextValue>({
 	user: undefined,
 	mutate: () => Promise.resolve(undefined),
 	error: undefined,
-	isLoading: false,
-	isValidating: false,
 });
 
 const publicPaths = ['/login', '/register'];
@@ -32,7 +28,7 @@ interface Props {
 const UserProvider = ({ children, fallback }: Props) => {
 	const router = useRouter();
 	const isPublic = publicPaths.includes(router.pathname);
-	const { data, error, isLoading, isValidating, mutate } = useSWR<User>(
+	const { data, error } = useSWR<User>(
 		!isPublic ? api('verify') : null,
 		fetcher,
 		fallback
@@ -42,13 +38,18 @@ const UserProvider = ({ children, fallback }: Props) => {
 			  }
 			: { keepPreviousData: true },
 	);
+	// avoid rerenders
+	const mutate = useCallback<KeyedMutator<User>>(
+		(data, opts) => SWRMutate<User>(api('verify'), data, opts),
+		[],
+	);
 
-	if ((!data && !isLoading) || error) {
+	if (!data || error) {
 		if (!isPublic) router.push(`/login?from=${location.pathname}`);
 	}
 
 	return (
-		<UserContext.Provider value={{ user: data, mutate, error, isLoading, isValidating }}>
+		<UserContext.Provider value={{ user: data, mutate, error }}>
 			{children}
 		</UserContext.Provider>
 	);
