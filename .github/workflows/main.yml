@@ -185,8 +185,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install awsebcli
-      - run: eb init "milkyweb-dashboard" --platform docker
-      - run: eb config "Main-env"
+      - run: eb init "milkyweb-dashboard" --platform docker --region "us-east-1"
+      - run: eb status
+      - run: eb use "Main-env"
+      - run: eb config --display
       - name: Deploy to Elastic Beanstalk
         run: |
           eb deploy "Main-env" -l "${{ github.sha }}" -m "${{ github.event.head_commit.message }}" -p
