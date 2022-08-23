@@ -12,8 +12,6 @@ services:
     environment:
       - PAYMENTS_URI=http://payments:6000
     restart: always
-    links:
-      - payments
   gateway:
     image: 262246349843.dkr.ecr.us-east-1.amazonaws.com/central-gateway:latest
     env_file:
@@ -35,8 +33,6 @@ services:
     environment:
       - CRUD_URI=http://crud:8080
     restart: always
-    links:
-      - crud
   nginx:
     image: 262246349843.dkr.ecr.us-east-1.amazonaws.com/central-nginx:latest
     restart: always
