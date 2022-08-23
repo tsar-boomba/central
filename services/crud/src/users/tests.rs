@@ -54,7 +54,7 @@ pub fn remove(target: String, conn: &db::PoolConn) {
 
 #[actix_web::test]
 async fn get() {
-    let (default1, default2) = defaults("users get");
+    let (default1, default2) = defaults("users-get");
 
     let app = tests::init(super::routes::init_routes).await;
     let conn = db::connection().unwrap();
@@ -94,7 +94,7 @@ async fn get() {
 #[actix_web::test]
 async fn post() {
     actix_web::rt::spawn(crate::tests::mock_payments());
-    let (default1, _default2) = defaults("users post");
+    let (default1, _default2) = defaults("users-post");
 
     let app = tests::init(super::routes::init_routes).await;
 
@@ -122,7 +122,7 @@ async fn post() {
 
 #[actix_web::test]
 async fn put() {
-    let (default1, _default2) = defaults("users put");
+    let (default1, _default2) = defaults("users-put");
 
     let app = tests::init(super::routes::init_routes).await;
     let conn = db::connection().unwrap();
@@ -159,7 +159,7 @@ async fn put() {
 #[actix_web::test]
 async fn delete() {
     actix_web::rt::spawn(crate::tests::mock_payments());
-    let (default1, default2) = defaults("users delete");
+    let (default1, default2) = defaults("users-delete");
 
     let app = tests::init(super::routes::init_routes).await;
     let conn = db::connection().unwrap();

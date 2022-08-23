@@ -1,6 +1,6 @@
 # For NGINX in container
 # Base on offical NGINX Alpine image
-FROM public.ecr.aws/nginx/nginx:1.23-alpine
+FROM nginx:1.23.1-alpine
 
 # Remove any existing config files
 RUN rm /etc/nginx/conf.d/*

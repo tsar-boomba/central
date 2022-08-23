@@ -118,7 +118,7 @@ jobs:
     if: needs.dashboard-changes.outputs.changed == 'true'
     steps:
       - uses: actions/checkout@v3
-      - run: docker pull public.ecr.aws/docker/library/node:16.14.2-alpine3.15
+      - run: docker pull node:16-alpine3.16
       - uses: satackey/action-docker-layer-caching@v0.0.11
         with:
           key: central-dashboard-docker4-{hash}
@@ -146,7 +146,7 @@ jobs:
     if: needs.nginx-changes.outputs.changed == 'true'
     steps:
       - uses: actions/checkout@v3
-      - run: docker pull public.ecr.aws/nginx/nginx:1.23-alpine
+      - run: docker pull nginx:1.23.1-alpine
       - uses: satackey/action-docker-layer-caching@v0.0.11
         with:
           key: central-nginx-docker4-{hash}
