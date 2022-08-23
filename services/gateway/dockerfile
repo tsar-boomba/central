@@ -23,4 +23,4 @@ WORKDIR /gateway
 COPY --from=builder /gateway/target/release/gateway /usr/local/bin
 
 EXPOSE 4000
-ENTRYPOINT ["/usr/local/bin/gateway"]
+CMD ["/usr/local/bin/gateway"]

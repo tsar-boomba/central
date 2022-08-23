@@ -26,4 +26,4 @@ COPY --from=builder /payments/target/release/payments /usr/local/bin
 RUN apt-get update && apt-get install openssl
 
 EXPOSE 6000
-ENTRYPOINT ["/usr/local/bin/payments"]
+CMD ["/usr/local/bin/payments"]

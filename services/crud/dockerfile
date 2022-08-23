@@ -24,4 +24,4 @@ RUN apt-get update && apt-get install libpq5 ca-certificates -y
 COPY --from=builder /crud/target/release/crud /usr/local/bin
 
 EXPOSE 8080
-ENTRYPOINT ["/usr/local/bin/crud"]
+CMD ["/usr/local/bin/crud"]

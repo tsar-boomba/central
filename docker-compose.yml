@@ -3,6 +3,8 @@ services:
     image: 262246349843.dkr.ecr.us-east-1.amazonaws.com/central-dashboard:latest
     depends_on:
       - gateway
+    links:
+      - gateway
   crud:
     image: 262246349843.dkr.ecr.us-east-1.amazonaws.com/central-crud:latest
     env_file:
@@ -10,6 +12,8 @@ services:
     environment:
       - PAYMENTS_URI=http://payments:6000
     restart: always
+    links:
+      - payments
   gateway:
     image: 262246349843.dkr.ecr.us-east-1.amazonaws.com/central-gateway:latest
     env_file:
@@ -21,6 +25,9 @@ services:
     depends_on:
       - crud
       - payments
+    links:
+      - payments
+      - crud
   payments:
     image: 262246349843.dkr.ecr.us-east-1.amazonaws.com/central-payments:latest
     env_file:
@@ -28,12 +35,17 @@ services:
     environment:
       - CRUD_URI=http://crud:8080
     restart: always
+    links:
+      - crud
   nginx:
     image: 262246349843.dkr.ecr.us-east-1.amazonaws.com/central-nginx:latest
     restart: always
     ports:
       - '80:80'
     depends_on:
+      - gateway
+      - dashboard
+    links:
       - gateway
       - dashboard
     volumes:
