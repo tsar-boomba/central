@@ -155,7 +155,7 @@ jobs:
         # Ignore the failure of a step and avoid terminating the job.
         continue-on-error: true
       - name: Build Image
-        run: docker build . -f ./services/nginx/dockerfile -t central-nginx:latest --label cache=true
+        run: docker build ./nginx -t central-nginx:latest --label cache=true
       - name: Push to ECR
         uses: ./.github/push-image
         with:
