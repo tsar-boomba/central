@@ -24,7 +24,7 @@ jobs:
     if: needs.crud-changes.outputs.changed == 'true'
     steps:
       - uses: actions/checkout@v3
-      - run: docker pull lukemathwalker/cargo-chef:0.1.39-rust-latest & docker pull debian:buster-slim
+      - run: docker pull lukemathwalker/cargo-chef:0.1.39-rust-latest & docker pull debian:bullseye-slim
       - uses: satackey/action-docker-layer-caching@v0.0.11
         with:
           key: central-crud-docker4-{hash}
@@ -87,7 +87,7 @@ jobs:
     if: needs.payments-changes.outputs.changed == 'true'
     steps:
       - uses: actions/checkout@v3
-      - run: docker pull lukemathwalker/cargo-chef:0.1.39-rust-latest & docker pull debian:buster-slim
+      - run: docker pull lukemathwalker/cargo-chef:0.1.39-rust-latest & docker pull debian:bullseye-slim
       - uses: satackey/action-docker-layer-caching@v0.0.11
         with:
           key: central-payments-docker4-{hash}
