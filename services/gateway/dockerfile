@@ -7,7 +7,7 @@ RUN cargo chef prepare --bin services/gateway --recipe-path recipe.json
 
 FROM chef AS cacher 
 COPY --from=planner /gateway/recipe.json recipe.json
-# Build dependencies - this is the caching Docker layer!
+# Build dependencies - this is the caching Docker layer
 RUN cargo chef cook --release --bin gateway --recipe-path recipe.json
 
 FROM chef as builder

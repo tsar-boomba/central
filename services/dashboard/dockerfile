@@ -6,7 +6,7 @@ RUN npm install -g pnpm@7.9.0
 
 FROM base AS build
 # Copy package.json and package-lock.json before other files
-# Utilise Docker cache to save re-installing dependencies if unchanged
+# Utilise Docker cache to save re-installing dependencies if unchange
 COPY ./package.json ./
 COPY ./pnpm-lock.yaml ./
 
