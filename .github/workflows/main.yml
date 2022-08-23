@@ -191,4 +191,4 @@ jobs:
       - run: eb config --display
       - name: Deploy to Elastic Beanstalk
         run: |
-          eb deploy "Main-env" -l ${{ github.sha }} -m "${{ github.event.head_commit.message }}" --source . -p
+          eb deploy "Main-env" --label ${{ github.sha }} -m "${{ github.event.head_commit.message }}" --source . -p
