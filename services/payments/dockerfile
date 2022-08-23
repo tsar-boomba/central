@@ -23,7 +23,7 @@ FROM debian:bullseye-slim AS runtime
 WORKDIR /payments
 COPY --from=builder /payments/target/release/payments /usr/local/bin
 
-RUN apt-get update && apt-get --no-cache install openssl
+RUN apt-get update && apt-get install openssl
 
 EXPOSE 6000
 ENTRYPOINT ["/usr/local/bin/payments"]
