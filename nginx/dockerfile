@@ -6,7 +6,7 @@ FROM nginx:1.23.1-alpine
 RUN rm /etc/nginx/conf.d/*
 
 # Copy config files
-# *.conf files in conf.d/ dir get included in main config
+# *.conf files in conf.d/ dir get included in main config s
 COPY ./default.conf /etc/nginx/conf.d/
 
 # Expose the listening port

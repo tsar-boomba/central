@@ -192,4 +192,4 @@ jobs:
       - run: eb config --display
       - name: Deploy to Elastic Beanstalk
         run: |
-          eb deploy -l ${{ github.sha }} -m "${{ github.event.head_commit.message }}" -v -p
+          eb deploy -l ${{ github.sha }} -m "${{ github.event.head_commit.message }}" -v -p -nh

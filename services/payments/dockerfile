@@ -19,9 +19,11 @@ COPY . .
 RUN cargo build --release -p payments
 
 # We do not need the Rust toolchain to run the binary! need r
-FROM debian:buster-slim AS runtime
+FROM debian:bullseye-slim AS runtime
 WORKDIR /payments
 COPY --from=builder /payments/target/release/payments /usr/local/bin
+
+RUN apt-get update && apt-get --no-cache install openssl
 
 EXPOSE 6000
 ENTRYPOINT ["/usr/local/bin/payments"]
