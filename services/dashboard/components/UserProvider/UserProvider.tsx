@@ -45,7 +45,7 @@ const UserProvider = ({ children, fallback }: Props) => {
 	);
 
 	if (!data || error) {
-		if (!isPublic) router.push(`/login?from=${location.pathname}`);
+		if (!isPublic) router.push(`/login?from=${router.asPath || router.pathname}`);
 	}
 
 	return (
