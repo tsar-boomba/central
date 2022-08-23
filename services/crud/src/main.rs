@@ -18,7 +18,11 @@ mod accounts;
 mod instances;
 mod users;
 
-use actix_web::{middleware, post, web::{Json, self}, App, HttpResponse, HttpServer};
+use actix_web::{
+    middleware, post,
+    web::{self, Json},
+    App, HttpResponse, HttpServer,
+};
 use api_error::ApiError;
 use dotenv::dotenv;
 use models::{Account, Validate};
@@ -45,7 +49,10 @@ async fn main() -> std::io::Result<()> {
     let eb_client = aws_sdk_elasticbeanstalk::Client::new(&aws_creds);
     let r53_client = aws_sdk_route53::Client::new(&aws_creds);
 
-    let app_data = AppData { eb_client, r53_client };
+    let app_data = AppData {
+        eb_client,
+        r53_client,
+    };
 
     info!("Starting HTTP server at http://localhost:8080");
 
@@ -60,7 +67,7 @@ async fn main() -> std::io::Result<()> {
             .configure(instances::routes::init_routes)
             .app_data(web::Data::new(app_data.clone()))
     })
-    .bind(("127.0.0.1", 8080))?
+    .bind((if *PROD { "0.0.0.0" } else { "127.0.0.1" }, 8080))?
     .run()
     .await
 }
@@ -70,6 +77,7 @@ lazy_static! {
         std::env::var("PAYMENTS_URI").unwrap_or("http://127.0.0.1:6000".into());
     pub static ref INSTANCES_URI: String =
         std::env::var("INSTANCES_URI").unwrap_or("http://127.0.0.1:3001".into());
+    static ref PROD: bool = std::env::var("RUST_ENV").unwrap_or("dev".into()) == "prod";
 }
 
 #[derive(Debug, Deserialize)]

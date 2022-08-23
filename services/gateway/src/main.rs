@@ -19,6 +19,10 @@ use std::{
 
 type Client = hyper::client::Client<HttpConnector, Body>;
 
+lazy_static! {
+    static ref PROD: bool = std::env::var("RUST_ENV").unwrap_or("dev".into()) == "prod";
+}
+
 async fn app(port: u16) {
     let main_client = Client::new();
 
@@ -48,7 +52,7 @@ async fn app(port: u16) {
         }
     });
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], port));
+    let addr = SocketAddr::from((if *PROD { [0, 0, 0, 0] } else { [127, 0, 0, 1] }, port));
     println!("reverse proxy listening on {}", addr);
     axum::Server::bind(&addr).serve(make_service).await.unwrap()
 }

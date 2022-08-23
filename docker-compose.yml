@@ -11,6 +11,7 @@ services:
       - .env
     environment:
       - PAYMENTS_URI=http://payments:6000
+      - RUST_ENV=prod
     restart: always
   gateway:
     image: 262246349843.dkr.ecr.us-east-1.amazonaws.com/central-gateway:latest
@@ -19,6 +20,7 @@ services:
     environment:
       - CRUD_URI=http://crud:8080
       - PAYMENTS_URI=http://payments:6000
+      - RUST_ENV=prod
     restart: always
     depends_on:
       - crud
@@ -32,6 +34,7 @@ services:
       - .env
     environment:
       - CRUD_URI=http://crud:8080
+      - RUST_ENV=prod
     restart: always
   nginx:
     image: 262246349843.dkr.ecr.us-east-1.amazonaws.com/central-nginx:latest
