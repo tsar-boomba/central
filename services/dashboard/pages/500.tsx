@@ -31,6 +31,4 @@ const ServerError = () => {
 	);
 };
 
-export const getStaticProps = () => ({ props: {} });
-
 export default ServerError;

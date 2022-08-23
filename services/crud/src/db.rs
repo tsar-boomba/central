@@ -71,6 +71,7 @@ pub fn init() {
         // add admin user
         diesel::insert_into(models::users::table)
             .values(NewUser {
+                id: "admin".into(),
                 account_id: "admin".into(),
                 username: admin_name.unwrap(),
                 first_name: "Test".into(),

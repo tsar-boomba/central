@@ -3,7 +3,7 @@
 macro_rules! user_models {
     ($parent:ident) => {
         child_model! {
-            i32, NaiveDateTime, "users", NewUser, UpdateUser, $parent,
+            String, NaiveDateTime, "users", NewUser, UpdateUser, "server gen", $parent,
             User {
                 #[serde(default)]
                 account_id: String,
@@ -37,7 +37,7 @@ pub mod schema {
         use crate::types::role_sql::Role;
 
         users {
-            id -> Int4,
+            id -> Text,
             created_at -> Timestamp,
             updated_at -> Timestamp,
             account_id -> Text,

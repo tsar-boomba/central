@@ -26,11 +26,12 @@ async fn login(login: Json<Login>) -> Result<HttpResponse, ApiError> {
     // check if found a matching user
     if let Some(user) = user {
         // check password hashes
-        match block(move || bcrypt::verify(login.password, &user.password)).await? {
+        let pass = user.password.clone();
+        match block(move || bcrypt::verify(login.password, &pass)).await? {
             Ok(result) => {
                 if result {
                     // passwords match
-                    let token = super::sign(user.id, user.account_id);
+                    let token = super::sign(user.id.clone(), user.account_id.clone());
                     match token {
                         Ok(token) => Ok(HttpResponse::Ok()
                             .cookie(
@@ -41,7 +42,7 @@ async fn login(login: Json<Login>) -> Result<HttpResponse, ApiError> {
                                     .max_age(Duration::milliseconds(super::TOKEN_EXPIRY))
                                     .finish(),
                             )
-                            .finish()),
+                            .json(user)),
                         _ => {
                             Ok(HttpResponse::InternalServerError()
                                 .json(ErrorBody::server_err(None)))

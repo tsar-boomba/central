@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct ReqUser {
-    pub id: i32,
+    pub id: String,
     pub account_id: String,
     pub role: models::types::Role,
 }

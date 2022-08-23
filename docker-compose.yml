@@ -1,0 +1,40 @@
+services:
+  dashboard:
+    image: 262246349843.dkr.ecr.us-east-1.amazonaws.com/central-dashboard:latest
+    depends_on:
+      - gateway
+  crud:
+    image: 262246349843.dkr.ecr.us-east-1.amazonaws.com/central-crud:latest
+    env_file:
+      - .env
+    environment:
+      - PAYMENTS_URI=http://payments:6000
+    restart: always
+  gateway:
+    image: 262246349843.dkr.ecr.us-east-1.amazonaws.com/central-gateway:latest
+    env_file:
+      - .env
+    environment:
+      - CRUD_URI=http://crud:8080
+      - PAYMENTS_URI=http://payments:6000
+    restart: always
+    depends_on:
+      - crud
+      - payments
+  payments:
+    image: 262246349843.dkr.ecr.us-east-1.amazonaws.com/central-payments:latest
+    env_file:
+      - .env
+    environment:
+      - CRUD_URI=http://crud:8080
+    restart: always
+  nginx:
+    image: 262246349843.dkr.ecr.us-east-1.amazonaws.com/central-nginx:latest
+    restart: always
+    ports:
+      - '80:80'
+    depends_on:
+      - gateway
+      - dashboard
+    volumes:
+      - "${EB_LOG_BASE_DIR}/nginx:/var/log/nginx"

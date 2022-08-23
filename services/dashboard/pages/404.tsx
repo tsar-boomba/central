@@ -31,6 +31,4 @@ const NotFound = () => {
 	);
 };
 
-export const getStaticProps = () => ({ props: {} });
-
 export default NotFound;

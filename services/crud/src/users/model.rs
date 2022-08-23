@@ -6,7 +6,7 @@ use models::users::dsl::*;
 
 use crate::{api_error::ApiError, db};
 
-impl Model<i32, NewUser, UpdateUser, ApiError> for User {
+impl Model<String, NewUser, UpdateUser, ApiError> for User {
     fn find_all() -> Result<Vec<Self>, ApiError> {
         let conn = db::connection()?;
         let result = users.load::<Self>(&conn)?;
@@ -14,7 +14,7 @@ impl Model<i32, NewUser, UpdateUser, ApiError> for User {
         Ok(result)
     }
 
-    fn find_by_id(target: i32) -> Result<Self, ApiError> {
+    fn find_by_id(target: String) -> Result<Self, ApiError> {
         let conn = db::connection()?;
         let result = users.filter(id.eq(target)).get_result::<Self>(&conn)?;
 
@@ -24,6 +24,7 @@ impl Model<i32, NewUser, UpdateUser, ApiError> for User {
     fn insert(new: NewUser) -> Result<Self, ApiError> {
         let conn = db::connection()?;
         let with_hash = NewUser {
+            id: nanoid!(10),
             password: hash(new.password, DEFAULT_COST)?,
             role: Role::User,
             ..new
@@ -35,7 +36,7 @@ impl Model<i32, NewUser, UpdateUser, ApiError> for User {
         Ok(result)
     }
 
-    fn update(target: i32, new_vals: UpdateUser) -> Result<Self, ApiError> {
+    fn update(target: String, new_vals: UpdateUser) -> Result<Self, ApiError> {
         let conn = db::connection()?;
         let result = diesel::update(users.filter(id.eq(target)))
             .set(new_vals)
@@ -44,7 +45,7 @@ impl Model<i32, NewUser, UpdateUser, ApiError> for User {
         Ok(result)
     }
 
-    fn delete(target: i32) -> Result<usize, ApiError> {
+    fn delete(target: String) -> Result<usize, ApiError> {
         let conn = db::connection()?;
         let result = diesel::delete(users.filter(id.eq(target))).execute(&conn)?;
 

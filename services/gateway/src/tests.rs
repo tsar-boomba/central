@@ -43,7 +43,7 @@ async fn mock_crud() {
             "/verify",
             get(|| async {
                 Json(auth::ReqUser {
-                    id: 10,
+                    id: "10".into(),
                     account_id: "account_id".into(),
                     role: Role::User,
                 })
@@ -116,7 +116,7 @@ async fn e2e() {
     assert_eq!(
         body_json,
         auth::ReqUser {
-            id: 10,
+            id: "10".into(),
             account_id: "account_id".into(),
             role: Role::User
         }

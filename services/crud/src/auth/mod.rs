@@ -17,7 +17,7 @@ pub struct Login {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Claim {
-    pub id: i32,
+    pub id: String,
     pub account_id: String,
     pub exp: i64,
     pub iat: i64,
@@ -27,7 +27,7 @@ pub struct Claim {
 const TOKEN_EXPIRY: i64 = 43_200_000;
 
 impl Claim {
-    pub fn new(id: i32, account_id: String) -> Self {
+    pub fn new(id: String, account_id: String) -> Self {
         let now = Utc::now().timestamp_millis();
         // expires in 12 hours
         Self {
@@ -51,12 +51,12 @@ lazy_static! {
     )
     .unwrap();
     static ref INSTANCE_KEY_SECRET: Hmac<Sha256> = Hmac::new_from_slice(
-        std::env::var("INSTANCE_DEPLOY_SECRET").unwrap().as_bytes()
+        std::env::var("INSTANCE_KEY_SECRET").unwrap().as_bytes()
     )
     .unwrap();
 }
 
-fn sign(id: i32, account_id: String) -> Result<String, jwt::Error> {
+fn sign(id: String, account_id: String) -> Result<String, jwt::Error> {
     let claim = Claim::new(id, account_id);
     claim.sign_with_key(&*JWT_SECRET)
 }

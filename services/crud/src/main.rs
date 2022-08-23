@@ -107,6 +107,7 @@ async fn register(data: Json<RegisterBody>) -> Result<HttpResponse, ApiError> {
             .get_result::<models::Account>(&conn)?;
 
         let with_hash = models::NewUser {
+            id: nanoid!(10),
             password: bcrypt::hash(data.user.password, bcrypt::DEFAULT_COST)?,
             role: models::types::Role::Owner,
             account_id: account.id.clone(),

@@ -12,7 +12,7 @@ const textFetcher = async <Text>(url: string, init: RequestInit = {}): Promise<T
 		throw err;
 	}
 
-	return res.text() as Text;
+	return res.text() as any as Text;
 };
 
 export type SubscriptionStatus = 'active' | 'unpaid' | 'past_due';

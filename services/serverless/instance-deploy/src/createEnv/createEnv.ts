@@ -66,6 +66,9 @@ export const createEnv = async ({
 			setEnvVar('JWT_SECRET', jwtSecret),
 			setEnvVar('KEY', key),
 			setEnvVar('ID', instanceId),
+			setEnvVar('ACCOUNT_ID', accountId),
+			setEnvVar('NEXT_PUBLIC_NAME', name),
+			setEnvVar('NAME', name),
 		],
 	};
 

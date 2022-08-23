@@ -1,46 +1,36 @@
-# Base on offical Node.js Alpine image
-FROM public.ecr.aws/docker/library/node:16.14.2-alpine3.15 AS build
+FROM public.ecr.aws/docker/library/node:16.14.2-alpine3.15 AS base
+WORKDIR /app
+# isntall pnpm
+RUN apk --no-cache add libc6-compat
+RUN --mount=type=cache,id=pnpm-store,target=/root/.pnpm-store \
+    npm install -g pnpm@7.9.0
 
-# add curl and bash for node-prune
-RUN apk update && apk add curl bash && rm -rf /var/cache/apk/*
-
-# install node-prune
-RUN curl -sfL https://install.goreleaser.com/github.com/tj/node-prune.sh | bash -s -- -b /usr/local/bin
-
-# Set working directory
-WORKDIR /usr/src/frontend
-
+FROM base AS build
 # Copy package.json and package-lock.json before other files
 # Utilise Docker cache to save re-installing dependencies if unchanged
 COPY ./package.json ./
+COPY ./pnpm-lock.yaml ./
 
-# Install dependencies
-RUN npm install --legacy-peer-deps
-
+# Install dependencies & build
+RUN --mount=type=cache,id=pnpm-store,target=/root/.pnpm-store \
+    pnpm install --frozen-lockfile \
+    | grep -v "cross-device link not permitted\|Falling back to copying packages from store"
+RUN apk --no-cache add git
 COPY ./ ./
+RUN pnpm build
+RUN rm -rf node_modules \
+	&& pnpm -r exec -- rm -rf node_modules
 
-# Build app
-RUN npm run build
-
-RUN npm prune --production
-
-FROM public.ecr.aws/docker/library/node:16.14.2-alpine3.15
-
-WORKDIR /app
-
-# Install PM2 globally
+# Final image
+FROM base
 RUN npm install --global pm2
 
-COPY --from=build /usr/src/frontend/.next ./.next
-COPY --from=build /usr/src/frontend/public ./public
-COPY --from=build /usr/src/frontend/node_modules ./node_modules
-COPY --from=build /usr/src/frontend/next.config.js ./next.config.js
-COPY --from=build /usr/src/frontend/package.json ./package.json
-COPY --from=build /usr/src/frontend/.env.production ./.env.production
+COPY --from=build /app .
+
+RUN --mount=type=cache,id=pnpm-store,target=/root/.pnpm-store \
+    pnpm install --frozen-lockfile --prod \
+    | grep -v "cross-device link not permitted\|Falling back to copying packages from store"
 
 EXPOSE 3000
 
-ENV NODE_ENV=production
-
-# Run npm start script with PM2 when container starts
 CMD [ "pm2-runtime", "npm", "--", "start" ]

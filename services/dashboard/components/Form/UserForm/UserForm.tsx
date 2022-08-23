@@ -28,7 +28,7 @@ import RoleSelect from './RoleSelect';
 interface Props {
 	defaultUser?: NewUser & { confirmPass?: string };
 	create?: boolean;
-	id?: number;
+	id?: string;
 }
 
 type FormValues = NewUser & { confirmPass?: string };

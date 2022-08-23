@@ -57,7 +57,7 @@ async fn authenticate() {
         .cookie(
             Cookie::build(
                 "at",
-                sign(0, default1.account_id.clone()).expect("Failed to sign jwt."),
+                sign("1".into(), default1.account_id.clone()).expect("Failed to sign jwt."),
             )
             .path("/")
             .finish(),
@@ -102,7 +102,7 @@ async fn verify() {
         .cookie(
             Cookie::build(
                 "at",
-                sign(result1.id, result1.account_id.clone()).expect("Failed to sign jwt."),
+                sign(result1.id.clone(), result1.account_id.clone()).expect("Failed to sign jwt."),
             )
             .path("/")
             .finish(),

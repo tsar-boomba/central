@@ -14,6 +14,7 @@ pub fn compare(got: &User, exp: &NewUser) {
 pub fn defaults(test_name: &str) -> (NewUser, NewUser) {
     (
         NewUser {
+            id: "1".to_string() + test_name,
             account_id: "test".into(),
             username: test_name.into(),
             first_name: "Test".into(),
@@ -28,6 +29,7 @@ pub fn defaults(test_name: &str) -> (NewUser, NewUser) {
             notes: None,
         },
         NewUser {
+            id: "2".to_string() + test_name,
             account_id: "test".into(),
             username: format!("{}2", test_name),
             first_name: "Test2".into(),
@@ -44,7 +46,7 @@ pub fn defaults(test_name: &str) -> (NewUser, NewUser) {
     )
 }
 
-pub fn remove(target: i32, conn: &db::PoolConn) {
+pub fn remove(target: String, conn: &db::PoolConn) {
     diesel::delete(users.filter(id.eq(target)))
         .execute(conn)
         .expect("couldn't delete test user from table");
@@ -107,7 +109,7 @@ async fn post() {
 
     // Check in db for inserted record
     let got = users
-        .filter(id.eq(resp.id))
+        .filter(id.eq(resp.id.clone()))
         .get_result::<User>(&conn)
         .expect("Could not find record.");
 

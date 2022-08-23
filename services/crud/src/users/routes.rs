@@ -27,7 +27,7 @@ async fn find_all(req_user: Option<ReqUser>) -> Result<HttpResponse, ApiError> {
 }
 
 #[get("/users/{id}")]
-async fn find(id: web::Path<i32>, req_user: Option<ReqUser>) -> Result<HttpResponse, ApiError> {
+async fn find(id: web::Path<String>, req_user: Option<ReqUser>) -> Result<HttpResponse, ApiError> {
     let user = web::block(move || User::find_by_id(id.into_inner())).await??;
 
     if !belongs_to_account(&req_user, &user.account_id) {
@@ -61,6 +61,7 @@ async fn create(
     // If req came from user, use their account id instead of whatever they set
     let with_hash = if let Some(req_account_id) = req_user.map(|req_user| req_user.account_id) {
         NewUser {
+            id: nanoid!(10),
             password: hashed_pass,
             role: Role::User,
             account_id: req_account_id,
@@ -68,6 +69,7 @@ async fn create(
         }
     } else {
         NewUser {
+            id: nanoid!(10),
             password: hashed_pass,
             role: Role::User,
             ..new_user
@@ -144,12 +146,13 @@ async fn create(
 
 #[put("/users/{id}")]
 async fn update(
-    id: web::Path<i32>,
+    id: web::Path<String>,
     user: web::Json<UpdateUser>,
     req_user: Option<ReqUser>,
 ) -> Result<HttpResponse, ApiError> {
     let id = id.into_inner();
-    let to_be_updated = web::block(move || User::find_by_id(id)).await??;
+    let updated_id = id.clone();
+    let to_be_updated = web::block(move || User::find_by_id(updated_id)).await??;
     if !belongs_to_account(&req_user, &to_be_updated.account_id)
         || !require_role(&req_user, Role::Moderator)
     {
@@ -192,12 +195,13 @@ async fn update(
 
 #[delete("/users/{id}")]
 async fn delete(
-    target: web::Path<i32>,
+    target: web::Path<String>,
     req_user: Option<ReqUser>,
 ) -> Result<HttpResponse, ApiError> {
     let target = target.into_inner();
 
-    let user = web::block(move || User::find_by_id(target)).await??;
+    let deleted_id = target.clone();
+    let user = web::block(move || User::find_by_id(deleted_id)).await??;
     if !belongs_to_account(&req_user, &user.account_id) {
         return Err(ApiError::forbidden());
     }
@@ -257,11 +261,12 @@ async fn delete(
 
 #[put("/users/{id}/toggle-status")]
 async fn toggle_status(
-    id: web::Path<i32>,
+    id: web::Path<String>,
     req_user: Option<ReqUser>,
 ) -> Result<HttpResponse, ApiError> {
     let id = id.into_inner();
-    let to_be_updated = web::block(move || User::find_by_id(id)).await??;
+    let updated_id = id.clone();
+    let to_be_updated = web::block(move || User::find_by_id(updated_id)).await??;
     if !belongs_to_account(&req_user, &to_be_updated.account_id)
         || !higher_role(&req_user, to_be_updated.role)
     {
@@ -281,11 +286,12 @@ async fn toggle_status(
 
 #[put("/users/{id}/transfer-owner")]
 async fn transfer_owner(
-    target: web::Path<i32>,
+    target: web::Path<String>,
     req_user: Option<ReqUser>,
 ) -> Result<HttpResponse, ApiError> {
     let target = target.into_inner();
-    let to_be_updated = web::block(move || User::find_by_id(target)).await??;
+    let updated_id = target.clone();
+    let to_be_updated = web::block(move || User::find_by_id(updated_id)).await??;
     if !belongs_to_account(&req_user, &to_be_updated.account_id)
         || !require_role(&req_user, Role::Owner)
     {
@@ -307,11 +313,11 @@ async fn transfer_owner(
 
             if let Some(req_user) = req_user {
                 diesel::update(users.filter(id.eq(req_user.id)))
-                .set(UpdateUser {
-                    role: Some(Role::Admin),
-                    ..Default::default()
-                })
-                .execute(&conn)?;
+                    .set(UpdateUser {
+                        role: Some(Role::Admin),
+                        ..Default::default()
+                    })
+                    .execute(&conn)?;
             }
 
             Ok(())

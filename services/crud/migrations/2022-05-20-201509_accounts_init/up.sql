@@ -4,7 +4,7 @@ CREATE TYPE Resource AS ENUM ('load', 'carrier', 'shipper');
 CREATE TYPE Role AS ENUM('owner', 'admin', 'moderator', 'user');
 
 CREATE TABLE public.users (
-	id				SERIAL		NOT NULL PRIMARY KEY,
+	id				TEXT		NOT NULL PRIMARY KEY,
 	created_at		TIMESTAMP	NOT NULL DEFAULT NOW(),
 	updated_at		TIMESTAMP	NOT NULL DEFAULT NOW(),
 	account_id		TEXT		NOT NULL,
