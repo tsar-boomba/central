@@ -13,11 +13,11 @@ lazy_static! {
     pub static ref URI: String =
         std::env::var("CRUD_URI").unwrap_or("http://127.0.0.1:8080".into());
     pub static ref PUBLIC_PATH_RE: RegexSet = RegexSet::new(&[
-        "^/verify$",
-        "^/login$",
-        "^/authenticate$",
-        "^/register$",
-        r"^/instances/\S*/callback$",
+        "^/verify/?$",
+        "^/login/?$",
+        "^/authenticate/?$",
+        "^/register/?$",
+        r"^/instances/\S*/callback/?$",
     ]).unwrap();
 }
 

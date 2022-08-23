@@ -10,10 +10,10 @@ pub const PATH_BASE: &str = "/payments";
 
 lazy_static! {
     /// Paths which don't need to be authenticated
-    static ref PUBLIC_PATH_RE: RegexSet = RegexSet::new(&["^/webhooks$"]).unwrap();
+    static ref PUBLIC_PATH_RE: RegexSet = RegexSet::new(&["^/webhooks/?$"]).unwrap();
     /// Paths which can only be accessed by other services
     static ref PRIVATE_PATH_RE: RegexSet =
-        RegexSet::new(&["^/create-usage-record$", r"^/customer/.*$"]).unwrap();
+        RegexSet::new(&["^/create-usage-record/?$", r"^/customer/.*/?$"]).unwrap();
 }
 
 lazy_static! {
