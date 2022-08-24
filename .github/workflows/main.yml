@@ -165,12 +165,13 @@ jobs:
 
   instance-deploy-changes:
     uses: ./.github/workflows/changes.yml
+    needs: [deploy]
     with:
       path: services/serverless/instance-deploy/**
 
   instance-deploy-deploy:
     runs-on: ubuntu-latest
-    needs: [deploy, instance-deploy-changes]
+    needs: [instance-deploy-changes]
     if: ${{ needs.instance-deploy-changes.outputs.changed == 'true' }}
     defaults:
       run:
