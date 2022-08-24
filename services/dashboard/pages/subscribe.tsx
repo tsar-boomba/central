@@ -51,6 +51,7 @@ const Subscribe = ({ error, account: fallback }: Props) => {
 
 export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
 	const user = await isAuthed(ctx);
+	console.log(user);
 
 	if (!user) {
 		return redirect('/subscribe');
@@ -62,6 +63,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
 
 	// When they visit this page, get their account and see if it has customer & subscription
 	const accountRes = await ssrFetch(api(`accounts/${user.accountId}`), ctx);
+	console.log('acctRes:', accountRes);
 
 	if (!accountRes.ok)
 		return {
@@ -71,6 +73,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
 		};
 
 	const account: Account = await accountRes.json();
+	console.log(account);
 	if (!account.stripeId) {
 		const customerRes = await ssrFetch(api('payments/customer'), ctx, {
 			body: JSON.stringify(account),
@@ -79,6 +82,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
 			},
 			method: 'POST',
 		});
+		console.log('custRes:', customerRes);
 
 		if (!customerRes.ok)
 			return {
