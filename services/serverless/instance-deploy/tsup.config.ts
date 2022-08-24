@@ -1,6 +1,6 @@
 import { defineConfig } from 'tsup';
 
-export default defineConfig((ost) => ({
+export default defineConfig((og) => ({
 	entry: ['src/index.ts'],
 	outDir: 'dist',
 	clean: true,

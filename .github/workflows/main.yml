@@ -165,7 +165,6 @@ jobs:
 
   instance-deploy-changes:
     uses: ./.github/workflows/changes.yml
-    needs: [deploy]
     with:
       path: services/serverless/instance-deploy/**
 
