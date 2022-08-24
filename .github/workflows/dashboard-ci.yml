@@ -21,6 +21,5 @@ jobs:
         cache: 'pnpm'
         cache-dependency-path: ./services/dashboard/pnpm-lock.yaml
     - run: pnpm i --frozen-lockfile
-      continue-on-error: true
     - run: pnpm build
     #- run: pnpm test --if-present

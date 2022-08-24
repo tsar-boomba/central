@@ -13,7 +13,7 @@ const app = fastify({
 	logger: true,
 });
 
-export interface Params {
+interface Params {
 	instanceId: string;
 	accountId: string;
 	name: string;

@@ -31,3 +31,4 @@ runs:
         docker tag $REPO:latest $REGISTRY/$REPO:latest
         docker push $REGISTRY/$REPO:latest
         docker image prune -f --filter "until=48h"
+        docker image prune -f --filter "label!=cache=true"

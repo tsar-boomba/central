@@ -1,7 +1,9 @@
 import { defineConfig } from 'tsup';
 
-export default defineConfig((options) => ({
-	entry: ['src/lambda.ts'],
+export default defineConfig(() => ({
+	entry: ['src/index.ts'],
 	outDir: 'dist',
 	clean: true,
+	noExternal: [/.*/],
+	minify: true,
 }));
