@@ -32,9 +32,10 @@ async fn app(port: u16) {
         async move {
             Ok::<_, Infallible>(service_fn(move |req: Request<Body>| {
                 let client = temp_client.clone();
+                let req_uri = req.uri().clone();
+                let req_method = req.method().clone();
                 let res = async move {
-                    log(&req).await;
-                    match req.method() {
+                    let res = match req.method() {
                         &Method::OPTIONS => {
                             corsify(
                                 Response::builder()
@@ -45,7 +46,9 @@ async fn app(port: u16) {
                             .await
                         }
                         _ => corsify(crate::handle(client_ip, client, req).await.unwrap()).await,
-                    }
+                    }.unwrap();
+                    log(req_uri, req_method, &res);
+                    Ok::<Response<Body>, Infallible>(res)
                 };
                 res
             }))
@@ -143,9 +146,7 @@ pub async fn authorize_req(client: &Client, req: &Request<Body>) -> Option<auth:
     match client.request(auth_req).await {
         Ok(res) => {
             let body = body::to_bytes(res.into_body()).await.unwrap();
-            println!("{:?}", body);
             let opt = serde_json::from_slice(&body);
-            println!("{:?}", opt);
             opt.ok()
         }
         _ => None,
@@ -156,7 +157,13 @@ pub async fn corsify(mut res: Response<Body>) -> Result<Response<Body>, Infallib
     let new_headers = res.headers_mut();
     new_headers.append(
         "Access-Control-Allow-Origin",
-        "http://localhost:3000".parse::<HeaderValue>().unwrap(),
+        if *PROD {
+            "https://dashboard.milkyweb.app"
+        } else {
+            "http://localhost:3000"
+        }
+        .parse::<HeaderValue>()
+        .unwrap(),
     );
     new_headers.append(
         "Access-Control-Allow-Headers",
@@ -177,8 +184,8 @@ pub async fn corsify(mut res: Response<Body>) -> Result<Response<Body>, Infallib
 }
 
 // TODO make better logger
-pub async fn log(req: &Request<Body>) {
-    tracing::info!("[Logger] {} {}", req.method(), req.uri());
+pub fn log(uri: Uri, method: Method, res: &Response<Body>) {
+    tracing::info!("[Logger] {} {} {}", res.status(), method, uri);
 }
 
 pub fn error_body(message: impl Into<String>) -> String {
