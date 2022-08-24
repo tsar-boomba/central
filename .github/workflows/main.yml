@@ -170,7 +170,7 @@ jobs:
 
   instance-deploy-deploy:
     runs-on: ubuntu-latest
-    needs: [instance-deploy-changes, deploy]
+    needs: [deploy, instance-deploy-changes]
     if: ${{ needs.instance-deploy-changes.outputs.changed == 'true' }}
     defaults:
       run:
