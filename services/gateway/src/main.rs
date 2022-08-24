@@ -46,7 +46,8 @@ async fn app(port: u16) {
                             .await
                         }
                         _ => corsify(crate::handle(client_ip, client, req).await.unwrap()).await,
-                    }.unwrap();
+                    }
+                    .unwrap();
                     log(req_uri, req_method, &res);
                     Ok::<Response<Body>, Infallible>(res)
                 };
@@ -185,7 +186,12 @@ pub async fn corsify(mut res: Response<Body>) -> Result<Response<Body>, Infallib
 
 // TODO make better logger
 pub fn log(uri: Uri, method: Method, res: &Response<Body>) {
-    tracing::info!("[Logger] {} {} {}", res.status(), method, uri);
+    let ua = res
+        .headers()
+        .get("User-Agent")
+        .map(|v| v.to_str().unwrap_or_default())
+        .unwrap_or_default();
+    tracing::info!("[Logger] {} {} {} {}", res.status(), method, uri, ua);
 }
 
 pub fn error_body(message: impl Into<String>) -> String {

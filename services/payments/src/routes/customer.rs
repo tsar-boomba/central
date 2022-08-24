@@ -35,6 +35,7 @@ async fn create_customer(
         ));
     }
 
+    tracing::info!("Creating customer for account: {}", account.id);
     let customer = Customer::create(
         &stripe,
         CreateCustomer {
@@ -55,6 +56,7 @@ async fn create_customer(
     )
     .await?;
 
+    tracing::info!("Updating account: {}", account.id);
     let req = Request::builder()
         .uri(format!("{}/accounts/{}", CRUD_URI.as_str(), account.id))
         .method(Method::PUT)

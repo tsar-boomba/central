@@ -23,7 +23,7 @@ FROM debian:bullseye-slim AS runtime
 WORKDIR /payments
 COPY --from=builder /payments/target/release/payments /usr/local/bin
 
-RUN apt-get update && apt-get install openssl
+RUN apt-get update && apt-get install openssl ca-certificates
 
 EXPOSE 6000
 CMD ["/usr/local/bin/payments"]
