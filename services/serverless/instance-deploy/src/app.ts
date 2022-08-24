@@ -20,7 +20,7 @@ interface Params {
 	key: string;
 }
 
-app.post('/:any', async (req, res) => {
+app.post('/*', async (req, res) => {
 	const jwt = req.headers.jwt;
 	if (!jwt) {
 		res.statusCode = 400;
