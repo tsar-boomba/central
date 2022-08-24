@@ -170,8 +170,8 @@ jobs:
 
   instance-deploy-deploy:
     runs-on: ubuntu-latest
-    needs: [instance-deploy-changes]
-    if: needs.instance-deploy-changes.outputs.changed == 'true' && ${{ !failure() && !cancelled() }}
+    needs: [instance-deploy-changes, deploy]
+    if: needs.instance-deploy-changes.outputs.changed == 'true'
     defaults:
       run:
         working-directory: ./services/serverless/instance-deploy
@@ -195,7 +195,7 @@ jobs:
           aws-region: us-east-1
           aws-access-key-id: ${{ secrets.DEPLOY_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.DEPLOY_SECRET_ACCESS_KEY }}
-      - run: aws lambda update-function-code --function-name "central-instance-deploy" --zip-file package.zip --publish --region us-east-1
+      - run: aws lambda update-function-code --function-name "central-instance-deploy" --zip-file fileb://package.zip --publish --region us-east-1
           
   deploy:
     runs-on: ubuntu-latest

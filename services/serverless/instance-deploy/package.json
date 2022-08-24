@@ -7,7 +7,7 @@
 		"build": "tsup",
 		"dev": "tsx watch src/app.ts",
 		"lint-fix": "eslint --fix",
-		"test": "jest",
+		"test": "jes",
 		"package": "tsup && zip package.zip dist/index.js"
 	},
 	"keywords": [],
