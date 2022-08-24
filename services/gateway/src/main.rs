@@ -32,8 +32,12 @@ async fn app(port: u16) {
         async move {
             Ok::<_, Infallible>(service_fn(move |req: Request<Body>| {
                 let client = temp_client.clone();
+
+                // for logging
                 let req_uri = req.uri().clone();
                 let req_method = req.method().clone();
+                let ua_header = req.headers().get("User-Agent").cloned();
+
                 let res = async move {
                     let res = match req.method() {
                         &Method::OPTIONS => {
@@ -48,7 +52,7 @@ async fn app(port: u16) {
                         _ => corsify(crate::handle(client_ip, client, req).await.unwrap()).await,
                     }
                     .unwrap();
-                    log(req_uri, req_method, &res);
+                    log(req_uri, req_method, ua_header.as_ref(), &res);
                     Ok::<Response<Body>, Infallible>(res)
                 };
                 res
@@ -185,13 +189,11 @@ pub async fn corsify(mut res: Response<Body>) -> Result<Response<Body>, Infallib
 }
 
 // TODO make better logger
-pub fn log(uri: Uri, method: Method, res: &Response<Body>) {
-    let ua = res
-        .headers()
-        .get("User-Agent")
+pub fn log(uri: Uri, method: Method, ua_header: Option<&HeaderValue>, res: &Response<Body>) {
+    let ua = ua_header
         .map(|v| v.to_str().unwrap_or_default())
         .unwrap_or_default();
-    tracing::info!("[Logger] {} {} {} {}", res.status(), method, uri, ua);
+    tracing::info!(r#"[Logger] {} {} {} "{}""#, res.status(), method, uri, ua);
 }
 
 pub fn error_body(message: impl Into<String>) -> String {
