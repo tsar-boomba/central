@@ -20,12 +20,20 @@ interface Params {
 	key: string;
 }
 
-app.post('/', async (req, res) => {
+app.post('/:any', async (req, res) => {
 	const jwt = req.headers.jwt;
 	if (!jwt) {
 		res.statusCode = 400;
-		return res.send({ message: 'No key provided.' });
+		return res.send({ message: 'Not authorized' });
 	}
+
+	const jwtRes = await fetch(API_URI + '/verify-deploy', { headers: { jwt: String(jwt) } });
+
+	if (!jwtRes.ok) {
+		res.statusCode = 400;
+		return res.send({ message: 'Not authed' });
+	}
+
 	const params = req.body as Params;
 	if (!params.key || !params.accountId || !params.name || !params.instanceId) {
 		res.statusCode = 400;

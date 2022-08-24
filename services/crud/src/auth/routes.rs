@@ -121,8 +121,30 @@ async fn verify(req: HttpRequest) -> Result<HttpResponse, ApiError> {
     }
 }
 
+// used to make sure reqs to instance deploy are authorized
+#[get("/verify-deploy")]
+async fn verify_deploy(req: HttpRequest) -> Result<HttpResponse, ApiError> {
+    match req.headers().get("jwt") {
+        Some(jwt) => {
+            let jwt = jwt.to_str().unwrap_or_default();
+            match super::verify_instance_deploy(&jwt.into()) {
+                Ok(_) => {
+                    Ok(HttpResponse::Ok().finish())
+                },
+                Err(_) => {
+                    Err(ApiError::forbidden())
+                }
+            }
+        },
+        None => {
+            Err(ApiError::forbidden())
+        }
+    }
+}
+
 pub fn init_routes(config: &mut ServiceConfig) {
     config.service(login);
     config.service(verify);
     config.service(authenticate);
+    config.service(verify_deploy);
 }
