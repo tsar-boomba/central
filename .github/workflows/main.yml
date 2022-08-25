@@ -43,7 +43,7 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           push: true
           tags: ${{ steps.ecr.outputs.registry }}/central-crud:latest
-          cache-from: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-crud:buildcache
+          cache-from: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-crud:latest
 
   gateway-changes:
     uses: ./.github/workflows/changes.yml
@@ -78,7 +78,7 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           push: true
           tags: ${{ steps.ecr.outputs.registry }}/central-gateway:latest
-          cache-from: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-gateway:buildcache
+          cache-from: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-gateway:latest
 
   payments-changes:
     uses: ./.github/workflows/changes.yml
@@ -113,7 +113,7 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           push: true
           tags: ${{ steps.ecr.outputs.registry }}/central-payments:latest
-          cache-from: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-payments:buildcache
+          cache-from: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-payments:latest
 
   dashboard-changes:
     uses: ./.github/workflows/changes.yml
