@@ -44,7 +44,6 @@ jobs:
           push: true
           tags: ${{ steps.ecr.outputs.registry }}/central-crud:latest
           cache-from: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-crud:buildcache
-          cache-to: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-crud:buildcache,mode=min
 
   gateway-changes:
     uses: ./.github/workflows/changes.yml
@@ -80,7 +79,6 @@ jobs:
           push: true
           tags: ${{ steps.ecr.outputs.registry }}/central-gateway:latest
           cache-from: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-gateway:buildcache
-          cache-to: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-gateway:buildcache,mode=min
 
   payments-changes:
     uses: ./.github/workflows/changes.yml
@@ -116,7 +114,6 @@ jobs:
           push: true
           tags: ${{ steps.ecr.outputs.registry }}/central-payments:latest
           cache-from: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-payments:buildcache
-          cache-to: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-payments:buildcache,mode=min
 
   dashboard-changes:
     uses: ./.github/workflows/changes.yml
@@ -151,8 +148,7 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           push: true
           tags: ${{ steps.ecr.outputs.registry }}/central-dashboard:latest
-          cache-from: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-dashboard:buildcache
-          cache-to: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-dashboard:buildcache,mode=min
+          cache-from: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-dashboard:latest
 
   nginx-changes:
     uses: ./.github/workflows/changes.yml
