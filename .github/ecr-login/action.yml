@@ -1,15 +1,15 @@
-name: 'Push Image To ECR'
+name: 'Login To ECR'
 description: 'Push image to ECR'
 inputs:
-  repo:
-    required: true
-    type: string
   access-key:
     required: true
     type: string
   secret-key:
     required: true
     type: string
+outputs:
+  registry:
+    value: ${{ steps.ecr.outputs.registry }}
 runs:
   using: "composite"
   steps:
@@ -22,13 +22,3 @@ runs:
     - name: Login to Amazon ECR
       id: ecr
       uses: aws-actions/amazon-ecr-login@v1
-    - name: Tag & Push image to ECR
-      shell: bash
-      env:
-        REGISTRY: ${{ steps.ecr.outputs.registry }}
-        REPO: ${{ inputs.repo }}
-      run: |
-        docker tag $REPO:latest $REGISTRY/$REPO:latest
-        docker push $REGISTRY/$REPO:latest
-        docker image prune -f --filter "until=48h"
-        docker image prune -f --filter "label!=cache=true"

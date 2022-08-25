@@ -1,5 +1,6 @@
 import { MantineTheme } from '@mantine/core';
 
+// custom additions to theme
 export declare module '@mantine/core' {
 	export declare type MantineSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
 

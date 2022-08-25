@@ -26,24 +26,25 @@ jobs:
       - uses: actions/checkout@v3
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
+        id: buildx
         with:
           buildkitd-flags: --debug
-      - run: docker pull lukemathwalker/cargo-chef:0.1.39-rust-latest & docker pull debian:bullseye-slim
-      - uses: satackey/action-docker-layer-caching@v0.0.11
+      - name: Login to ECR
+        id: ecr
+        uses: ./.github/ecr-login
         with:
-          key: central-crud-docker4-{hash}
-          restore-keys: |
-            central-crud-docker4-
-        # Ignore the failure of a step and avoid terminating the job.
-        continue-on-error: true
-      - name: Build Image
-        run: docker buildx build . -f ./services/crud/dockerfile -t central-crud:latest
-      - name: Push to ECR
-        uses: ./.github/push-image
-        with:
-          repo: central-crud
           access-key: ${{ secrets.ECR_ACCESS_KEY }}
           secret-key: ${{ secrets.ECR_SECRET_KEY }}
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: ./
+          file: ./services/crud/dockerfile
+          builder: ${{ steps.buildx.outputs.name }}
+          push: true
+          tags: ${{ steps.ecr.outputs.registry }}/central-crud:latest
+          cache-from: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-crud:buildcache
+          cache-to: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-crud:buildcache,mode=max
 
   gateway-changes:
     uses: ./.github/workflows/changes.yml
@@ -59,23 +60,27 @@ jobs:
     if: needs.gateway-changes.outputs.changed == 'true'
     steps:
       - uses: actions/checkout@v3
-      - run: docker pull lukemathwalker/cargo-chef:0.1.39-rust-latest & docker pull debian:buster-slim
-      - uses: satackey/action-docker-layer-caching@v0.0.11
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        id: buildx
         with:
-          key: central-gateway-docker4-{hash}
-          restore-keys: |
-            central-gateway-docker4-
-        # Ignore the failure of a step and avoid terminating the job.
-        continue-on-error: true
-      - name: Build Image
-        # label so we can remove all images except this one for caching
-        run: docker build . -f ./services/gateway/dockerfile -t central-gateway:latest
-      - name: Push to ECR
-        uses: ./.github/push-image
+          buildkitd-flags: --debug
+      - name: Login to ECR
+        id: ecr
+        uses: ./.github/ecr-login
         with:
-          repo: central-gateway
           access-key: ${{ secrets.ECR_ACCESS_KEY }}
           secret-key: ${{ secrets.ECR_SECRET_KEY }}
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: ./
+          file: ./services/gateway/dockerfile
+          builder: ${{ steps.buildx.outputs.name }}
+          push: true
+          tags: ${{ steps.ecr.outputs.registry }}/central-gateway:latest
+          cache-from: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-gateway:buildcache
+          cache-to: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-gateway:buildcache,mode=max
 
   payments-changes:
     uses: ./.github/workflows/changes.yml
@@ -91,22 +96,27 @@ jobs:
     if: needs.payments-changes.outputs.changed == 'true'
     steps:
       - uses: actions/checkout@v3
-      - run: docker pull lukemathwalker/cargo-chef:0.1.39-rust-latest & docker pull debian:bullseye-slim
-      - uses: satackey/action-docker-layer-caching@v0.0.11
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        id: buildx
         with:
-          key: central-payments-docker4-{hash}
-          restore-keys: |
-            central-payments-docker4-
-        # Ignore the failure of a step and avoid terminating the job.
-        continue-on-error: true
-      - name: Build Image
-        run: docker build . -f ./services/payments/dockerfile -t central-payments:latest --label cache=true
-      - name: Push to ECR
-        uses: ./.github/push-image
+          buildkitd-flags: --debug
+      - name: Login to ECR
+        id: ecr
+        uses: ./.github/ecr-login
         with:
-          repo: central-payments
           access-key: ${{ secrets.ECR_ACCESS_KEY }}
           secret-key: ${{ secrets.ECR_SECRET_KEY }}
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: ./
+          file: ./services/payments/dockerfile
+          builder: ${{ steps.buildx.outputs.name }}
+          push: true
+          tags: ${{ steps.ecr.outputs.registry }}/central-payments:latest
+          cache-from: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-payments:buildcache
+          cache-to: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-payments:buildcache,mode=max
 
   dashboard-changes:
     uses: ./.github/workflows/changes.yml
@@ -122,22 +132,27 @@ jobs:
     if: needs.dashboard-changes.outputs.changed == 'true'
     steps:
       - uses: actions/checkout@v3
-      - run: docker pull node:16-alpine3.16
-      - uses: satackey/action-docker-layer-caching@v0.0.11
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        id: buildx
         with:
-          key: central-dashboard-docker4-{hash}
-          restore-keys: |
-            central-dashboard-docker4-
-        # Ignore the failure of a step and avoid terminating the job.
-        continue-on-error: true
-      - name: Build Image
-        run: docker build ./services/dashboard -t central-dashboard:latest --label cache=true
-      - name: Push to ECR
-        uses: ./.github/push-image
+          buildkitd-flags: --debug
+      - name: Login to ECR
+        id: ecr
+        uses: ./.github/ecr-login
         with:
-          repo: central-dashboard
           access-key: ${{ secrets.ECR_ACCESS_KEY }}
           secret-key: ${{ secrets.ECR_SECRET_KEY }}
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: ./
+          file: ./services/dashboard/dockerfile
+          builder: ${{ steps.buildx.outputs.name }}
+          push: true
+          tags: ${{ steps.ecr.outputs.registry }}/central-dashboard:latest
+          cache-from: type=registry,ref=${{ steps.ecr.outputs.registry }}/dashboard:buildcache
+          cache-to: type=registry,ref=${{ steps.ecr.outputs.registry }}/dashboard:buildcache,mode=max
 
   nginx-changes:
     uses: ./.github/workflows/changes.yml
@@ -150,22 +165,25 @@ jobs:
     if: needs.nginx-changes.outputs.changed == 'true'
     steps:
       - uses: actions/checkout@v3
-      - run: docker pull nginx:1.23.1-alpine
-      - uses: satackey/action-docker-layer-caching@v0.0.11
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        id: buildx
         with:
-          key: central-nginx-docker4-{hash}
-          restore-keys: |
-            central-nginx-docker4-
-        # Ignore the failure of a step and avoid terminating the job.
-        continue-on-error: true
-      - name: Build Image
-        run: docker build ./nginx -t central-nginx:latest --label cache=true
-      - name: Push to ECR
-        uses: ./.github/push-image
+          buildkitd-flags: --debug
+      - name: Login to ECR
+        id: ecr
+        uses: ./.github/ecr-login
         with:
-          repo: central-nginx
           access-key: ${{ secrets.ECR_ACCESS_KEY }}
           secret-key: ${{ secrets.ECR_SECRET_KEY }}
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: ./
+          file: ./nginx/dockerfile
+          builder: ${{ steps.buildx.outputs.name }}
+          push: true
+          tags: ${{ steps.ecr.outputs.registry }}/central-nginx:latest
 
   instance-deploy-changes:
     uses: ./.github/workflows/changes.yml
