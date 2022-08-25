@@ -5,10 +5,6 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[features]
-default = ["diesel"]
-diesel = []
-
 [dependencies]
 actix-web = "4"
 reqwest = { version = "0.11", features = ["blocking", "json"] }
@@ -33,7 +29,7 @@ aws-sdk-elasticbeanstalk = "0.17"
 aws-sdk-route53 = "0.17"
 models = { path = "../../libs/models", features = ["diesel"] }
 auth = { path = "../../libs/auth", features = ["actix", "diesel"] }
-payments-lib = { path = "../../libs/payments-lib" }
+payments-lib = { path = "../../libs/payments-lib", features = ["diesel"] }
 
 [dev-dependencies]
 actix-http = "3"
