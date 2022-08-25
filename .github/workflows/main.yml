@@ -37,7 +37,7 @@ jobs:
         # Ignore the failure of a step and avoid terminating the job.
         continue-on-error: true
       - name: Build Image
-        run: docker buildx . -f ./services/crud/dockerfile -t central-crud:latest
+        run: docker buildx build . -f ./services/crud/dockerfile -t central-crud:latest
       - name: Push to ECR
         uses: ./.github/push-image
         with:
