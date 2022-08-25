@@ -20,7 +20,7 @@ RUN cargo build --release -p crud
 # We do not need the Rust toolchain to run the binary! 
 FROM debian:bullseye-slim AS runtime
 WORKDIR /crud
-RUN apt-get update && apt-get install libpq5 ca-certificates -y
+RUN apt-get update && apt-get install libpq5 ca-certificates openssl -y
 COPY --from=builder /crud/target/release/crud /usr/local/bin
 
 EXPOSE 8080
