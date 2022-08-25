@@ -12,7 +12,7 @@ COPY ./Cargo.toml ./Cargo.toml
 RUN cargo build
 RUN rm src/*.rs
 
-# copy your source tree
+# copy your source tre
 COPY ./src ./src
 
 CMD ["cargo", "run", "-q"]

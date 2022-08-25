@@ -44,7 +44,7 @@ jobs:
           push: true
           tags: ${{ steps.ecr.outputs.registry }}/central-crud:latest
           cache-from: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-crud:buildcache
-          cache-to: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-crud:buildcache,mode=max
+          cache-to: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-crud:buildcache,mode=min
 
   gateway-changes:
     uses: ./.github/workflows/changes.yml
@@ -80,7 +80,7 @@ jobs:
           push: true
           tags: ${{ steps.ecr.outputs.registry }}/central-gateway:latest
           cache-from: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-gateway:buildcache
-          cache-to: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-gateway:buildcache,mode=max
+          cache-to: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-gateway:buildcache,mode=min
 
   payments-changes:
     uses: ./.github/workflows/changes.yml
@@ -116,7 +116,7 @@ jobs:
           push: true
           tags: ${{ steps.ecr.outputs.registry }}/central-payments:latest
           cache-from: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-payments:buildcache
-          cache-to: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-payments:buildcache,mode=max
+          cache-to: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-payments:buildcache,mode=min
 
   dashboard-changes:
     uses: ./.github/workflows/changes.yml
@@ -146,13 +146,13 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v2
         with:
-          context: ./
+          context: ./services/dashboard
           file: ./services/dashboard/dockerfile
           builder: ${{ steps.buildx.outputs.name }}
           push: true
           tags: ${{ steps.ecr.outputs.registry }}/central-dashboard:latest
-          cache-from: type=registry,ref=${{ steps.ecr.outputs.registry }}/dashboard:buildcache
-          cache-to: type=registry,ref=${{ steps.ecr.outputs.registry }}/dashboard:buildcache,mode=max
+          cache-from: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-dashboard:buildcache
+          cache-to: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-dashboard:buildcache,mode=min
 
   nginx-changes:
     uses: ./.github/workflows/changes.yml
@@ -179,7 +179,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v2
         with:
-          context: ./
+          context: ./nginx
           file: ./nginx/dockerfile
           builder: ${{ steps.buildx.outputs.name }}
           push: true

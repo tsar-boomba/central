@@ -4,7 +4,7 @@ module.exports = {
 		ecmaFeatures: {
 			jsx: true,
 		},
-		ecmaVersion: 12, //latest version of ES
+		ecmaVersion: 12, // latest version of ES
 		tsconfigRootDir: __dirname,
 	},
 	extends: [
