@@ -27,12 +27,12 @@ app.post('/*', async (req, res) => {
 		return res.send({ message: 'Not authorized' });
 	}
 
-	const jwtRes = await fetch(API_URI + '/verify-deploy', { headers: { jwt: String(jwt) } });
+	// const jwtRes = await fetch(API_URI + '/verify-deploy', { headers: { jwt: String(jwt) } });
 
-	if (!jwtRes.ok) {
-		res.statusCode = 400;
-		return res.send({ message: 'Not authed' });
-	}
+	// if (!jwtRes.ok) {
+	// 	res.statusCode = 400;
+	// 	return res.send({ message: 'Not authed' });
+	// }
 
 	const params = req.body as Params;
 	if (!params.key || !params.accountId || !params.name || !params.instanceId) {
