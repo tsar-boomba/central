@@ -10,7 +10,7 @@ FROM base AS build
 COPY ./package.json ./
 COPY ./pnpm-lock.yaml ./
 
-# Install dependencies & build  
+# Install dependencies & build
 RUN pnpm install --frozen-lockfile 
 RUN apk --no-cache add git
 COPY ./ ./

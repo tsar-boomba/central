@@ -18,7 +18,7 @@ COPY --from=cacher $CARGO_HOME $CARGO_HOME
 COPY . .
 RUN cargo build --release -p payments
 
-# We do not need the Rust toolchain to run the binary! ne
+# We do not need the Rust toolchain to run the binary! n
 FROM debian:bullseye-slim AS runtime
 WORKDIR /payments
 COPY --from=builder /payments/target/release/payments /usr/local/bin
