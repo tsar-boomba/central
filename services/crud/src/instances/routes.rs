@@ -266,7 +266,7 @@ async fn deploy(
         // cannot deploy while these are happening
         return Err(ApiError::new(
             400,
-            "Can only deactivate an instance that has status 'Inactive' or 'Failed'.".into(),
+            "Can only deploy an instance that has status 'Inactive' or 'Failed'.".into(),
         ));
     }
 

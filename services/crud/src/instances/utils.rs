@@ -18,6 +18,8 @@ pub async fn deploy(instance: &Instance) -> Result<(), ApiError> {
         .send()
         .await?;
 
+    info!("Instance deploy response: {:?}", res);
+
     if let Err(_) = res.error_for_status() {
         return Err(ApiError::new(
             500,

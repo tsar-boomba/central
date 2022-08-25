@@ -67,7 +67,7 @@ async fn app(port: u16) {
 
 #[tokio::main]
 async fn main() {
-    std::env::set_var("RUST_LOG", "debug");
+    std::env::set_var("RUST_LOG", "error,info");
     tracing_subscriber::fmt::init();
     app(4000).await
 }
