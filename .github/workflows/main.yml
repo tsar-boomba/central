@@ -24,6 +24,10 @@ jobs:
     if: needs.crud-changes.outputs.changed == 'true'
     steps:
       - uses: actions/checkout@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          buildkitd-flags: --debug
       - run: docker pull lukemathwalker/cargo-chef:0.1.39-rust-latest & docker pull debian:bullseye-slim
       - uses: satackey/action-docker-layer-caching@v0.0.11
         with:
@@ -33,7 +37,7 @@ jobs:
         # Ignore the failure of a step and avoid terminating the job.
         continue-on-error: true
       - name: Build Image
-        run: docker build . -f ./services/crud/dockerfile -t central-crud:latest
+        run: docker buildx . -f ./services/crud/dockerfile -t central-crud:latest
       - name: Push to ECR
         uses: ./.github/push-image
         with:
