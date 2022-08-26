@@ -4,10 +4,13 @@ import { createEnv } from './createEnv';
 import { configLoadBalancer } from './configLoadBalancer';
 import { configDomain } from './configDomain';
 import fetch from 'node-fetch';
+import { verify } from 'jsonwebtoken';
 
 config({ path: '.env.local' });
+config();
 
 const API_URI = process.env.API_URI || 'http://localhost:4000';
+const JWT_SECRET = process.env.JWT_SECRET || 'thuthy';
 
 const app = fastify({
 	logger: true,
@@ -27,12 +30,14 @@ app.post('/*', async (req, res) => {
 		return res.send({ message: 'Not authorized' });
 	}
 
-	// const jwtRes = await fetch(API_URI + '/verify-deploy', { headers: { jwt: String(jwt) } });
+	let failed = false;
+	await new Promise((res) => res(verify(String(jwt), JWT_SECRET))).catch(() => {
+		res.statusCode = 403;
+		res.send({ message: 'Bad token.' });
+		failed = true;
+	});
 
-	// if (!jwtRes.ok) {
-	// 	res.statusCode = 400;
-	// 	return res.send({ message: 'Not authed' });
-	// }
+	if (failed) return;
 
 	const params = req.body as Params;
 	if (!params.key || !params.accountId || !params.name || !params.instanceId) {
