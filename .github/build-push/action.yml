@@ -4,11 +4,15 @@ inputs:
   service:
     required: true
     type: string
-  path:
+  file-dir:
     required: true
     type: string
   registry:
     required: true
+    type: string
+  context:
+    required: false
+    default: ${{ inputs.path }}
     type: string
 runs:
   using: "composite"
@@ -28,8 +32,8 @@ runs:
     - name: Build and push
       uses: docker/build-push-action@v2
       with:
-        context: ${{ inputs.path }}
-        file: ${{ inputs.path }}/dockerfile
+        context: ${{ inputs.context }}
+        file: ${{ inputs.file-dir }}/dockerfile
         builder: ${{ steps.buildx.outputs.name }}
         push: true
         tags: ${{ inputs.registry }}/central-${{ inputs.service }}:latest

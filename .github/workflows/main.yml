@@ -40,7 +40,8 @@ jobs:
         with:
           registry: ${{ steps.ecr.outputs.registry }}
           service: crud
-          path: ./services/crud
+          file-dir: ./services/crud
+          context: ./
 
   gateway-changes:
     uses: ./.github/workflows/changes.yml
@@ -72,7 +73,8 @@ jobs:
         with:
           registry: ${{ steps.ecr.outputs.registry }}
           service: gateway
-          path: ./services/gateway
+          file-dir: ./services/gateway
+          context: ./
 
   payments-changes:
     uses: ./.github/workflows/changes.yml
@@ -104,7 +106,8 @@ jobs:
         with:
           registry: ${{ steps.ecr.outputs.registry }}
           service: payments
-          path: ./services/payments
+          file-dir: ./services/payments
+          context: ./
 
   dashboard-changes:
     uses: ./.github/workflows/changes.yml
@@ -136,7 +139,7 @@ jobs:
         with:
           registry: ${{ steps.ecr.outputs.registry }}
           service: dashboard
-          path: ./services/dashboard
+          file-dir: ./services/dashboard
 
   nginx-changes:
     uses: ./.github/workflows/changes.yml
@@ -160,7 +163,7 @@ jobs:
         with:
           registry: ${{ steps.ecr.outputs.registry }}
           service: nginx
-          path: ./nginx
+          file-dir: ./nginx
 
   instance-deploy-changes:
     uses: ./.github/workflows/changes.yml
