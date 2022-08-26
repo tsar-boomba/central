@@ -25,9 +25,9 @@ runs:
       uses: actions/cache@v2
       with:
         path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ inputs.service }}-${{ github.sha }}
+        key: ${{ runner.os }}-buildx-${{ inputs.service }}-v2-${{ github.sha }}
         restore-keys: |
-          ${{ runner.os }}-buildx-${{ inputs.service }}-
+          ${{ runner.os }}-buildx-${{ inputs.service }}-v2-
     - name: Build and push
       uses: docker/build-push-action@v2
       with:
