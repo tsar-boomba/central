@@ -4,7 +4,10 @@ use reqwest::Client;
 use crate::{api_error::ApiError, auth::{sign_instance_deploy, self}, INSTANCES_URI};
 
 pub async fn deploy(instance: &Instance) -> Result<(), ApiError> {
+    info!("{}", *INSTANCES_URI);
     let res = Client::builder()
+        .connect_timeout(std::time::Duration::from_secs(5))
+        .timeout(std::time::Duration::from_secs(15))
         .build()
         .unwrap()
         .post(INSTANCES_URI.as_str())

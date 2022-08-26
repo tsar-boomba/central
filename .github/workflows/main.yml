@@ -36,14 +36,11 @@ jobs:
           access-key: ${{ secrets.ECR_ACCESS_KEY }}
           secret-key: ${{ secrets.ECR_SECRET_KEY }}
       - name: Build and push
-        uses: docker/build-push-action@v2
+        uses: ./.github/build-push
         with:
-          context: ./
-          file: ./services/crud/dockerfile
-          builder: ${{ steps.buildx.outputs.name }}
-          push: true
-          tags: ${{ steps.ecr.outputs.registry }}/central-crud:latest
-          cache-from: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-crud:latest
+          registry: ${{ steps.ecr.outputs.registry }}
+          service: crud
+          path: ./services/crud
 
   gateway-changes:
     uses: ./.github/workflows/changes.yml
@@ -71,14 +68,11 @@ jobs:
           access-key: ${{ secrets.ECR_ACCESS_KEY }}
           secret-key: ${{ secrets.ECR_SECRET_KEY }}
       - name: Build and push
-        uses: docker/build-push-action@v2
+        uses: ./.github/build-push
         with:
-          context: ./
-          file: ./services/gateway/dockerfile
-          builder: ${{ steps.buildx.outputs.name }}
-          push: true
-          tags: ${{ steps.ecr.outputs.registry }}/central-gateway:latest
-          cache-from: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-gateway:latest
+          registry: ${{ steps.ecr.outputs.registry }}
+          service: gateway
+          path: ./services/gateway
 
   payments-changes:
     uses: ./.github/workflows/changes.yml
@@ -106,14 +100,11 @@ jobs:
           access-key: ${{ secrets.ECR_ACCESS_KEY }}
           secret-key: ${{ secrets.ECR_SECRET_KEY }}
       - name: Build and push
-        uses: docker/build-push-action@v2
+        uses: ./.github/build-push
         with:
-          context: ./
-          file: ./services/payments/dockerfile
-          builder: ${{ steps.buildx.outputs.name }}
-          push: true
-          tags: ${{ steps.ecr.outputs.registry }}/central-payments:latest
-          cache-from: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-payments:latest
+          registry: ${{ steps.ecr.outputs.registry }}
+          service: payments
+          path: ./services/payments
 
   dashboard-changes:
     uses: ./.github/workflows/changes.yml
@@ -141,14 +132,11 @@ jobs:
           access-key: ${{ secrets.ECR_ACCESS_KEY }}
           secret-key: ${{ secrets.ECR_SECRET_KEY }}
       - name: Build and push
-        uses: docker/build-push-action@v2
+        uses: ./.github/build-push
         with:
-          context: ./services/dashboard
-          file: ./services/dashboard/dockerfile
-          builder: ${{ steps.buildx.outputs.name }}
-          push: true
-          tags: ${{ steps.ecr.outputs.registry }}/central-dashboard:latest
-          cache-from: type=registry,ref=${{ steps.ecr.outputs.registry }}/central-dashboard:latest
+          registry: ${{ steps.ecr.outputs.registry }}
+          service: dashboard
+          path: ./services/dashboard
 
   nginx-changes:
     uses: ./.github/workflows/changes.yml
@@ -161,11 +149,6 @@ jobs:
     if: needs.nginx-changes.outputs.changed == 'true'
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-        id: buildx
-        with:
-          buildkitd-flags: --debug
       - name: Login to ECR
         id: ecr
         uses: ./.github/ecr-login
@@ -173,13 +156,11 @@ jobs:
           access-key: ${{ secrets.ECR_ACCESS_KEY }}
           secret-key: ${{ secrets.ECR_SECRET_KEY }}
       - name: Build and push
-        uses: docker/build-push-action@v2
+        uses: ./.github/build-push
         with:
-          context: ./nginx
-          file: ./nginx/dockerfile
-          builder: ${{ steps.buildx.outputs.name }}
-          push: true
-          tags: ${{ steps.ecr.outputs.registry }}/central-nginx:latest
+          registry: ${{ steps.ecr.outputs.registry }}
+          service: nginx
+          path: ./nginx
 
   instance-deploy-changes:
     uses: ./.github/workflows/changes.yml
