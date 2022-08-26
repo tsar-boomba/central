@@ -12,7 +12,6 @@ inputs:
     type: string
   context:
     required: false
-    default: ${{ inputs.path }}
     type: string
 runs:
   using: "composite"
