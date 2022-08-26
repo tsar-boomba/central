@@ -37,28 +37,19 @@ app.post('/*', async (req, res) => {
 		return res.send({ message: 'Bad token.' });
 	}
 
-	let params: Params;
-
-	if (req.awsLambda) {
-		// is in lambda mode
-		console.log(req.awsLambda.event);
-		console.log(req.awsLambda.context);
-		console.log(req.body);
-		params = req.awsLambda.event;
-	} else {
-		params = req.body as Params;
-	}
+	const params = req.body as Params;
 
 	if (!params.key || !params.accountId || !params.name || !params.instanceId) {
 		res.statusCode = 400;
 		console.log(req.body);
 		return res.send({ message: 'Failed to provide a required parameter.' });
 	}
+	console.log('Creating with:', params);
 	const instanceData = await createEnv(params);
 
 	console.log(instanceData);
-
-	res.send();
+	console.log('Started deployment, sending response.');
+	res.send({ message: 'Deployment starded.' });
 
 	await configLoadBalancer(instanceData);
 	const domainInfo = await configDomain(instanceData);
