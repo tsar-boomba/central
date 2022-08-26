@@ -41,7 +41,9 @@ app.post('/*', async (req, res) => {
 
 	if (req.awsLambda) {
 		// is in lambda mode
-		console.log(req.awsLambda);
+		console.log(req.awsLambda.event);
+		console.log(req.awsLambda.context);
+		console.log(req.body);
 		params = req.awsLambda.event;
 	} else {
 		params = req.body as Params;
