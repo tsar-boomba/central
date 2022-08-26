@@ -30,16 +30,23 @@ app.post('/*', async (req, res) => {
 		return res.send({ message: 'Not authorized' });
 	}
 
-	let failed = false;
-	await new Promise((res) => res(verify(String(jwt), JWT_SECRET))).catch(() => {
+	try {
+		verify(String(jwt), JWT_SECRET);
+	} catch (e) {
 		res.statusCode = 403;
-		res.send({ message: 'Bad token.' });
-		failed = true;
-	});
+		return res.send({ message: 'Bad token.' });
+	}
 
-	if (failed) return;
+	let params: Params;
 
-	const params = req.body as Params;
+	if (req.awsLambda) {
+		// is in lambda mode
+		console.log(req.awsLambda);
+		params = req.awsLambda.event;
+	} else {
+		params = req.body as Params;
+	}
+
 	if (!params.key || !params.accountId || !params.name || !params.instanceId) {
 		res.statusCode = 400;
 		console.log(req.body);
