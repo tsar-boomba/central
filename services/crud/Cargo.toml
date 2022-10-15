@@ -6,11 +6,11 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-actix-web = "4"
+actix-web = { worspace = true }
 reqwest = { version = "0.11", features = ["blocking", "json", "rustls"] }
 chrono = { version = "0.4", features = ["serde"] }
 dotenv = "0.15.0"
-diesel = { version = "1.4", features = ["postgres", "r2d2", "chrono"] }
+diesel = { workspace = true, features = ["postgres", "r2d2", "chrono"] }
 diesel_migrations = "1.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

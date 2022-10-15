@@ -207,7 +207,8 @@ jobs:
       id-token: write
       contents: read
     needs: [push-gateway, push-crud, push-payments, push-dashboard, push-nginx]
-    if: ${{ !failure() && !cancelled() }}
+    # No fails and cancels and one of the services must have been pushed in order to start a deploy
+    if: ${{ !failure() && !cancelled() && (needs.push-gateway.result == 'success' || needs.push-crus.result == 'success' || needs.push-payments.result == 'success' || needs.push-dashboard.result == 'success' || needs.push-nginx.result == 'success') }}
     steps:
       - uses: actions/checkout@v3
       - name: Configure AWS Credentials

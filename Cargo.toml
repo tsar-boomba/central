@@ -7,3 +7,8 @@ members = [
 	"libs/models",
 	"libs/auth"
 ]
+
+[workspace.dependencies]
+diesel = "1.4"
+axum = "0.5"
+actix-web = "4"
