@@ -1,7 +1,5 @@
-FROM rust:bullseye AS base
+FROM rust:bullseye AS chef
 WORKDIR /gateway
-
-FROM base AS chef
 RUN cargo install cargo-chef
 
 FROM chef AS planner
