@@ -5,7 +5,8 @@ members = [
 	"services/gateway",
 	"services/payments",
 	"libs/models",
-	"libs/auth"
+	"libs/auth",
+	"libs/payments-lib"
 ]
 
 [workspace.dependencies]
