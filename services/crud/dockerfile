@@ -1,7 +1,7 @@
 FROM rust:bullseye AS chef
 WORKDIR /gateway
 RUN cargo install cargo-chef
-
+# force build
 FROM chef AS planner
 COPY . .
 RUN cargo chef prepare --bin services/crud --recipe-path recipe.json
