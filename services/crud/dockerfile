@@ -1,5 +1,8 @@
-FROM lukemathwalker/cargo-chef:0.1.39-rust-latest AS chef
-WORKDIR /crud
+FROM rust:bullseye AS base
+WORKDIR /gateway
+
+FROM base AS chef
+RUN cargo install cargo-chef
 
 FROM chef AS planner
 COPY . .
