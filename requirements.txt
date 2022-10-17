@@ -1,1 +1,2 @@
+# For building serverless binaries in ci/cd
 cargo-lambda==0.10.0rc1
