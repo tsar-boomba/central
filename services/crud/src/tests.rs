@@ -28,10 +28,12 @@ pub async fn init(
     let aws_creds = aws_config::load_from_env().await;
     let eb_client = aws_sdk_elasticbeanstalk::Client::new(&aws_creds);
     let r53_client = aws_sdk_route53::Client::new(&aws_creds);
+    let sns_client = aws_sdk_sns::Client::new(&aws_creds);
 
     let app_data = crate::AppData {
         eb_client,
         r53_client,
+        sns_client,
     };
 
     // serialize password when doing tests

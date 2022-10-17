@@ -1,29 +1,24 @@
 use models::{types::InstanceStatus, Instance, Model, UpdateInstance};
-use reqwest::Client;
 
-use crate::{api_error::ApiError, auth::{sign_instance_deploy, self}, INSTANCES_URI};
+use crate::{api_error::ApiError, auth};
 
-pub async fn deploy(instance: &Instance) -> Result<(), ApiError> {
-    info!("{}", *INSTANCES_URI);
-    let res = Client::builder()
-        .connect_timeout(std::time::Duration::from_secs(5))
-        .timeout(std::time::Duration::from_secs(15))
-        .build()
-        .unwrap()
-        .post(INSTANCES_URI.as_str())
-        .header("jwt", sign_instance_deploy().unwrap())
-        .json(&serde_json::json!({
-            "instanceId": instance.id,
-            "accountId": instance.account_id,
-            "name": instance.name,
-            "key": auth::sign_instance_key().unwrap(),
-        }))
+pub async fn deploy(instance: &Instance, sns_client: &aws_sdk_sns::Client) -> Result<(), ApiError> {
+    let result = sns_client
+        .publish()
+        .topic_arn("arn:aws:sns:us-east-1:262246349843:InstanceDeploy")
+        .message(
+            serde_json::to_string(&serde_json::json!({
+                "instanceId": instance.id,
+                "accountId": instance.account_id,
+                "name": instance.name,
+                "key": auth::sign_instance_key().unwrap(),
+            }))
+            .unwrap(),
+        )
         .send()
-        .await?;
+        .await;
 
-    info!("Instance deploy response: {:?}", res);
-
-    if let Err(_) = res.error_for_status() {
+    if let Err(_) = result {
         return Err(ApiError::new(
             500,
             "An error ocurred during initial instance deployment. Please try again later.".into(),
@@ -55,8 +50,8 @@ pub fn ensure_deployment(id: String) {
                 ) {
                     Err(_) => {
                         error!("Error updating failed deployment.")
-                    },
-					_ => {}
+                    }
+                    _ => {}
                 };
             }
         } else {

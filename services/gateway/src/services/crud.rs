@@ -18,6 +18,7 @@ lazy_static! {
         "^/authenticate/?$",
         "^/register/?$",
         r"^/instances/\S*/callback/?$",
+        r"^/instances/\S*/fail-callback/?$",
     ]).unwrap();
 }
 

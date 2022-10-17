@@ -1,1 +1,0 @@
-export { configLoadBalancer } from './configLoadBalancer';

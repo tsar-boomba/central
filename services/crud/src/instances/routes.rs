@@ -47,6 +47,7 @@ async fn find(id: web::Path<String>, req_user: Option<ReqUser>) -> Result<HttpRe
 async fn create(
     instance: web::Json<NewInstance>,
     req_user: Option<ReqUser>,
+    app_data: web::Data<AppData>,
 ) -> Result<HttpResponse, ApiError> {
     if !belongs_to_account(&req_user, &instance.account_id) || !require_role(&req_user, Role::Admin)
     {
@@ -72,7 +73,7 @@ async fn create(
     let instance = web::block(move || Instance::insert(created)).await??;
 
     // just start deployment with aws, lambda will call back later with url and env_id
-    let deploy_result = super::utils::deploy(&instance).await;
+    let deploy_result = super::utils::deploy(&instance, &app_data.sns_client).await;
 
     if let Err(_) = deploy_result {
         // initial deployment failed
@@ -254,6 +255,7 @@ async fn deactivate(
 async fn deploy(
     id: web::Path<String>,
     req_user: Option<ReqUser>,
+    app_data: web::Data<AppData>,
 ) -> Result<HttpResponse, ApiError> {
     let find_id = id.clone();
     let instance = web::block(move || Instance::find_by_id(find_id)).await??;
@@ -283,7 +285,7 @@ async fn deploy(
     .await??;
 
     // just start deployment with aws, lambda will call back later with url and env_id
-    let deploy_result = super::utils::deploy(&instance).await;
+    let deploy_result = super::utils::deploy(&instance, &app_data.sns_client).await;
 
     if let Err(_) = deploy_result {
         info!("failed to send req to deploy instance");
@@ -365,6 +367,38 @@ async fn callback(
         error!("Failed to update instance usage with Stripe. Your instance will still be usable.");
         return Ok(HttpResponse::InternalServerError().finish());
     };
+
+    Ok(HttpResponse::Ok().finish())
+}
+
+#[post("/instances/{id}/fail-callback")]
+async fn fail_callback(
+    target: web::Path<String>,
+    req: HttpRequest,
+) -> Result<HttpResponse, ApiError> {
+    // make sure has token sent to instance deploy invocation
+    if verify_instance_deploy(
+        &req.headers()
+            .get("jwt")
+            .map(|v| v.to_str().unwrap())
+            .unwrap_or_default()
+            .to_string(),
+    )
+    .is_err()
+    {
+        return Err(ApiError::forbidden());
+    }
+
+    web::block(move || {
+        Instance::update(
+            target.into_inner(),
+            UpdateInstance {
+                status: Some(InstanceStatus::Failed),
+                ..Default::default()
+            },
+        )
+    })
+    .await??;
 
     Ok(HttpResponse::Ok().finish())
 }
@@ -486,5 +520,6 @@ pub fn init_routes(config: &mut web::ServiceConfig) {
     config.service(deactivate);
     config.service(deploy);
     config.service(callback);
+    config.service(fail_callback);
     config.service(health);
 }

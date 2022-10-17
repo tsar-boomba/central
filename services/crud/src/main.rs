@@ -35,6 +35,7 @@ use crate::json::ErrorBody;
 struct AppData {
     pub eb_client: aws_sdk_elasticbeanstalk::Client,
     pub r53_client: aws_sdk_route53::Client,
+    pub sns_client: aws_sdk_sns::Client,
 }
 
 #[actix_web::main]
@@ -48,10 +49,12 @@ async fn main() -> std::io::Result<()> {
     let aws_creds = aws_config::load_from_env().await;
     let eb_client = aws_sdk_elasticbeanstalk::Client::new(&aws_creds);
     let r53_client = aws_sdk_route53::Client::new(&aws_creds);
+    let sns_client = aws_sdk_sns::Client::new(&aws_creds);
 
     let app_data = AppData {
         eb_client,
         r53_client,
+        sns_client,
     };
 
     info!("Starting HTTP server at http://localhost:8080");
@@ -75,8 +78,6 @@ async fn main() -> std::io::Result<()> {
 lazy_static! {
     pub static ref PAYMENTS_URI: String =
         std::env::var("PAYMENTS_URI").unwrap_or("http://127.0.0.1:6000".into());
-    pub static ref INSTANCES_URI: String =
-        std::env::var("INSTANCES_URI").unwrap_or("http://127.0.0.1:3001".into());
     static ref PROD: bool = std::env::var("RUST_ENV").unwrap_or("dev".into()) == "prod";
 }
 

@@ -176,30 +176,36 @@ jobs:
     runs-on: ubuntu-latest
     needs: [instance-deploy-changes]
     if: needs.instance-deploy-changes.outputs.changed == 'true'
-    defaults:
-      run:
-        working-directory: ./services/serverless/instance-deploy
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
+      - uses: actions/setup-python@v4
         with:
-          version: 7.9.0
-      - name: Use Node.js
-        uses: actions/setup-node@v3
+          python-version: '3.10'
+          cache: 'pip'
+      - uses: actions-rs/toolchain@v1.0.6
         with:
-          node-version: 16.x
-          cache: 'pnpm'
-          cache-dependency-path: ./services/serverless/instance-deploy/pnpm-lock.yaml
-      - run: pnpm i --frozen-lockfile
-      # creates package.zip
-      - run: pnpm package
+          profile: minimal
+          toolchain: stable
+      - name: Install cargo-lambda
+        run: pip install cargo-lambda
+      - name: Build Lambda Binaries
+        run: cargo lambda build --release --arm64 -p instance-deploy
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: us-east-1
           aws-access-key-id: ${{ secrets.DEPLOY_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.DEPLOY_SECRET_ACCESS_KEY }}
-      - run: aws lambda update-function-code --function-name "central-instance-deploy" --zip-file fileb://package.zip --publish --region us-east-1
+      - name: Create ZIP Archives
+        run: |
+          zip deploy.zip target/lambda/deploy/bootstrap
+          zip config.zip target/lambda/config/bootstrap
+          zip fail.zip target/lambda/fail/bootstrap
+      - name: Publish New Versions
+        run: |
+          aws lambda update-function-code --function-name "central-instance-deploy" --zip-file fileb://deploy.zip --publish --region us-east-1
+          aws lambda update-function-code --function-name "central-instance-config" --zip-file fileb://config.zip --publish --region us-east-1
+          aws lambda update-function-code --function-name "central-instance-fail" --zip-file fileb://fail.zip --publish --region us-east-1
           
   deploy:
     runs-on: ubuntu-latest
