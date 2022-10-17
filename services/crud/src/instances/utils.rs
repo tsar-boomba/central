@@ -3,6 +3,11 @@ use models::{types::InstanceStatus, Instance, Model, UpdateInstance};
 use crate::{api_error::ApiError, auth};
 
 pub async fn deploy(instance: &Instance, sns_client: &aws_sdk_sns::Client) -> Result<(), ApiError> {
+    // dont test this, its sus
+    if cfg!(test) {
+        return Ok(());
+    }
+
     let result = sns_client
         .publish()
         .topic_arn("arn:aws:sns:us-east-1:262246349843:InstanceDeploy")
@@ -12,6 +17,7 @@ pub async fn deploy(instance: &Instance, sns_client: &aws_sdk_sns::Client) -> Re
                 "accountId": instance.account_id,
                 "name": instance.name,
                 "key": auth::sign_instance_key().unwrap(),
+                "jwt": auth::sign_instance_deploy().unwrap(),
             }))
             .unwrap(),
         )
