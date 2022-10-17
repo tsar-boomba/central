@@ -186,6 +186,10 @@ jobs:
         with:
           profile: minimal
           toolchain: stable
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: 'central-instance-deploy-cache'
       - name: Install cargo-lambda
         run: pip install cargo-lambda
       - name: Build Lambda Binaries
