@@ -12,7 +12,7 @@ use lambda_runtime::{service_fn, LambdaEvent};
 use serde::Serialize;
 
 use error::Error;
-use types::{ConfigMessage, SqsMessageEvent};
+use types::{FailMessage, SqsMessageEvent};
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -59,7 +59,7 @@ async fn func(
         .records
         .into_iter()
         .map(|record| {
-            let message: ConfigMessage = serde_json::from_str(&record.body).unwrap();
+            let message: FailMessage = serde_json::from_str(&record.body).unwrap();
             (
                 tokio::spawn(handle_message(
                     message,
@@ -105,47 +105,51 @@ async fn func(
 }
 
 async fn handle_message(
-    message: ConfigMessage,
+    message: FailMessage,
     eb_client: aws_sdk_elasticbeanstalk::Client,
     r53_client: aws_sdk_route53::Client,
     http_client: reqwest::Client,
 ) -> Result<(), Error> {
-    let term_result = eb_client
-        .terminate_environment()
-        .environment_id(&message.env_id)
-        .force_terminate(true)
-        .send()
-        .await;
+    if let Some(env_id) = message.env_id {
+        if let Some(env_name) = message.env_name {
+            let term_result = eb_client
+                .terminate_environment()
+                .environment_id(&env_id)
+                .force_terminate(true)
+                .send()
+                .await;
 
-    if let Ok(env) = term_result {
-        r53_client
-            .change_resource_record_sets()
-            .hosted_zone_id(HOSTED_ZONE_ID)
-            .change_batch(
-                ChangeBatch::builder()
-                    .changes(
-                        Change::builder()
-                            .action(ChangeAction::Delete)
-                            .resource_record_set(
-                                ResourceRecordSet::builder()
-                                    .name(&format!("{}.{}", message.env_name, DOMAIN_NAME))
-                                    .r#type(RrType::A)
-                                    .alias_target(
-                                        AliasTarget::builder()
-                                            .dns_name(env.cname().unwrap())
-                                            .evaluate_target_health(false)
-                                            .hosted_zone_id(ELB_ZONE_ID)
+            if let Ok(env) = term_result {
+                r53_client
+                    .change_resource_record_sets()
+                    .hosted_zone_id(HOSTED_ZONE_ID)
+                    .change_batch(
+                        ChangeBatch::builder()
+                            .changes(
+                                Change::builder()
+                                    .action(ChangeAction::Delete)
+                                    .resource_record_set(
+                                        ResourceRecordSet::builder()
+                                            .name(&format!("{}.{}", env_name, DOMAIN_NAME))
+                                            .r#type(RrType::A)
+                                            .alias_target(
+                                                AliasTarget::builder()
+                                                    .dns_name(env.cname().unwrap())
+                                                    .evaluate_target_health(false)
+                                                    .hosted_zone_id(ELB_ZONE_ID)
+                                                    .build(),
+                                            )
                                             .build(),
                                     )
                                     .build(),
                             )
                             .build(),
                     )
-                    .build(),
-            )
-            .send()
-            .await
-            .ok();
+                    .send()
+                    .await
+                    .ok();
+            }
+        }
     }
 
     http_client
@@ -153,7 +157,7 @@ async fn handle_message(
             "{}instances/{}/fail-callback",
             *CRUD_URI, message.instance_id
         ))
-        .header("jwt", message.key)
+        .header("jwt", message.jwt)
         .send()
         .await?
         .error_for_status()

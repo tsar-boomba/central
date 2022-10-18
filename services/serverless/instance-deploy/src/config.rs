@@ -272,7 +272,7 @@ async fn handle_message(
                 "{}instances/{}/callback",
                 *CRUD_URI, message.instance_id
             ))
-            .header("jwt", &message.key)
+            .header("jwt", &message.jwt)
             .json(&serde_json::json!({
                 "envId": &message.env_id,
                 "accountId": &message.account_id,

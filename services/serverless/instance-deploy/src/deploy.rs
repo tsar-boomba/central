@@ -157,6 +157,7 @@ async fn func(
                     instance_id: message.instance_id.clone(),
                     key: message.key,
                     name: message.name,
+                    jwt: message.jwt,
                     application_name: application_name.to_string(),
                     // add necessary data from environment
                     env_id,
