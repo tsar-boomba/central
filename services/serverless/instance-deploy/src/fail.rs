@@ -41,13 +41,7 @@ async fn main() -> Result<(), lambda_runtime::Error> {
             .build()
             .unwrap();
 
-        func(
-            event,
-            eb_client,
-            r53_client,
-            http_client,
-        )
-        .await
+        func(event, eb_client, r53_client, http_client).await
     }))
     .await?;
     Ok(())

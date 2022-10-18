@@ -30,6 +30,8 @@ async fn main() -> Result<(), lambda_runtime::Error> {
         let eb_client = aws_sdk_elasticbeanstalk::Client::new(&aws_config);
         let sns_client = aws_sdk_sqs::Client::new(&aws_config);
 
+        println!("aws clients done");
+
         let http_client = reqwest::Client::builder()
             .use_rustls_tls()
             .connect_timeout(Duration::from_secs(10))
@@ -37,13 +39,9 @@ async fn main() -> Result<(), lambda_runtime::Error> {
             .build()
             .unwrap();
 
-        func(
-            event,
-            eb_client,
-            sns_client,
-            http_client,
-        )
-        .await
+        println!("https client done");
+
+        func(event, eb_client, sns_client, http_client).await
     }))
     .await?;
     Ok(())
@@ -55,6 +53,7 @@ async fn func(
     sqs_client: aws_sdk_sqs::Client,
     http_client: reqwest::Client,
 ) -> Result<Response, Error> {
+    println!("handler called");
     let (event, _context) = event.into_parts();
     let message: DeployMessage = serde_json::from_str(&event.records[0].sns.message).unwrap();
     // eventually get this from the payload
@@ -81,6 +80,8 @@ async fn func(
             .version_label()
             .map(|x| x.to_owned())
             .ok_or(Error::new("No version label?!?!?!"))?;
+
+        println!("ver label gotten");
 
         let solutions_stacks = eb_client
             .list_available_solution_stacks()
