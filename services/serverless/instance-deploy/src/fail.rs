@@ -35,6 +35,7 @@ async fn main() -> Result<(), lambda_runtime::Error> {
         let r53_client = aws_sdk_route53::Client::new(&aws_config);
 
         let http_client = reqwest::Client::builder()
+            .use_rustls_tls()
             .connect_timeout(Duration::from_secs(2))
             .timeout(Duration::from_secs(2))
             .build()
