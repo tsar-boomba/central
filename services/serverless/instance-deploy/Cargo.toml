@@ -10,11 +10,12 @@ serde_json = "1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 tracing = { version = "0.1", features = ["log"] }
 # NOTE: the following crate is not part of the SDK, but it is maintained by AWS.
-lambda_runtime = "0.7"
+lambda_runtime = "0.6.1"
 aws-config = "0.49.0"
 aws-sdk-elasticbeanstalk = "0.19"
 aws-sdk-route53 = "0.19"
 aws-sdk-elasticloadbalancingv2 = "0.19"
+aws_lambda_events = { version = "0.7", default-features = false, features = ["sqs", "sns"] }
 aws-sdk-sqs = "0.19"
 nanoid = "0.4"
 lazy_static = "1"

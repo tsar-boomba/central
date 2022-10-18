@@ -4,6 +4,7 @@ mod types;
 
 use std::time::Duration;
 
+use aws_lambda_events::sqs::SqsEvent;
 use aws_sdk_elasticloadbalancingv2::model::{
     Action, ActionTypeEnum, Certificate, ProtocolEnum, RedirectActionConfig,
     RedirectActionStatusCodeEnum,
@@ -16,7 +17,7 @@ use serde::Serialize;
 
 use common::{CRUD_URI, DOMAIN_NAME, ELB_ZONE_ID, HOSTED_ZONE_ID};
 use error::Error;
-use types::{ConfigMessage, SqsMessageEvent};
+use types::ConfigMessage;
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -43,7 +44,7 @@ async fn main() -> Result<(), lambda_runtime::Error> {
     Ok(())
 }
 
-async fn func(event: LambdaEvent<SqsMessageEvent>) -> Result<Response, Error> {
+async fn func(event: LambdaEvent<SqsEvent>) -> Result<Response, Error> {
     tracing::info!("ev received");
     let aws_config = aws_config::load_from_env().await;
     let eb_client = aws_sdk_elasticbeanstalk::Client::new(&aws_config);
@@ -63,8 +64,9 @@ async fn func(event: LambdaEvent<SqsMessageEvent>) -> Result<Response, Error> {
     let tasks = event
         .records
         .into_iter()
+        .filter(|record| record.body.is_some() && record.message_id.is_some())
         .map(|record| {
-            let message: ConfigMessage = serde_json::from_str(&record.body).unwrap();
+            let message: ConfigMessage = serde_json::from_str(&record.body.unwrap()).unwrap();
             (
                 tokio::spawn(handle_message(
                     message,
@@ -74,7 +76,7 @@ async fn func(event: LambdaEvent<SqsMessageEvent>) -> Result<Response, Error> {
                     sqs_client.clone(),
                     http_client.clone(),
                 )),
-                record.message_id,
+                record.message_id.unwrap(),
             )
         })
         .collect::<Vec<_>>();

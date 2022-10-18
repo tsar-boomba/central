@@ -4,6 +4,7 @@ mod types;
 
 use std::time::Duration;
 
+use aws_lambda_events::sns::SnsEvent;
 use aws_sdk_elasticbeanstalk::{
     model::{ConfigurationOptionSetting, EnvironmentTier},
     output::CreateEnvironmentOutput,
@@ -14,7 +15,7 @@ use serde::Serialize;
 
 use common::CRUD_URI;
 use error::Error;
-use types::{ConfigMessage, DeployMessage, SnsMessageEvent};
+use types::{ConfigMessage, DeployMessage};
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -35,7 +36,7 @@ async fn main() -> Result<(), lambda_runtime::Error> {
     Ok(())
 }
 
-async fn func(event: LambdaEvent<SnsMessageEvent>) -> Result<Response, Error> {
+async fn func(event: LambdaEvent<SnsEvent>) -> Result<Response, Error> {
     tracing::info!("ev received");
     let aws_config = aws_config::load_from_env().await;
     let eb_client = aws_sdk_elasticbeanstalk::Client::new(&aws_config);
