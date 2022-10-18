@@ -14,7 +14,7 @@ use aws_sdk_route53::model::{
 use lambda_runtime::{service_fn, LambdaEvent};
 use serde::Serialize;
 
-use common::{CRUD_URI, DOMAIN_NAME, HOSTED_ZONE_ID, ELB_ZONE_ID};
+use common::{CRUD_URI, DOMAIN_NAME, ELB_ZONE_ID, HOSTED_ZONE_ID};
 use error::Error;
 use types::{ConfigMessage, SqsMessageEvent};
 
@@ -32,21 +32,21 @@ struct Response {
 
 #[tokio::main]
 async fn main() -> Result<(), lambda_runtime::Error> {
-    dotenvy::dotenv().ok();
-    let aws_config = aws_config::load_from_env().await;
-    let eb_client = aws_sdk_elasticbeanstalk::Client::new(&aws_config);
-    let elb_client = aws_sdk_elasticloadbalancingv2::Client::new(&aws_config);
-    let r53_client = aws_sdk_route53::Client::new(&aws_config);
-    let sqs_client = aws_sdk_sqs::Client::new(&aws_config);
+    lambda_runtime::run(service_fn(|event| async {
+        dotenvy::dotenv().ok();
+        let aws_config = aws_config::load_from_env().await;
+        let eb_client = aws_sdk_elasticbeanstalk::Client::new(&aws_config);
+        let elb_client = aws_sdk_elasticloadbalancingv2::Client::new(&aws_config);
+        let r53_client = aws_sdk_route53::Client::new(&aws_config);
+        let sqs_client = aws_sdk_sqs::Client::new(&aws_config);
 
-    let http_client = reqwest::Client::builder()
-        .use_rustls_tls()
-        .connect_timeout(Duration::from_secs(10))
-        .timeout(Duration::from_secs(10))
-        .build()
-        .unwrap();
+        let http_client = reqwest::Client::builder()
+            .use_rustls_tls()
+            .connect_timeout(Duration::from_secs(2))
+            .timeout(Duration::from_secs(2))
+            .build()
+            .unwrap();
 
-    lambda_runtime::run(service_fn(|event| {
         func(
             event,
             eb_client.clone(),
@@ -55,6 +55,7 @@ async fn main() -> Result<(), lambda_runtime::Error> {
             sqs_client.clone(),
             http_client.clone(),
         )
+        .await
     }))
     .await?;
     Ok(())

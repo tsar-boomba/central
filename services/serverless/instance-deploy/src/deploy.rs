@@ -1,6 +1,6 @@
+mod common;
 mod error;
 mod types;
-mod common;
 
 use std::time::Duration;
 
@@ -12,10 +12,9 @@ use lambda_runtime::{service_fn, LambdaEvent};
 use nanoid::nanoid;
 use serde::Serialize;
 
+use common::CRUD_URI;
 use error::Error;
 use types::{ConfigMessage, DeployMessage, SnsMessageEvent};
-use common::CRUD_URI;
-
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -25,25 +24,26 @@ struct Response {
 
 #[tokio::main]
 async fn main() -> Result<(), lambda_runtime::Error> {
-    dotenvy::dotenv().ok();
-    let aws_config = aws_config::load_from_env().await;
-    let eb_client = aws_sdk_elasticbeanstalk::Client::new(&aws_config);
-    let sns_client = aws_sdk_sqs::Client::new(&aws_config);
+    lambda_runtime::run(service_fn(|event| async {
+        dotenvy::dotenv().ok();
+        let aws_config = aws_config::load_from_env().await;
+        let eb_client = aws_sdk_elasticbeanstalk::Client::new(&aws_config);
+        let sns_client = aws_sdk_sqs::Client::new(&aws_config);
 
-    let http_client = reqwest::Client::builder()
-        .use_rustls_tls()
-        .connect_timeout(Duration::from_secs(10))
-        .timeout(Duration::from_secs(10))
-        .build()
-        .unwrap();
+        let http_client = reqwest::Client::builder()
+            .use_rustls_tls()
+            .connect_timeout(Duration::from_secs(10))
+            .timeout(Duration::from_secs(10))
+            .build()
+            .unwrap();
 
-    lambda_runtime::run(service_fn(|event| {
         func(
             event,
             eb_client.clone(),
             sns_client.clone(),
             http_client.clone(),
         )
+        .await
     }))
     .await?;
     Ok(())
