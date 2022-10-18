@@ -25,7 +25,7 @@ struct Response {
 #[tokio::main]
 async fn main() -> Result<(), lambda_runtime::Error> {
     lambda_runtime::run(service_fn(|event| async {
-        dotenvy::dotenv().ok();
+        println!("ev received");
         let aws_config = aws_config::load_from_env().await;
         let eb_client = aws_sdk_elasticbeanstalk::Client::new(&aws_config);
         let sns_client = aws_sdk_sqs::Client::new(&aws_config);

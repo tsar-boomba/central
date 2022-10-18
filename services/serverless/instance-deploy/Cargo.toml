@@ -16,7 +16,6 @@ aws-sdk-elasticbeanstalk = "0.19"
 aws-sdk-route53 = "0.19"
 aws-sdk-elasticloadbalancingv2 = "0.19"
 aws-sdk-sqs = "0.19"
-dotenvy = "0.15.5"
 nanoid = "0.4"
 lazy_static = "1"
 reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"] }
