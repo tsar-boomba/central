@@ -31,6 +31,8 @@ pub struct FailMessage {
     pub name: String,
     pub key: String,
     pub jwt: String,
+    #[serde(default)]
 	pub env_id: Option<String>,
+    #[serde(default)]
 	pub env_name: Option<String>,
 }

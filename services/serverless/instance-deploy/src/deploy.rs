@@ -37,12 +37,9 @@ async fn main() -> Result<(), lambda_runtime::Error> {
 }
 
 async fn func(event: LambdaEvent<SnsEvent>) -> Result<Response, Error> {
-    tracing::info!("ev received");
     let aws_config = aws_config::load_from_env().await;
     let eb_client = aws_sdk_elasticbeanstalk::Client::new(&aws_config);
     let sqs_client = aws_sdk_sqs::Client::new(&aws_config);
-
-    tracing::info!("aws clients made");
 
     let http_client = reqwest::Client::builder()
         .use_rustls_tls()
