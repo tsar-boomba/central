@@ -1571,12 +1571,12 @@ dependencies = [
  "aws-sdk-sqs",
  "lambda_runtime",
  "lazy_static",
- "log",
  "nanoid",
  "reqwest",
  "serde",
  "serde_json",
  "tokio",
+ "tracing",
  "tracing-subscriber",
 ]
 

@@ -24,36 +24,32 @@ struct Response {
 
 #[tokio::main]
 async fn main() -> Result<(), lambda_runtime::Error> {
-    lambda_runtime::run(service_fn(|event| async {
-        println!("ev received");
-        let aws_config = aws_config::load_from_env().await;
-        let eb_client = aws_sdk_elasticbeanstalk::Client::new(&aws_config);
-        let sns_client = aws_sdk_sqs::Client::new(&aws_config);
+    tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::INFO)
+        // disabling time is handy because CloudWatch will add the ingestion time.
+        .without_time()
+        .init();
 
-        println!("aws clients done");
-
-        let http_client = reqwest::Client::builder()
-            .use_rustls_tls()
-            .connect_timeout(Duration::from_secs(10))
-            .timeout(Duration::from_secs(10))
-            .build()
-            .unwrap();
-
-        println!("https client done");
-
-        func(event, eb_client, sns_client, http_client).await
-    }))
-    .await?;
+    let service = service_fn(func);
+    lambda_runtime::run(service).await?;
     Ok(())
 }
 
-async fn func(
-    event: LambdaEvent<SnsMessageEvent>,
-    eb_client: aws_sdk_elasticbeanstalk::Client,
-    sqs_client: aws_sdk_sqs::Client,
-    http_client: reqwest::Client,
-) -> Result<Response, Error> {
-    println!("handler called");
+async fn func(event: LambdaEvent<SnsMessageEvent>) -> Result<Response, Error> {
+    tracing::info!("ev received");
+    let aws_config = aws_config::load_from_env().await;
+    let eb_client = aws_sdk_elasticbeanstalk::Client::new(&aws_config);
+    let sqs_client = aws_sdk_sqs::Client::new(&aws_config);
+
+    tracing::info!("aws clients made");
+
+    let http_client = reqwest::Client::builder()
+        .use_rustls_tls()
+        .connect_timeout(Duration::from_secs(10))
+        .timeout(Duration::from_secs(10))
+        .build()
+        .unwrap();
+
     let (event, _context) = event.into_parts();
     let message: DeployMessage = serde_json::from_str(&event.records[0].sns.message).unwrap();
     // eventually get this from the payload

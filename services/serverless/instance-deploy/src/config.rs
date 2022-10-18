@@ -32,43 +32,32 @@ struct Response {
 
 #[tokio::main]
 async fn main() -> Result<(), lambda_runtime::Error> {
-    lambda_runtime::run(service_fn(|event| async {
-        println!("ev received");
-        let aws_config = aws_config::load_from_env().await;
-        let eb_client = aws_sdk_elasticbeanstalk::Client::new(&aws_config);
-        let elb_client = aws_sdk_elasticloadbalancingv2::Client::new(&aws_config);
-        let r53_client = aws_sdk_route53::Client::new(&aws_config);
-        let sqs_client = aws_sdk_sqs::Client::new(&aws_config);
+    tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::INFO)
+        // disabling time is handy because CloudWatch will add the ingestion time.
+        .without_time()
+        .init();
 
-        let http_client = reqwest::Client::builder()
-            .use_rustls_tls()
-            .connect_timeout(Duration::from_secs(2))
-            .timeout(Duration::from_secs(2))
-            .build()
-            .unwrap();
-
-        func(
-            event,
-            eb_client,
-            elb_client,
-            r53_client,
-            sqs_client,
-            http_client,
-        )
-        .await
-    }))
-    .await?;
+    let service = service_fn(func);
+    lambda_runtime::run(service).await?;
     Ok(())
 }
 
-async fn func(
-    event: LambdaEvent<SqsMessageEvent>,
-    eb_client: aws_sdk_elasticbeanstalk::Client,
-    elb_client: aws_sdk_elasticloadbalancingv2::Client,
-    r53_client: aws_sdk_route53::Client,
-    sqs_client: aws_sdk_sqs::Client,
-    http_client: reqwest::Client,
-) -> Result<Response, Error> {
+async fn func(event: LambdaEvent<SqsMessageEvent>) -> Result<Response, Error> {
+    tracing::info!("ev received");
+    let aws_config = aws_config::load_from_env().await;
+    let eb_client = aws_sdk_elasticbeanstalk::Client::new(&aws_config);
+    let elb_client = aws_sdk_elasticloadbalancingv2::Client::new(&aws_config);
+    let r53_client = aws_sdk_route53::Client::new(&aws_config);
+    let sqs_client = aws_sdk_sqs::Client::new(&aws_config);
+
+    let http_client = reqwest::Client::builder()
+        .use_rustls_tls()
+        .connect_timeout(Duration::from_secs(2))
+        .timeout(Duration::from_secs(2))
+        .build()
+        .unwrap();
+
     let (event, _context) = event.into_parts();
 
     let tasks = event
@@ -97,7 +86,7 @@ async fn func(
         match task.0.await {
             Ok(result) => match result {
                 Err(err) => {
-                    log::error!("Error ocurred processing message {}: {}", task.1, err);
+                    tracing::error!("Error ocurred processing message {}: {}", task.1, err);
                     failures.push(ItemFailure {
                         item_identifier: task.1,
                     })
@@ -105,7 +94,7 @@ async fn func(
                 _ => {}
             },
             Err(err) => {
-                log::error!(
+                tracing::error!(
                     "Join error ocurred while processing message {}: {}",
                     task.1,
                     err
