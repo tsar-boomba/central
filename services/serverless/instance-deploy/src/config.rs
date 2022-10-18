@@ -41,7 +41,6 @@ async fn main() -> Result<(), lambda_runtime::Error> {
         let sqs_client = aws_sdk_sqs::Client::new(&aws_config);
 
         let http_client = reqwest::Client::builder()
-            .use_rustls_tls()
             .connect_timeout(Duration::from_secs(2))
             .timeout(Duration::from_secs(2))
             .build()
@@ -49,11 +48,11 @@ async fn main() -> Result<(), lambda_runtime::Error> {
 
         func(
             event,
-            eb_client.clone(),
-            elb_client.clone(),
-            r53_client.clone(),
-            sqs_client.clone(),
-            http_client.clone(),
+            eb_client,
+            elb_client,
+            r53_client,
+            sqs_client,
+            http_client,
         )
         .await
     }))

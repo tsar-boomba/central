@@ -31,7 +31,6 @@ async fn main() -> Result<(), lambda_runtime::Error> {
         let sns_client = aws_sdk_sqs::Client::new(&aws_config);
 
         let http_client = reqwest::Client::builder()
-            .use_rustls_tls()
             .connect_timeout(Duration::from_secs(10))
             .timeout(Duration::from_secs(10))
             .build()
@@ -39,9 +38,9 @@ async fn main() -> Result<(), lambda_runtime::Error> {
 
         func(
             event,
-            eb_client.clone(),
-            sns_client.clone(),
-            http_client.clone(),
+            eb_client,
+            sns_client,
+            http_client,
         )
         .await
     }))
