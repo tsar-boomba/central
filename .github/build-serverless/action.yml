@@ -26,8 +26,10 @@ runs:
       with:
         key: 'central-instance-deploy-cache'
     - name: Install cargo-lambda
+      shell: bash
       run: pip install cargo-lambda
     - name: Build Lambda Binaries
+      shell: bash
       env:
         PACKAGE: ${{ inputs.package }}
       run: cargo lambda build --release --arm64 --output-format zip -p $PACKAGE

@@ -43,7 +43,8 @@ jobs:
     if: needs.pudo-update-changes.outputs.changed == 'true'
     steps:
       - uses: actions/checkout@v3
-      - uses: ./.github/build-serverless
+      - name: Build Function
+        uses: ./.github/build-serverless
         with:
           package: "pudo-update"
           access-key: ${{ secrets.DEPLOY_ACCESS_KEY }}

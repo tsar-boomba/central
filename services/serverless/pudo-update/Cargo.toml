@@ -8,7 +8,7 @@ edition = "2021"
 #
 # If you're using an older Rust version,
 # download cargo-edit(https://github.com/killercup/cargo-edit#installation) 
-# to install the `add` subcommand.
+# to install the `add` subcommand
 
 [dependencies]
 
