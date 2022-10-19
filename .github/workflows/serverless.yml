@@ -35,7 +35,7 @@ jobs:
   pudo-update-changes:
     uses: ./.github/workflows/changes.yml
     with:
-      path: services/serverless/instance-deploy/**
+      path: services/serverless/pudo-update/**
 
   pudo-update-deploy:
     runs-on: ubuntu-latest
