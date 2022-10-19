@@ -1,0 +1,39 @@
+name: 'Build Serverless'
+description: 'Build a serverless package'
+inputs:
+  package:
+    required: true
+    type: string
+  access-key:
+    required: true
+    type: string
+  secret-key:
+    required: true
+    type: string
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+    - uses: actions-rs/toolchain@v1.0.6
+      with:
+        profile: minimal
+        toolchain: stable
+    - name: Rust Cache
+      uses: Swatinem/rust-cache@v2
+      with:
+        key: 'central-instance-deploy-cache'
+    - name: Install cargo-lambda
+      run: pip install cargo-lambda
+    - name: Build Lambda Binaries
+      env:
+        PACKAGE: ${{ inputs.package }}
+      run: cargo lambda build --release --arm64 --output-format zip -p $PACKAGE
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-region: us-east-1
+        aws-access-key-id: ${{ inputs.access-key }}
+        aws-secret-access-key: ${{ inputs.secret-key }}
