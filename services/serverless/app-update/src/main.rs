@@ -54,6 +54,11 @@ async fn function_handler(event: LambdaEvent<Payload>) -> Result<Response, Error
         .ok_or(Error::new("No environments found."))?
         .to_owned();
 
+    if environments.len() == 0 {
+        info!("No environments to update.");
+        return Ok(Response { exit_code: 0 })
+    }
+
     info!(
         "Updating {} environments for {}",
         environments.len(),
