@@ -5,7 +5,6 @@ edition = "2021"
 
 # Starting in Rust 1.62 you can use `cargo add` to add dependencies 
 # to your project.
-#
 # If you're using an older Rust version,
 # download cargo-edit(https://github.com/killercup/cargo-edit#installation) 
 # to install the `add` subcommand
