@@ -7,8 +7,9 @@ members = [
 	"libs/models",
 	"libs/auth",
 	"libs/payments-lib",
+	"services/serverless/serverless-util",
 	"services/serverless/instance-deploy",
-	"services/serverless/pudo-update"
+	"services/serverless/app-update"
 ]
 
 [workspace.dependencies]

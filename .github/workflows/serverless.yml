@@ -32,22 +32,22 @@ jobs:
           aws lambda update-function-code --function-name "central-instance-config" --zip-file fileb://target/lambda/config/bootstrap.zip --publish --region us-east-1
           aws lambda update-function-code --function-name "central-instance-fail" --zip-file fileb://target/lambda/fail/bootstrap.zip --publish --region us-east-1
 
-  pudo-update-changes:
+  app-update-changes:
     uses: ./.github/workflows/changes.yml
     with:
-      path: services/serverless/pudo-update/**
+      path: services/serverless/app-update/**
 
-  pudo-update-deploy:
+  app-update-deploy:
     runs-on: ubuntu-latest
-    needs: [pudo-update-changes]
-    if: needs.pudo-update-changes.outputs.changed == 'true'
+    needs: [app-update-changes]
+    if: needs.app-update-changes.outputs.changed == 'true'
     steps:
       - uses: actions/checkout@v3
       - name: Build Function
         uses: ./.github/build-serverless
         with:
-          package: "pudo-update"
+          package: "app-update"
           access-key: ${{ secrets.DEPLOY_ACCESS_KEY }}
           secret-key: ${{ secrets.DEPLOY_SECRET_ACCESS_KEY }}
       - name: Publish New Versions
-        run: aws lambda update-function-code --function-name "pudo-update" --zip-file fileb://target/lambda/pudo-update/bootstrap.zip --publish --region us-east-1
+        run: aws lambda update-function-code --function-name "app-update" --zip-file fileb://target/lambda/app-update/bootstrap.zip --publish --region us-east-1

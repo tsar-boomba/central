@@ -247,6 +247,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08f9b8508dccb7687a1d6c4ce66b2b0ecef467c94667de27d8d7fe1f8d2a9cdc"
 
 [[package]]
+name = "app-update"
+version = "0.1.0"
+dependencies = [
+ "aws-config",
+ "aws-sdk-elasticbeanstalk",
+ "itertools",
+ "lambda_runtime 0.7.0",
+ "serde",
+ "serde_json",
+ "serverless-util",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "async-channel"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1760,6 +1776,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "879d54834c8c76457ef4293a689b2a8c59b076067ad77b15efafbb05f92a592b"
 
 [[package]]
+name = "itertools"
+version = "0.10.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b0fd2260e829bddf4cb6ea802289de2f86d6a7a690192fbe91b3f46e0f2c8473"
+dependencies = [
+ "either",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2314,18 +2339,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pudo-update"
-version = "0.1.0"
-dependencies = [
- "lambda_runtime 0.7.0",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
 name = "query_map"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2760,6 +2773,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "serverless-util"
+version = "0.1.0"
+dependencies = [
+ "aws-smithy-http",
+ "reqwest",
+ "serde",
 ]
 
 [[package]]
