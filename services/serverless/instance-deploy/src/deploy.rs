@@ -51,7 +51,7 @@ async fn func(event: LambdaEvent<SnsEvent>) -> Result<Response, Error> {
     let (event, _context) = event.into_parts();
     let message: DeployMessage = serde_json::from_str(&event.records[0].sns.message).unwrap();
     // eventually get this from the payload
-    let application_name = "test-deploy";
+    let application_name = "pudo";
 
     let result: Result<CreateEnvironmentOutput, Error> = async {
         let app_version_label = eb_client
