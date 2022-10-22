@@ -1,2 +1,4 @@
 # For building serverless binaries in ci/cd
 cargo-lambda==0.10.0rc1
+# For deploying new stuff to elastic beanstalk
+awsebcli==3.20.3
