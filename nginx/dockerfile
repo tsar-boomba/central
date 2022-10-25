@@ -1,5 +1,5 @@
 # For NGINX in container
-# Base on offical NGINX Alpine image
+# Base on offical NGINX Alpine img
 FROM nginx:1.23.1-alpine
 
 # Remove any existing config files
