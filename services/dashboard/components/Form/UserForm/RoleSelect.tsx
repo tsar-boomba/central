@@ -1,4 +1,4 @@
-import { useUser } from '@/components/UserProvider';
+import { useUser } from '@/utils/authUtils';
 import { Role } from '@/types/User';
 import { higherRole } from '@/utils/authUtils';
 import { Group, Loader, Select, SelectProps, Text } from '@mantine/core';

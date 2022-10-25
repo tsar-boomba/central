@@ -1,6 +1,6 @@
 import Layout from '@/components/Layout';
 import type { AppContext, AppInitialProps, AppProps } from 'next/app';
-import { useState, useMemo, ReactNode } from 'react';
+import { useState, useMemo, ReactNode, useEffect } from 'react';
 import Head from 'next/head';
 import {
 	ColorScheme,
@@ -15,10 +15,12 @@ import { getCookie, parse, setCookie } from 'ez-cookies';
 import App from 'next/app';
 import { NotificationsProvider } from '@/components/NotificationsProvider';
 import { ColorProvider } from '@/components/ColorProvider';
-import { UserProvider } from '@/components/UserProvider';
 import { Spotlight } from '@/components/Spotlight';
 import { isAuthed } from '../utils/authUtils';
 import { User } from '../types/User';
+import useSWR from 'swr';
+import { api } from '@/utils/apiHelpers';
+import fetcher from '@/utils/swrFetcher';
 
 interface _App<P = {}> {
 	(props: AppProps & P): ReactNode;
@@ -40,20 +42,35 @@ const getTheme = (
 });
 
 const noLayoutPaths: string[] = ['/register'];
+const publicPaths: string[] = ['/login', '/register'];
 
 const MyApp: _App<{
 	colorScheme: ColorScheme;
 	primaryColor: DefaultMantineColor;
-	user?: User;
+	initialUser?: User;
 }> = ({
 	Component,
 	pageProps,
 	router,
-	user,
+	initialUser,
 	colorScheme: initialColorScheme,
 	primaryColor: initialPrimaryColor,
 }) => {
 	const isNoLayout = noLayoutPaths.includes(router.pathname);
+	const isPublic = publicPaths.includes(router.pathname);
+
+	const {
+		data: user,
+		error,
+		mutate,
+	} = useSWR(api('verify'), fetcher, { fallbackData: initialUser });
+
+	useEffect(() => {
+		if ((!user || error) && !isPublic) {
+			mutate(undefined);
+			router.push(`/login?from=${router.pathname}`);
+		}
+	});
 
 	const [primaryColor, _setPrimaryColor] = useState(initialPrimaryColor);
 	const [colorScheme, setColorScheme] = useState(initialColorScheme);
@@ -86,20 +103,18 @@ const MyApp: _App<{
 				<title>Dashboard | Milky Web</title>
 			</Head>
 			<ColorSchemeProvider colorScheme={colorScheme} toggleColorScheme={toggleColorScheme}>
-				<MantineProvider withGlobalStyles withNormalizeCSS theme={theme}>
+				<MantineProvider withGlobalStyles withNormalizeCSS theme={theme as any}>
 					<ColorProvider primaryColor={primaryColor} setPrimaryColor={setPrimaryColor}>
 						<ModalsProvider>
 							<NotificationsProvider>
 								<Spotlight>
-									<UserProvider fallback={user}>
-										{!isNoLayout ? (
-											<Layout>
-												<Component {...pageProps} />
-											</Layout>
-										) : (
+									{!isNoLayout ? (
+										<Layout>
 											<Component {...pageProps} />
-										)}
-									</UserProvider>
+										</Layout>
+									) : (
+										<Component {...pageProps} />
+									)}
 								</Spotlight>
 							</NotificationsProvider>
 						</ModalsProvider>

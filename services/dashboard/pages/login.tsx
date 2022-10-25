@@ -1,4 +1,4 @@
-import { useUser } from '@/components/UserProvider';
+import { useUser } from '@/utils/authUtils';
 import { callApi } from '@/utils/apiHelpers';
 import { fetchNotification } from '@/utils/fetchNotification';
 import { Anchor, Button, Group, Paper, PasswordInput, Text, TextInput } from '@mantine/core';

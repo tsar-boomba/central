@@ -1,5 +1,5 @@
 import { UserDisplay } from '@/components/UserDisplay';
-import { useUser } from '@/components/UserProvider';
+import { useUser } from '@/utils/authUtils';
 import { Role, User } from '@/types/User';
 import { api, ssrFetch } from '@/utils/apiHelpers';
 import { isAuthed, redirect, requireRole } from '@/utils/authUtils';

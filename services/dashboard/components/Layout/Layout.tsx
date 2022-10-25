@@ -6,7 +6,7 @@ import { useLayoutStyles } from './LayoutStyles';
 import { useDisclosure, useHotkeys } from '@mantine/hooks';
 import { LinksGroupProps } from './NavbarLinksGroup';
 import { IconDatabase, IconHome, IconSettings, IconUser } from '@tabler/icons';
-import { useUser } from '../UserProvider';
+import { useUser } from '@/utils/authUtils';
 import { Role } from '@/types/User';
 
 const Layout: React.FC<PropsWithChildren<unknown>> = ({ children }) => {

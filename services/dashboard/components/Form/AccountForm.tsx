@@ -9,7 +9,7 @@ import { Box, Button, Divider, Group, Paper, Text, TextInput } from '@mantine/co
 import { useForm } from '@mantine/form';
 import { FormRulesRecord } from '@mantine/form/lib/types';
 import { useState } from 'react';
-import { useUser } from '../UserProvider';
+import { useUser } from '@/utils/authUtils';
 import StateInput from './StateInput';
 import TextInputInfo from './TextInputInfo';
 

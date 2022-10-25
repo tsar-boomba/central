@@ -1,4 +1,4 @@
-import { useUser } from '@/components/UserProvider';
+import { useUser } from '@/utils/authUtils';
 import { Instance } from '@/types/Instance';
 import { api } from '@/utils/apiHelpers';
 import fetcher from '@/utils/swrFetcher';

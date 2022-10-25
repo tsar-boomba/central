@@ -7,7 +7,7 @@ import { openConfirmModal } from '@mantine/modals';
 import { IconCircleCheck, IconCircleMinus, IconDots } from '@tabler/icons';
 import Link from 'next/link';
 import { mutate } from 'swr';
-import { useUser } from '../UserProvider';
+import { useUser } from '@/utils/authUtils';
 
 interface Props {
 	userData: User;

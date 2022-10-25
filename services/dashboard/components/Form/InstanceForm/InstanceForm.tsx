@@ -1,5 +1,5 @@
 import RichTextEditor from '@/components/RichTextEditor';
-import { useAccount, useUser } from '@/components/UserProvider';
+import { useAccount, useUser } from '@/utils/authUtils';
 import { InstanceStatus } from '@/types/Instance';
 import { Role } from '@/types/User';
 import { NewInstance } from '@/types/utils';

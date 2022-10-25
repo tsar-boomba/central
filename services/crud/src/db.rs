@@ -1,4 +1,3 @@
-use models::{NewAccount, NewUser};
 use bcrypt::{hash, DEFAULT_COST};
 use diesel::{
     r2d2::{self, Builder, ConnectionManager},
@@ -6,6 +5,7 @@ use diesel::{
 };
 use diesel_migrations::embed_migrations;
 use models::types::{Resource, Role};
+use models::{NewAccount, NewUser};
 
 use crate::api_error::ApiError;
 
@@ -78,7 +78,50 @@ pub fn init() {
                 last_name: "User".into(),
                 password: hash(admin_pass.unwrap(), DEFAULT_COST).unwrap(),
                 active: true,
-                instances: vec!["hatfield".into()],
+                instances: vec![],
+                create_perms: vec![Resource::Load, Resource::Carrier, Resource::Shipper],
+                update_perms: vec![Resource::Load, Resource::Carrier, Resource::Shipper],
+                delete_perms: vec![Resource::Load, Resource::Carrier, Resource::Shipper],
+                role: Role::Owner,
+                notes: None,
+            })
+            .on_conflict_do_nothing()
+            .execute(&conn)
+            .unwrap();
+    }
+
+    #[cfg(debug_assertions)]
+    if !*crate::PROD {
+        // add dev account & user
+        diesel::insert_into(models::accounts::table)
+            .values(NewAccount {
+                id: "dev".into(),
+                address1: "6024 Downfield Wood Dr".into(),
+                address2: None,
+                business_name: "Hatfield Transport LLC".into(),
+                city: "Charlotte".into(),
+                email: "billy@hatfield.com".into(),
+                phone_number: "704-804-1261".into(),
+                short_name: "Hatfield".into(),
+                zip_code: "28269".into(),
+                stripe_id: None,
+                sub_id: None,
+                state: "NC".into(),
+            })
+            .on_conflict_do_nothing()
+            .execute(&conn)
+            .unwrap();
+
+        diesel::insert_into(models::users::table)
+            .values(NewUser {
+                id: "dev".into(),
+                account_id: "dev".into(),
+                username: "dev".into(),
+                first_name: "Test".into(),
+                last_name: "User".into(),
+                password: hash("password".to_string(), DEFAULT_COST).unwrap(),
+                active: true,
+                instances: vec![],
                 create_perms: vec![Resource::Load, Resource::Carrier, Resource::Shipper],
                 update_perms: vec![Resource::Load, Resource::Carrier, Resource::Shipper],
                 delete_perms: vec![Resource::Load, Resource::Carrier, Resource::Shipper],

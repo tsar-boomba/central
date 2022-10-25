@@ -1,6 +1,6 @@
 import AccountForm from '@/components/Form/AccountForm';
 import { ManageSubscription } from '@/components/ManageSubscription';
-import { useAccount, useUser } from '@/components/UserProvider';
+import { useAccount, useUser } from '@/utils/authUtils';
 import { Role } from '@/types/User';
 import { DEFAULT_SSR, requireRole } from '@/utils/authUtils';
 import { Loader, Stack, Tabs, Text } from '@mantine/core';

@@ -1,4 +1,4 @@
-import { useUser } from '@/components/UserProvider';
+import { useUser } from '@/utils/authUtils';
 import { Instance, InstanceStatus } from '@/types/Instance';
 import { Role } from '@/types/User';
 import { api, callApi, resError } from '@/utils/apiHelpers';

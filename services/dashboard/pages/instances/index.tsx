@@ -1,5 +1,5 @@
 import { InstanceDisplay } from '@/components/InstanceDisplay';
-import { useUser } from '@/components/UserProvider';
+import { useUser } from '@/utils/authUtils';
 import { Instance } from '@/types/Instance';
 import { Role } from '@/types/User';
 import { api, ssrFetch } from '@/utils/apiHelpers';

@@ -8,7 +8,7 @@ import { IconAlertCircle } from '@tabler/icons';
 import { useRouter } from 'next/router';
 import { FormEventHandler, useState } from 'react';
 import useSWR from 'swr';
-import { useUser } from '../../UserProvider';
+import { useUser } from '@/utils/authUtils';
 
 const sizes = {
 	xs: 30,

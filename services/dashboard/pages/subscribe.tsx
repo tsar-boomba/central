@@ -1,7 +1,7 @@
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { Container, Loader, Text } from '@mantine/core';
-import { useUser } from '../components/UserProvider';
+import { useUser } from '@/utils/authUtils';
 import { api, ssrFetch } from '../utils/apiHelpers';
 import useSWR from 'swr';
 import fetcher from '../utils/swrFetcher';

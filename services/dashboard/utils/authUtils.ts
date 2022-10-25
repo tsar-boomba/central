@@ -1,6 +1,9 @@
+import { Account } from '@/types/Account';
 import { Role, User } from '@/types/User';
 import { GetServerSideProps, GetServerSidePropsResult } from 'next';
+import useSWR from 'swr';
 import { api } from './apiHelpers';
+import fetcher from './swrFetcher';
 
 export const isAuthed = async ({
 	req,
@@ -74,4 +77,18 @@ export const higherRole = (curr: Role | undefined, required: Role): boolean => {
 		return roleToNum(curr) > roleToNum(required);
 	}
 	return false;
+};
+
+export const useUser = () => {
+	const { data, ...rest } = useSWR<User>(api('verify'), fetcher);
+	return { user: data, ...rest };
+};
+
+export const useAccount = () => {
+	const { user } = useUser();
+	const { data, ...rest } = useSWR<Account>(
+		user ? api(`accounts/${user.accountId}`) : null,
+		fetcher,
+	);
+	return { account: data, ...rest };
 };

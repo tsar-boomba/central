@@ -7,7 +7,7 @@ import { CardElement, useStripe, useElements, CardElementProps } from '@stripe/r
 import { IconAlertCircle } from '@tabler/icons';
 import { FormEventHandler, useState } from 'react';
 import useSWR from 'swr';
-import { useUser } from '../UserProvider';
+import { useUser } from '@/utils/authUtils';
 
 const sizes = {
 	xs: 30,

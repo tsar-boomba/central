@@ -18,7 +18,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { IconAlertCircle, IconTrash } from '@tabler/icons';
 import useSWR from 'swr';
 import GradientCard from '../GradientCard';
-import { useUser } from '../UserProvider';
+import { useUser } from '@/utils/authUtils';
 import CardForm from './CardForm';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');

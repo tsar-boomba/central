@@ -1,5 +1,5 @@
 import useSWR from 'swr';
-import { useAccount } from '../components/UserProvider';
+import { useAccount } from '@/utils/authUtils';
 import { api } from './apiHelpers';
 
 const textFetcher = async <Text>(url: string, init: RequestInit = {}): Promise<Text> => {

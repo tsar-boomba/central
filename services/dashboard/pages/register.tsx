@@ -207,6 +207,7 @@ const Register = () => {
 							placeholder='ste 512'
 							label='Address Line 2'
 							{...form.getInputProps('account.address2')}
+							value={form.values.account.address2 ?? ''}
 							onChange={(e) => {
 								// if empty string, it will be set to null
 								form.setFieldValue('address2', e.target.value || null);
